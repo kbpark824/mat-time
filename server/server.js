@@ -30,4 +30,8 @@ app.use('/api/revenuecat', require('./routes/revenuecat'));
 
 const PORT = process.env.PORT || 5001;
 
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+app.listen(PORT, () => {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`Server started on port ${PORT}`);
+  }
+});
