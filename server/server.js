@@ -14,7 +14,7 @@ const app = express();
 // Middleware
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-production-domain.com'] // Update with your actual domain
+    ? ['https://mat-time-production.up.railway.app'] // Your Railway domain
     : ['http://localhost:19006', 'http://localhost:8081', 'http://192.168.1.219:19006'], // Expo dev servers
   credentials: true
 };
