@@ -7,11 +7,13 @@ import apiClient from '../api/client';
 import TagInput from '../components/TagInput';
 import colors from '../constants/colors';
 import Purchases from 'react-native-purchases';
+import { useAuth } from '../auth/context';
 
 export default function SessionLogScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const sessionToEdit = params.id ? JSON.parse(params.session) : null;
+  const { user } = useAuth();
 
   const [date, setDate] = useState(sessionToEdit ? new Date(sessionToEdit.date) : new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -27,16 +29,22 @@ export default function SessionLogScreen() {
   useEffect(() => {
     const checkSubscription = async () => {
       try {
+        // Check both RevenueCat and database for premium status
         const customerInfo = await Purchases.getCustomerInfo();
-        if (typeof customerInfo.entitlements.active.pro !== 'undefined') {
-          setIsPro(true);
-        }
+        const isProFromRevenueCat = typeof customerInfo.entitlements.active.pro !== 'undefined';
+        const isProFromDatabase = user?.isPro || false;
+        
+        // User is pro if either RevenueCat OR database says so
+        const isPremium = isProFromRevenueCat || isProFromDatabase;
+        setIsPro(isPremium);
       } catch (e) {
-        // handle error
+        // If RevenueCat fails, fall back to database only
+        const isProFromDatabase = user?.isPro || false;
+        setIsPro(isProFromDatabase);
       }
     };
     checkSubscription();
-  }, []);
+  }, [user]);
 
   const onChangeDate = (event, selectedDate) => {
     setShowDatePicker(false);
