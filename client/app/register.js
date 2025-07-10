@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TextInput, StyleSheet, Text, Alert, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
+import { View, TextInput, StyleSheet, Text, Alert, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, TouchableOpacity, Linking } from 'react-native';
 import { useAuth } from '../auth/context';
 import colors from '../constants/colors';
 import Purchases from 'react-native-purchases';
@@ -7,11 +7,16 @@ import Purchases from 'react-native-purchases';
 export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const { register } = useAuth();
 
   const handleRegister = async () => {
     if (password.length < 6) {
         Alert.alert('Weak Password', 'Password must be at least 6 characters long.');
+        return;
+    }
+    if (!acceptedTerms) {
+        Alert.alert('Terms Required', 'Please accept the Terms of Use and Privacy Policy to continue.');
         return;
     }
     try {
@@ -51,6 +56,28 @@ export default function RegisterScreen() {
             onChangeText={setPassword}
             secureTextEntry
           />
+          
+          <View style={styles.termsContainer}>
+            <TouchableOpacity 
+              style={styles.checkboxContainer} 
+              onPress={() => setAcceptedTerms(!acceptedTerms)}
+            >
+              <View style={[styles.checkbox, acceptedTerms && styles.checkboxChecked]}>
+                {acceptedTerms && <Text style={styles.checkmark}>✓</Text>}
+              </View>
+              <View style={styles.termsTextContainer}>
+                <Text style={styles.termsText}>I agree to the </Text>
+                <TouchableOpacity onPress={() => Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/')}>
+                  <Text style={styles.linkText}>Terms of Use</Text>
+                </TouchableOpacity>
+                <Text style={styles.termsText}> and </Text>
+                <TouchableOpacity onPress={() => Linking.openURL('https://www.termsfeed.com/live/ff739534-7f59-4d57-84d3-6acf05dc0024')}>
+                  <Text style={styles.linkText}>Privacy Policy</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </View>
+          
           <TouchableOpacity style={styles.primaryButton} onPress={handleRegister}>
             <Text style={styles.primaryButtonText}>Register</Text>
           </TouchableOpacity>
@@ -105,5 +132,50 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  termsContainer: {
+    marginVertical: 15,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 2,
+    borderColor: colors.mutedAccent,
+    borderRadius: 3,
+    marginRight: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  checkboxChecked: {
+    backgroundColor: colors.primaryText,
+    borderColor: colors.primaryText,
+  },
+  checkmark: {
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  termsTextContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+  },
+  termsText: {
+    fontSize: 14,
+    color: colors.primaryText,
+    lineHeight: 20,
+  },
+  linkText: {
+    fontSize: 14,
+    color: colors.primaryText,
+    textDecorationLine: 'underline',
+    fontWeight: '500',
+    lineHeight: 20,
   },
 });
