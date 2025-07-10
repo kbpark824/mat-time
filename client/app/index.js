@@ -8,7 +8,7 @@ import colors from '../constants/colors';
 import Paywall from '../components/Paywall';
 
 export default function HomeScreen() {
-  const { logout, user } = useAuth();
+  const { logout, user, setUser } = useAuth();
   const router = useRouter();
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -111,7 +111,11 @@ export default function HomeScreen() {
   const [showPaywall, setShowPaywall] = useState(false);
 
   const handlePurchase = () => {
-    setIsPro(true);
+    // Update user's premium status in context
+    setUser(prevUser => ({
+      ...prevUser,
+      isPro: true
+    }));
     setShowPaywall(false);
   };
 

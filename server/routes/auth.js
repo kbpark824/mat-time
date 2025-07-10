@@ -2,15 +2,46 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const Joi = require('joi');
 const User = require('../models/User');
 const Session = require('../models/Session');
 const Tag = require('../models/Tag');
 const auth = require('../middleware/authMiddleware');
 
+// Validation schemas
+const registerSchema = Joi.object({
+  email: Joi.string().email().required().messages({
+    'string.email': 'Please provide a valid email address',
+    'any.required': 'Email is required'
+  }),
+  password: Joi.string().min(8).pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]')).required().messages({
+    'string.min': 'Password must be at least 8 characters long',
+    'string.pattern.base': 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
+    'any.required': 'Password is required'
+  }),
+  revenueCatId: Joi.string().optional()
+});
+
+const loginSchema = Joi.object({
+  email: Joi.string().email().required().messages({
+    'string.email': 'Please provide a valid email address',
+    'any.required': 'Email is required'
+  }),
+  password: Joi.string().required().messages({
+    'any.required': 'Password is required'
+  })
+});
+
 // @route   POST api/auth/register
 // @desc    Register a new user
 // @access  Public
 router.post('/register', async (req, res) => {
+  // Validate input
+  const { error } = registerSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ msg: error.details[0].message });
+  }
+
   const { email, password, revenueCatId } = req.body;
 
   try {
@@ -37,6 +68,12 @@ router.post('/register', async (req, res) => {
 // @desc    Authenticate user & get token
 // @access  Public
 router.post('/login', async (req, res) => {
+  // Validate input
+  const { error } = loginSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ msg: error.details[0].message });
+  }
+
   const { email, password } = req.body;
 
   try {

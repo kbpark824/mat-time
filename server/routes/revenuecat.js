@@ -1,11 +1,33 @@
 const express = require('express');
+const crypto = require('crypto');
 const router = express.Router();
 const User = require('../models/User');
 
+// Middleware to verify RevenueCat webhook signature
+const verifySignature = (req, res, next) => {
+  const signature = req.headers['x-revenuecat-signature'];
+  const webhookSecret = process.env.REVENUECAT_WEBHOOK_SECRET;
+  
+  if (!signature || !webhookSecret) {
+    return res.status(401).json({ msg: 'Unauthorized - Missing signature or webhook secret' });
+  }
+  
+  const expectedSignature = crypto
+    .createHmac('sha256', webhookSecret)
+    .update(JSON.stringify(req.body))
+    .digest('hex');
+  
+  if (signature !== expectedSignature) {
+    return res.status(401).json({ msg: 'Unauthorized - Invalid signature' });
+  }
+  
+  next();
+};
+
 // @route   POST /api/revenuecat/webhook
 // @desc    Handle RevenueCat webhooks
-// @access  Public
-router.post('/webhook', async (req, res) => {
+// @access  Public (but signature verified)
+router.post('/webhook', verifySignature, async (req, res) => {
   const { event } = req.body;
   const { app_user_id, entitlements } = event;
 

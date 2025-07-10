@@ -6,13 +6,14 @@ import { SplashScreen } from 'expo-router';
 import Purchases from 'react-native-purchases';
 import { Platform } from 'react-native';
 import { jwtDecode } from 'jwt-decode';
+import Constants from 'expo-constants';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
 const revenueCatKeys = {
-  apple: 'appl_FrctCCLTynKgxasefzLYLewAUpz',
-  google: 'goog_PxjVqJelFyQQBVPtpRKVzdNDdwE',
+  apple: Constants.expoConfig?.extra?.revenueCatAppleKey,
+  google: Constants.expoConfig?.extra?.revenueCatGoogleKey,
 };
 
 function Layout() {
