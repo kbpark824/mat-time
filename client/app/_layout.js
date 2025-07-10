@@ -56,7 +56,7 @@ function Layout() {
     if (!user) {
       router.replace('/login');
     } else {
-      router.replace('/');
+      router.replace('/(tabs)');
     }
   }, [user, navigationState?.key, isReady]);
 
@@ -69,8 +69,8 @@ function Layout() {
       <Stack.Screen name="login" />
       <Stack.Screen name="register" />
       <Stack.Screen
-        name="index"
-        options={{ headerShown: true, title: 'Mat Time' }}
+        name="(tabs)"
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="logSession"
