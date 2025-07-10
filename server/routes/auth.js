@@ -3,6 +3,9 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Session = require('../models/Session');
+const Tag = require('../models/Tag');
+const auth = require('../middleware/authMiddleware');
 
 // @route   POST api/auth/register
 // @desc    Register a new user
@@ -52,6 +55,29 @@ router.post('/login', async (req, res) => {
       if (err) throw err;
       res.json({ token });
     });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// @route   DELETE api/auth/account
+// @desc    Delete user account and all associated data
+// @access  Private
+router.delete('/account', auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Delete all user's sessions
+    await Session.deleteMany({ user: userId });
+
+    // Delete all user's tags
+    await Tag.deleteMany({ user: userId });
+
+    // Delete the user account
+    await User.findByIdAndDelete(userId);
+
+    res.json({ msg: 'Account and all associated data have been permanently deleted' });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error');
