@@ -35,8 +35,19 @@ function Layout() {
           const token = await authStorage.getToken();
           if (token) {
             const decodedToken = jwtDecode(token);
-            setUser(decodedToken.user);
+            
+            // Check if token is expired
+            const currentTime = Date.now() / 1000;
+            if (decodedToken.exp && decodedToken.exp < currentTime) {
+              // Token is expired, remove it
+              await authStorage.removeToken();
+            } else {
+              setUser(decodedToken.user);
+            }
           }
+        } catch (error) {
+          // Invalid token, remove it
+          await authStorage.removeToken();
         } finally {
           setIsReady(true);
           // Hide the splash screen after we're done

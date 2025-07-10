@@ -17,7 +17,8 @@ const verifySignature = (req, res, next) => {
     .update(JSON.stringify(req.body))
     .digest('hex');
   
-  if (signature !== expectedSignature) {
+  // Use timing-safe comparison to prevent timing attacks
+  if (!crypto.timingSafeEqual(Buffer.from(signature, 'hex'), Buffer.from(expectedSignature, 'hex'))) {
     return res.status(401).json({ msg: 'Unauthorized - Invalid signature' });
   }
   

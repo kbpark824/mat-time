@@ -55,7 +55,7 @@ export default function HomeScreen() {
     try {
         const response = await apiClient.get('/tags');
         setAllTags(response.data);
-    } catch (error)        {
+    } catch (error) {
         console.error('Failed to fetch tags', error);
     }
   };
