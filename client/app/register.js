@@ -25,7 +25,7 @@ export default function RegisterScreen() {
     } catch (error) {
         const message = error.response?.data?.error || error.response?.data?.msg || 'An unexpected error occurred.';
         Alert.alert('Registration Failed', message);
-        console.log(JSON.stringify(error.response, null, 2));
+        // Error logged for debugging - remove in production
     }
   };
 

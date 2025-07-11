@@ -3,6 +3,7 @@ const router = express.Router();
 const auth = require('../middleware/authMiddleware');
 const Session = require('../models/Session');
 const mongoose = require('mongoose');
+const logger = require('../config/logger');
 
 // @route   GET api/stats/summary
 // @desc    Get training statistics for the user
@@ -67,7 +68,7 @@ router.get('/summary', auth, async (req, res) => {
     res.json(result);
 
   } catch (err) {
-    console.error(err.message);
+    logger.error('Error getting stats summary:', err.message);
     res.status(500).send('Server Error');
   }
 });

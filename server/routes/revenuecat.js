@@ -2,6 +2,7 @@ const express = require('express');
 const crypto = require('crypto');
 const router = express.Router();
 const User = require('../models/User');
+const logger = require('../config/logger');
 
 // Middleware to verify RevenueCat webhook signature
 const verifySignature = (req, res, next) => {
@@ -36,6 +37,10 @@ router.post('/webhook', verifySignature, async (req, res) => {
     return res.status(400).json({ msg: 'User ID is required' });
   }
 
+  if (!entitlements || typeof entitlements !== 'object') {
+    return res.status(400).json({ msg: 'Invalid entitlements data' });
+  }
+
   try {
     const user = await User.findOne({ revenueCatId: app_user_id });
 
@@ -43,7 +48,13 @@ router.post('/webhook', verifySignature, async (req, res) => {
       return res.status(404).json({ msg: 'User not found' });
     }
 
-    const isPro = entitlements.pro && entitlements.pro.expires_date === null;
+    let isPro = false;
+    try {
+      isPro = entitlements.pro && entitlements.pro.expires_date === null;
+    } catch (err) {
+      logger.error(`Error parsing entitlements: ${err.message}`);
+      return res.status(400).json({ msg: 'Invalid entitlements format' });
+    }
 
     if (user.isPro !== isPro) {
       user.isPro = isPro;
@@ -52,7 +63,7 @@ router.post('/webhook', verifySignature, async (req, res) => {
 
     res.status(200).send('Webhook received');
   } catch (err) {
-    console.error(err.message);
+    logger.error(err.message);
     res.status(500).send('Server error');
   }
 });

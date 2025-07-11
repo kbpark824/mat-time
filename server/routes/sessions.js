@@ -3,6 +3,7 @@ const router = express.Router();
 const auth = require('../middleware/authMiddleware');
 const Session = require('../models/Session');
 const Tag = require('../models/Tag');
+const logger = require('../config/logger');
 
 // A helper function to find or create tags and return their IDs
 const getTagIds = async (tagNames, userId) => {
@@ -45,7 +46,7 @@ router.post('/', auth, async (req, res) => {
     await session.populate('tags');
     res.json(session);
   } catch (err) {
-    console.error(err.message);
+    logger.error(err.message);
     res.status(500).send('Server Error');
   }
 });
@@ -81,7 +82,7 @@ router.get('/', auth, async (req, res) => {
 
     res.json(sessions);
   } catch (err) {
-    console.error(err.message);
+    logger.error(err.message);
     res.status(500).send('Server Error');
   }
 });
@@ -120,7 +121,7 @@ router.put('/:id', auth, async (req, res) => {
 
         res.json(session);
     } catch (err) {
-        console.error(err.message);
+        logger.error('Error updating session:', err.message);
         res.status(500).send('Server Error');
     }
 });
@@ -141,7 +142,7 @@ router.delete('/:id', auth, async (req, res) => {
 
         res.json({ msg: 'Session removed' });
     } catch (err) {
-        console.error(err.message);
+        logger.error('Error deleting session:', err.message);
         res.status(500).send('Server Error');
     }
 });
