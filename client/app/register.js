@@ -20,7 +20,9 @@ export default function RegisterScreen() {
         return;
     }
     try {
-      const revenueCatId = await Purchases.getAppUserID();
+      const revenueCatId = __DEV__ 
+        ? `preview-user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        : await Purchases.getAppUserID();
       await register(email.toLowerCase(), password, revenueCatId);
     } catch (error) {
         const message = error.response?.data?.error || error.response?.data?.msg || 'An unexpected error occurred.';

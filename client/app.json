@@ -49,7 +49,8 @@
         "projectId": "b1c64a4a-ac3a-4ede-9a14-285cc19c0e66"
       },
       "revenueCatAppleKey": "appl_FrctCCLTynKgxasefzLYLewAUpz",
-      "revenueCatGoogleKey": "goog_PxjVqJelFyQQBVPtpRKVzdNDdwE"
+      "revenueCatGoogleKey": "goog_PxjVqJelFyQQBVPtpRKVzdNDdwE",
+      "apiEnvironment": "production"
     }
   }
 }

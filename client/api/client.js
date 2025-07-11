@@ -1,9 +1,9 @@
 import axios from 'axios';
 import authStorage from '../auth/storage';
-
+import getApiUrl from '../config/api';
 
 const apiClient = axios.create({
-  baseURL: __DEV__ ? 'http://192.168.1.219:5001/api' : 'https://mat-time-production.up.railway.app/api',
+  baseURL: getApiUrl(),
 });
 
 // Intercept requests to add the auth token to the header
