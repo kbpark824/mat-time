@@ -29,8 +29,7 @@ export default function Paywall({ onPurchaseCompleted, onClose }) {
     try {
       const { customerInfo } = await Purchases.purchasePackage(pkg);
       if (typeof customerInfo.entitlements.active.pro !== 'undefined') {
-        // Sync with your backend
-        await apiClient.post('/revenuecat/webhook', { event: { app_user_id: customerInfo.originalAppUserId, entitlements: customerInfo.entitlements.active } });
+        // RevenueCat will automatically send webhook to server
         onPurchaseCompleted(true);
       }
     } catch (e) {
