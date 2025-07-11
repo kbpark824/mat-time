@@ -10,10 +10,30 @@ export default function RegisterScreen() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const { register } = useAuth();
 
+  const validatePassword = (password) => {
+    if (password.length < 8) {
+      return 'Password must be at least 8 characters long';
+    }
+    if (!/(?=.*[a-z])/.test(password)) {
+      return 'Password must contain at least one lowercase letter';
+    }
+    if (!/(?=.*[A-Z])/.test(password)) {
+      return 'Password must contain at least one uppercase letter';
+    }
+    if (!/(?=.*\d)/.test(password)) {
+      return 'Password must contain at least one number';
+    }
+    if (!/(?=.*[@$!%*?&#+\-_=<>.,;:()\[\]{}|~^])/.test(password)) {
+      return 'Password must contain at least one special character';
+    }
+    return null; // Password is valid
+  };
+
   const handleRegister = async () => {
-    if (password.length < 6) {
-        Alert.alert('Weak Password', 'Password must be at least 6 characters long.');
-        return;
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      Alert.alert('Weak Password', passwordError);
+      return;
     }
     if (!acceptedTerms) {
         Alert.alert('Terms Required', 'Please accept the Terms of Use and Privacy Policy to continue.');
@@ -52,7 +72,7 @@ export default function RegisterScreen() {
           <Text style={styles.label}>Password</Text>
           <TextInput
             style={styles.input}
-            placeholder="Minimum 6 characters"
+            placeholder="8+ chars, uppercase, lowercase, number, special char"
             placeholderTextColor={colors.mutedAccent}
             value={password}
             onChangeText={setPassword}
