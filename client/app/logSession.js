@@ -5,6 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import apiClient from '../api/client';
 import TagInput from '../components/TagInput';
+import Paywall from '../components/Paywall';
 import colors from '../constants/colors';
 import Purchases from 'react-native-purchases';
 import { useAuth } from '../auth/context';
@@ -23,20 +24,21 @@ export default function SessionLogScreen() {
   const [rollingNotes, setRollingNotes] = useState(sessionToEdit ? sessionToEdit.rollingNotes : '');
   const [tags, setTags] = useState(sessionToEdit ? sessionToEdit.tags.map(t => t.name) : []);
   const [isPro, setIsPro] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
   
   const isEditing = !!sessionToEdit;
 
   useEffect(() => {
     const checkSubscription = async () => {
       try {
-        // Check both RevenueCat and database for premium status
+        // Check both RevenueCat and database for pro status
         const customerInfo = await Purchases.getCustomerInfo();
         const isProFromRevenueCat = typeof customerInfo.entitlements.active.pro !== 'undefined';
         const isProFromDatabase = user?.isPro || false;
         
         // User is pro if either RevenueCat OR database says so
-        const isPremium = isProFromRevenueCat || isProFromDatabase;
-        setIsPro(isPremium);
+        const userIsPro = isProFromRevenueCat || isProFromDatabase;
+        setIsPro(userIsPro);
       } catch (e) {
         // If RevenueCat fails, fall back to database only
         const isProFromDatabase = user?.isPro || false;
@@ -100,6 +102,19 @@ export default function SessionLogScreen() {
     );
   };
 
+  const handleUpgrade = () => {
+    setShowPaywall(true);
+  };
+
+  const handlePurchaseCompleted = () => {
+    setIsPro(true);
+    setShowPaywall(false);
+  };
+
+  if (showPaywall) {
+    return <Paywall onPurchaseCompleted={handlePurchaseCompleted} onClose={() => setShowPaywall(false)} />;
+  }
+
   return (
     <KeyboardAwareScrollView
       style={styles.container}
@@ -121,6 +136,7 @@ export default function SessionLogScreen() {
           mode="date"
           display="spinner"
           onChange={onChangeDate}
+          textColor="#333333"
         />
       )}
       
@@ -146,12 +162,19 @@ export default function SessionLogScreen() {
       <Text style={styles.label}>Rolling / Sparring Notes</Text>
       <TextInput style={[styles.input, styles.textArea]} multiline value={rollingNotes} onChangeText={setRollingNotes} placeholder="How did rolling go?" placeholderTextColor={colors.mutedAccent} />
 
+      <Text style={styles.label}>Tags</Text>
       {isPro ? (
         <TagInput tags={tags} onTagsChange={setTags} />
       ) : (
-        <View style={styles.premiumFeatureContainer}>
-          <Text style={styles.premiumFeatureText}>Tagging is a premium feature. Upgrade to unlock.</Text>
-        </View>
+        <TouchableOpacity style={styles.proFeatureContainer} onPress={handleUpgrade}>
+          <View style={styles.proFeatureContent}>
+            <Text style={styles.proFeatureTitle}>🏷️ Tagging</Text>
+            <Text style={styles.proFeatureText}>Organize your sessions with custom tags</Text>
+            <View style={styles.upgradePrompt}>
+              <Text style={styles.upgradePromptText}>Tap to upgrade to Pro</Text>
+            </View>
+          </View>
+        </TouchableOpacity>
       )}
 
       <View style={styles.spacer} />
@@ -251,16 +274,47 @@ const styles = StyleSheet.create({
       fontSize: 16,
       fontWeight: 'bold',
     },
-    premiumFeatureContainer: {
+    proFeatureContainer: {
       padding: 20,
       backgroundColor: colors.lightBackground,
       borderRadius: 8,
+      borderWidth: 2,
+      borderColor: colors.primaryText,
+      borderStyle: 'dashed',
       alignItems: 'center',
       marginBottom: 15,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
     },
-    premiumFeatureText: {
-      fontSize: 16,
+    proFeatureContent: {
+      alignItems: 'center',
+      width: '100%',
+    },
+    proFeatureTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
       color: colors.primaryText,
+      marginBottom: 8,
+    },
+    proFeatureText: {
+      fontSize: 14,
+      color: colors.mutedAccent,
+      textAlign: 'center',
+      marginBottom: 12,
+    },
+    upgradePrompt: {
+      backgroundColor: colors.primaryText,
+      paddingVertical: 8,
+      paddingHorizontal: 16,
+      borderRadius: 20,
+    },
+    upgradePromptText: {
+      color: colors.white,
+      fontSize: 12,
+      fontWeight: '600',
       textAlign: 'center',
     },
 });

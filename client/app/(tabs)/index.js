@@ -147,7 +147,7 @@ export default function HomeScreen() {
               </View>
               <Pressable onPress={() => !isPro && setShowPaywall(true)}>
                 <View>
-                  <Text style={styles.filterTitle}>Filter by Tag (Premium)</Text>
+                  <Text style={styles.filterTitle}>Filter by Tag (Pro)</Text>
                   <FlatList
                       data={allTags}
                       horizontal

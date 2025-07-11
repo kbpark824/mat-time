@@ -6,3 +6,6 @@ iOS Files/
 CLAUDE.md
 context.md
 todo.md
+.DS_Store
+.env
+*.log

@@ -19,7 +19,7 @@ export default function ProfileScreen() {
 
   const handlePurchaseCompleted = () => {
     setShowPaywall(false);
-    // The user context will update automatically through the hybrid premium check
+    // The user context will update automatically through the hybrid pro check
   };
 
   const handleDeleteAccount = () => {

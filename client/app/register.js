@@ -23,7 +23,7 @@ export default function RegisterScreen() {
       const revenueCatId = await Purchases.getAppUserID();
       await register(email.toLowerCase(), password, revenueCatId);
     } catch (error) {
-        const message = error.response?.data?.msg || 'An unexpected error occurred.';
+        const message = error.response?.data?.error || error.response?.data?.msg || 'An unexpected error occurred.';
         Alert.alert('Registration Failed', message);
         console.log(JSON.stringify(error.response, null, 2));
     }

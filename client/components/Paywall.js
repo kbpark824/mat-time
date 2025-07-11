@@ -49,7 +49,7 @@ export default function Paywall({ onPurchaseCompleted, onClose }) {
       <TouchableOpacity style={styles.closeButton} onPress={onClose}>
         <Ionicons name="close-circle" size={32} color={colors.primaryText} />
       </TouchableOpacity>
-      <Text style={styles.title}>Unlock Premium Features</Text>
+      <Text style={styles.title}>Unlock Pro Features</Text>
       <Text style={styles.subtitle}>Get unlimited access to tagging and filtering.</Text>
       {offerings && offerings.availablePackages.map((pkg) => (
         <TouchableOpacity key={pkg.identifier} style={styles.button} onPress={() => handlePurchase(pkg)}>

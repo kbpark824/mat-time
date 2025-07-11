@@ -7,14 +7,16 @@ import colors from '../constants/colors';
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
 
   const handleLogin = async () => {
     try {
-      await login(email.toLowerCase(), password);
+      await login(email.toLowerCase(), password, rememberMe);
     } catch (error) {
-      Alert.alert('Login Failed', 'Please check your email and password.');
+      const message = error.response?.data?.error || error.response?.data?.msg || 'Please check your email and password.';
+      Alert.alert('Login Failed', message);
     }
   };
 
@@ -45,6 +47,12 @@ export default function LoginScreen() {
             onChangeText={setPassword}
             secureTextEntry
           />
+          <TouchableOpacity style={styles.checkboxContainer} onPress={() => setRememberMe(!rememberMe)}>
+            <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
+              {rememberMe && <Text style={styles.checkmark}>✓</Text>}
+            </View>
+            <Text style={styles.checkboxLabel}>Remember me</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.primaryButton} onPress={handleLogin}>
             <Text style={styles.primaryButtonText}>Login</Text>
           </TouchableOpacity>
@@ -113,5 +121,34 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     color: colors.primaryText,
     fontSize: 16,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 2,
+    borderColor: colors.mutedAccent,
+    borderRadius: 3,
+    marginRight: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.white,
+  },
+  checkboxChecked: {
+    backgroundColor: colors.primaryText,
+    borderColor: colors.primaryText,
+  },
+  checkmark: {
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  checkboxLabel: {
+    fontSize: 16,
+    color: colors.primaryText,
   },
 });

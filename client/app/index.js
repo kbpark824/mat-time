@@ -111,7 +111,7 @@ export default function HomeScreen() {
   const [showPaywall, setShowPaywall] = useState(false);
 
   const handlePurchase = () => {
-    // Update user's premium status in context
+    // Update user's pro status in context
     setUser(prevUser => ({
       ...prevUser,
       isPro: true
@@ -154,7 +154,7 @@ export default function HomeScreen() {
               </View>
               <Pressable onPress={() => !isPro && setShowPaywall(true)}>
                 <View>
-                  <Text style={styles.filterTitle}>Filter by Tag (Premium)</Text>
+                  <Text style={styles.filterTitle}>Filter by Tag (Pro)</Text>
                   <FlatList
                       data={allTags}
                       horizontal

@@ -8,13 +8,15 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
-  const login = async (email, password) => {
+  const login = async (email, password, rememberMe = false) => {
     try {
       const response = await apiClient.post('/auth/login', { email, password });
       const { token } = response.data;
       const decodedToken = jwtDecode(token);
       setUser(decodedToken.user);
-      await authStorage.storeToken(token);
+      if (rememberMe) {
+        await authStorage.storeToken(token);
+      }
     } catch (error) {
       console.error("Login failed", error.response.data);
       throw error;
