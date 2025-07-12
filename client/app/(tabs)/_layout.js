@@ -1,62 +1,32 @@
+import React, { useState } from 'react';
 import { Tabs, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { ActionSheetIOS, Platform, Alert, View } from 'react-native';
+import { Alert, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import colors from '../../constants/colors';
+import AddActionBottomSheet from '../../components/AddActionBottomSheet';
 
 export default function TabLayout() {
   const router = useRouter();
+  const [showBottomSheet, setShowBottomSheet] = useState(false);
 
-  const showActionSheet = () => {
+  const showAddMenu = () => {
     // Haptic feedback for better UX
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-    const options = [
-      'Log New Session',
-      'Log New Seminar', 
-      'Log New Competition',
-      'Cancel'
-    ];
-
-    const destructiveButtonIndex = -1; // No destructive options
-    const cancelButtonIndex = 3;
-
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options,
-          cancelButtonIndex,
-          destructiveButtonIndex,
-          title: 'What would you like to add?',
-          message: 'Choose an option to log your martial arts activity',
-          userInterfaceStyle: 'dark', // Match app theme
-        },
-        (buttonIndex) => {
-          handleActionSheetResponse(buttonIndex);
-        }
-      );
-    } else {
-      // Android fallback using Alert
-      Alert.alert(
-        'What would you like to add?',
-        'Choose an option to log your martial arts activity',
-        [
-          { text: 'Log New Session', onPress: () => handleActionSheetResponse(0) },
-          { text: 'Log New Seminar', onPress: () => handleActionSheetResponse(1) },
-          { text: 'Log New Competition', onPress: () => handleActionSheetResponse(2) },
-          { text: 'Cancel', onPress: () => handleActionSheetResponse(3), style: 'cancel' },
-        ]
-      );
-    }
+    setShowBottomSheet(true);
   };
 
-  const handleActionSheetResponse = (buttonIndex) => {
-    switch (buttonIndex) {
-      case 0:
+  const handleBottomSheetClose = () => {
+    setShowBottomSheet(false);
+  };
+
+  const handleOptionSelect = (option) => {
+    switch (option) {
+      case 'session':
         // Navigate to existing session logging modal
         router.push('/logSession');
         break;
-      case 1:
+      case 'seminar':
         // Placeholder for seminar logging (future feature)
         Alert.alert(
           'Coming Soon',
@@ -64,7 +34,7 @@ export default function TabLayout() {
           [{ text: 'OK' }]
         );
         break;
-      case 2:
+      case 'competition':
         // Placeholder for competition logging (future feature)
         Alert.alert(
           'Coming Soon', 
@@ -72,14 +42,13 @@ export default function TabLayout() {
           [{ text: 'OK' }]
         );
         break;
-      case 3:
       default:
-        // Cancel - do nothing
         break;
     }
   };
 
   return (
+    <>
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.primaryText,
@@ -135,8 +104,8 @@ export default function TabLayout() {
           tabPress: (e) => {
             // Prevent default navigation
             e.preventDefault();
-            // Show action sheet instead
-            showActionSheet();
+            // Show bottom sheet instead
+            showAddMenu();
           },
         }}
       />
@@ -150,5 +119,13 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+    
+    {/* Bottom Sheet */}
+    <AddActionBottomSheet
+      visible={showBottomSheet}
+      onClose={handleBottomSheetClose}
+      onSelectOption={handleOptionSelect}
+    />
+  </>
   );
 }
