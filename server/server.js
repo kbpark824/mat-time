@@ -50,7 +50,7 @@ const corsOptions = {
   credentials: true
 };
 app.use(cors(corsOptions));
-app.use(express.json()); // Body parser for JSON
+app.use(express.json({ limit: '10mb' })); // Body parser for JSON with size limit
 
 // Request logging middleware
 app.use(requestLogger);

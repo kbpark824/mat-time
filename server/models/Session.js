@@ -34,5 +34,8 @@ const SessionSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 SessionSchema.index({ techniqueNotes: 'text', rollingNotes: 'text' });
+SessionSchema.index({ user: 1, date: -1 });
+SessionSchema.index({ user: 1, tags: 1 });
+SessionSchema.index({ user: 1, date: -1, tags: 1 });
 
 module.exports = mongoose.model('Session', SessionSchema);
