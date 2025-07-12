@@ -3,12 +3,16 @@ import { Tabs, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Alert, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { useAuth } from '../../auth/context';
 import colors from '../../constants/colors';
 import AddActionBottomSheet from '../../components/AddActionBottomSheet';
 
 export default function TabLayout() {
   const router = useRouter();
+  const { user } = useAuth();
   const [showBottomSheet, setShowBottomSheet] = useState(false);
+  
+  const isPro = user?.isPro || false;
 
   const showAddMenu = () => {
     // Haptic feedback for better UX
@@ -125,6 +129,7 @@ export default function TabLayout() {
       visible={showBottomSheet}
       onClose={handleBottomSheetClose}
       onSelectOption={handleOptionSelect}
+      isPro={isPro}
     />
   </>
   );

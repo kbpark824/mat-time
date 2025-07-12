@@ -5,7 +5,7 @@ import colors from '../constants/colors';
 
 const { height: screenHeight } = Dimensions.get('window');
 
-export default function AddActionBottomSheet({ visible, onClose, onSelectOption }) {
+export default function AddActionBottomSheet({ visible, onClose, onSelectOption, isPro = false }) {
   const slideAnim = React.useRef(new Animated.Value(screenHeight)).current;
 
   React.useEffect(() => {
@@ -84,32 +84,38 @@ export default function AddActionBottomSheet({ visible, onClose, onSelectOption 
 
             {/* Log New Seminar */}
             <TouchableOpacity 
-              style={styles.optionButton}
+              style={[styles.optionButton, !isPro && styles.proOptionButton]}
               onPress={() => handleOptionPress('seminar')}
               activeOpacity={0.7}
             >
-              <View style={styles.optionIconContainer}>
-                <Ionicons name="school" size={24} color={colors.primaryText} />
+              <View style={[styles.optionIconContainer, !isPro && styles.proIconContainer]}>
+                <Ionicons name="school" size={24} color={!isPro ? colors.mutedAccent : colors.primaryText} />
               </View>
               <View style={styles.optionTextContainer}>
-                <Text style={styles.optionTitle}>Log New Seminar</Text>
-                <Text style={styles.optionSubtitle}>Record seminar or workshop</Text>
+                <View style={styles.optionTitleRow}>
+                  <Text style={[styles.optionTitle, !isPro && styles.proOptionTitle]}>Log New Seminar</Text>
+                  {!isPro && <Text style={styles.proLabel}>PRO</Text>}
+                </View>
+                <Text style={[styles.optionSubtitle, !isPro && styles.proOptionSubtitle]}>Record seminar or workshop</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color={colors.mutedAccent} />
             </TouchableOpacity>
 
             {/* Log New Competition */}
             <TouchableOpacity 
-              style={styles.optionButton}
+              style={[styles.optionButton, !isPro && styles.proOptionButton]}
               onPress={() => handleOptionPress('competition')}
               activeOpacity={0.7}
             >
-              <View style={styles.optionIconContainer}>
-                <Ionicons name="trophy" size={24} color={colors.primaryText} />
+              <View style={[styles.optionIconContainer, !isPro && styles.proIconContainer]}>
+                <Ionicons name="trophy" size={24} color={!isPro ? colors.mutedAccent : colors.primaryText} />
               </View>
               <View style={styles.optionTextContainer}>
-                <Text style={styles.optionTitle}>Log New Competition</Text>
-                <Text style={styles.optionSubtitle}>Record competition or tournament</Text>
+                <View style={styles.optionTitleRow}>
+                  <Text style={[styles.optionTitle, !isPro && styles.proOptionTitle]}>Log New Competition</Text>
+                  {!isPro && <Text style={styles.proLabel}>PRO</Text>}
+                </View>
+                <Text style={[styles.optionSubtitle, !isPro && styles.proOptionSubtitle]}>Record competition or tournament</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color={colors.mutedAccent} />
             </TouchableOpacity>
@@ -185,15 +191,46 @@ const styles = StyleSheet.create({
   optionTextContainer: {
     flex: 1,
   },
+  optionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
   optionTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.primaryText,
-    marginBottom: 2,
+    marginBottom: 0,
   },
   optionSubtitle: {
     fontSize: 14,
     color: colors.mutedAccent,
+  },
+  proOptionButton: {
+    backgroundColor: colors.lightBackground,
+    opacity: 0.6,
+  },
+  proIconContainer: {
+    backgroundColor: colors.lightBackground,
+  },
+  proOptionTitle: {
+    color: colors.mutedAccent,
+  },
+  proOptionSubtitle: {
+    color: colors.mutedAccent,
+    opacity: 0.7,
+  },
+  proLabel: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: colors.white,
+    backgroundColor: colors.mutedAccent,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    marginLeft: 8,
+    textAlign: 'center',
+    overflow: 'hidden',
   },
   cancelButton: {
     backgroundColor: colors.lightBackground,
