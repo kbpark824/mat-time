@@ -131,11 +131,6 @@ export default function HomeScreen() {
             <Dashboard stats={stats} />
 
             <View style={styles.listHeader}>
-              <View style={styles.headerButtons}>
-                <TouchableOpacity style={styles.primaryButton} onPress={() => router.push('/logSession')}>
-                  <Text style={styles.primaryButtonText}>Log New Session</Text>
-                </TouchableOpacity>
-              </View>
               <View style={styles.searchContainer}>
                   <TextInput
                     style={styles.searchInput}
@@ -185,19 +180,6 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.primaryBackground },
-    headerButtons: { flexDirection: 'row', justifyContent: 'flex-start', marginBottom: 15, paddingHorizontal: 0 },
-    primaryButton: {
-      backgroundColor: colors.primaryText,
-      paddingVertical: 10,
-      paddingHorizontal: 20,
-      borderRadius: 8,
-      alignItems: 'center',
-    },
-    primaryButtonText: {
-      color: colors.white,
-      fontSize: 16,
-      fontWeight: 'bold',
-    },
     itemContainer: { 
         padding: 15, 
         backgroundColor: colors.white, 
