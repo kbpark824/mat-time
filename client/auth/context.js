@@ -8,15 +8,14 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
-  const login = async (email, password, rememberMe = false) => {
+  const login = async (email, password) => {
     try {
       const response = await apiClient.post('/auth/login', { email, password });
       const { token } = response.data;
       const decodedToken = jwtDecode(token);
       setUser(decodedToken.user);
-      if (rememberMe) {
-        await authStorage.storeToken(token);
-      }
+      // Always store token for persistent login
+      await authStorage.storeToken(token);
     } catch (error) {
       console.error("Login failed", error.response.data);
       throw error;

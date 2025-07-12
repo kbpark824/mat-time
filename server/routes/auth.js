@@ -59,7 +59,7 @@ router.post('/register', asyncHandler(async (req, res, next) => {
   user = new User({ email, password, revenueCatId });
   await user.save();
 
-  const payload = { user: { id: user.id, isPro: user.isPro } };
+  const payload = { user: { id: user.id, email: user.email, createdAt: user.createdAt, isPro: user.isPro } };
   
   const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '5h' });
   
@@ -70,6 +70,7 @@ router.post('/register', asyncHandler(async (req, res, next) => {
       user: {
         id: user.id,
         email: user.email,
+        createdAt: user.createdAt,
         isPro: user.isPro
       }
     }
@@ -107,7 +108,7 @@ router.post('/login', asyncHandler(async (req, res, next) => {
     });
   }
 
-  const payload = { user: { id: user.id, isPro: user.isPro } };
+  const payload = { user: { id: user.id, email: user.email, createdAt: user.createdAt, isPro: user.isPro } };
   const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '5h' });
   
   res.json({ 
@@ -117,6 +118,7 @@ router.post('/login', asyncHandler(async (req, res, next) => {
       user: {
         id: user.id,
         email: user.email,
+        createdAt: user.createdAt,
         isPro: user.isPro
       }
     }
