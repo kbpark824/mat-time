@@ -73,6 +73,10 @@ export default function SeminarLogScreen() {
     );
   };
 
+  const handleCancel = () => {
+    router.back();
+  };
+
 
   // Additional fields specific to seminars
   const additionalFields = (
@@ -102,6 +106,7 @@ export default function SeminarLogScreen() {
       additionalFields={additionalFields}
       onSave={handleSaveOrUpdate}
       onDelete={handleDelete}
+      onCancel={handleCancel}
       isEditing={isEditing}
       saveButtonText={isEditing ? "Save Changes" : "Save Seminar"}
       deleteButtonText="Delete Seminar"

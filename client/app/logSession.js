@@ -75,6 +75,10 @@ export default function SessionLogScreen() {
     );
   };
 
+  const handleCancel = () => {
+    router.back();
+  };
+
   // Additional fields specific to sessions
   const additionalFields = (
     <>
@@ -114,6 +118,7 @@ export default function SessionLogScreen() {
       additionalFields={additionalFields}
       onSave={handleSaveOrUpdate}
       onDelete={handleDelete}
+      onCancel={handleCancel}
       isEditing={isEditing}
       saveButtonText={isEditing ? "Save Changes" : "Save Session"}
       deleteButtonText="Delete Session"

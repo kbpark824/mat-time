@@ -25,6 +25,7 @@ export default function LogFormLayout({
   // Actions
   onSave,
   onDelete,
+  onCancel,
   isEditing,
   saveButtonText,
   deleteButtonText = "Delete",
@@ -124,6 +125,10 @@ export default function LogFormLayout({
       <View style={styles.spacer} />
       <TouchableOpacity style={styles.primaryButton} onPress={onSave}>
         <Text style={styles.primaryButtonText}>{saveButtonText}</Text>
+      </TouchableOpacity>
+      <View style={styles.buttonSpacer} />
+      <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
+        <Text style={styles.cancelButtonText}>Cancel</Text>
       </TouchableOpacity>
       <View style={styles.spacer} />
       
@@ -248,5 +253,19 @@ const styles = StyleSheet.create({
       fontSize: 14,
       color: colors.mutedAccent,
       textAlign: 'center',
+    },
+    buttonSpacer: { 
+      height: 12 
+    },
+    cancelButton: {
+      backgroundColor: '#DFDFDF',
+      paddingVertical: 12,
+      borderRadius: 8,
+      alignItems: 'center',
+    },
+    cancelButtonText: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors.primaryText,
     },
 });
