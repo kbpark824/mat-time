@@ -142,7 +142,10 @@ export default function HomeScreen() {
               </View>
               <Pressable onPress={() => !isPro && setShowPaywall(true)}>
                 <View>
-                  <Text style={styles.filterTitle}>Filter by Tag (Pro)</Text>
+                  <View style={styles.filterTitleRow}>
+                    <Text style={styles.filterTitle}>Filter by Tag</Text>
+                    {!isPro && <Text style={styles.proLabel}>PRO</Text>}
+                  </View>
                   <FlatList
                       data={allTags}
                       horizontal
@@ -229,12 +232,28 @@ const styles = StyleSheet.create({
       backgroundColor: colors.white,
       color: colors.primaryText,
     },
+    filterTitleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 5,
+    },
     filterTitle: {
       fontSize: 16,
       fontWeight: '600',
       marginHorizontal: 0,
-      marginBottom: 5,
       color: colors.primaryText,
+    },
+    proLabel: {
+      fontSize: 10,
+      fontWeight: 'bold',
+      color: colors.white,
+      backgroundColor: colors.mutedAccent,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 8,
+      marginLeft: 8,
+      textAlign: 'center',
+      overflow: 'hidden',
     },
     tagSelected: {
       backgroundColor: colors.primaryText,

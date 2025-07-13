@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { Tabs, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Alert, View } from 'react-native';
+import { Alert, View, Modal } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../auth/context';
 import colors from '../../constants/colors';
 import AddActionBottomSheet from '../../components/AddActionBottomSheet';
+import Paywall from '../../components/Paywall';
 
 export default function TabLayout() {
   const router = useRouter();
   const { user } = useAuth();
   const [showBottomSheet, setShowBottomSheet] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
   
   const isPro = user?.isPro || false;
 
@@ -31,12 +33,13 @@ export default function TabLayout() {
         router.push('/logSession');
         break;
       case 'seminar':
-        // Placeholder for seminar logging (future feature)
-        Alert.alert(
-          'Coming Soon',
-          'Seminar logging will be available in a future update!',
-          [{ text: 'OK' }]
-        );
+        if (isPro) {
+          // Navigate to seminar logging page for pro users
+          router.push('/logSeminar');
+        } else {
+          // Show subscription prompt for non-pro users
+          setShowPaywall(true);
+        }
         break;
       case 'competition':
         // Placeholder for competition logging (future feature)
@@ -49,6 +52,15 @@ export default function TabLayout() {
       default:
         break;
     }
+  };
+
+  const handlePaywallClose = () => {
+    setShowPaywall(false);
+  };
+
+  const handlePurchaseCompleted = () => {
+    setShowPaywall(false);
+    // User can now access pro features
   };
 
   return (
@@ -131,6 +143,18 @@ export default function TabLayout() {
       onSelectOption={handleOptionSelect}
       isPro={isPro}
     />
+
+    {/* Paywall Modal */}
+    <Modal
+      visible={showPaywall}
+      animationType="slide"
+      presentationStyle="pageSheet"
+    >
+      <Paywall
+        onPurchaseCompleted={handlePurchaseCompleted}
+        onClose={handlePaywallClose}
+      />
+    </Modal>
   </>
   );
 }

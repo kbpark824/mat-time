@@ -88,6 +88,10 @@ function Layout() {
         name="logSession"
         options={{ headerShown: true, title: 'Log a Session', presentation: 'modal' }}
       />
+      <Stack.Screen
+        name="logSeminar"
+        options={{ headerShown: true, title: 'Log a Seminar', presentation: 'modal' }}
+      />
     </Stack>
   );
 }
