@@ -26,11 +26,11 @@ export default function Dashboard({ stats }) {
         <StatCard title="Hours This Month" value={stats?.hoursThisMonth.toFixed(1) || '0.0'} />
       </View>
       <View style={styles.chartContainer}>
-        <Text style={styles.chartTitle}>Training Breakdown</Text>
+        <Text style={styles.chartTitle}>Activity Breakdown</Text>
         <PieChart
           data={chartData}
           width={screenWidth - 40} // Adjust for padding
-          height={220}
+          height={240} // Increased height for more categories
           chartConfig={{
             color: (opacity = 1) => `rgba(74, 74, 74, ${opacity})`,
           }}
@@ -38,6 +38,8 @@ export default function Dashboard({ stats }) {
           backgroundColor="transparent"
           paddingLeft="15"
           absolute // Show absolute numbers instead of percentages
+          hasLegend={true}
+          legendOffset={20} // Add some space for legend
         />
       </View>
     </View>

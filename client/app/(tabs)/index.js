@@ -43,12 +43,14 @@ export default function HomeScreen() {
         params.append('tags', selectedTags.join(','));
       }
       
-      // Fetch all three types of activities in parallel
-      const [sessionsResponse, seminarsResponse, competitionsResponse] = await Promise.all([
-        apiClient.get(`/sessions?${params.toString()}`),
-        apiClient.get(`/seminars?${params.toString()}`),
-        apiClient.get(`/competitions?${params.toString()}`)
-      ]);
+      // Fetch all three types of activities in parallel with error handling
+      const requests = [
+        apiClient.get(`/sessions?${params.toString()}`).catch(() => ({ data: [] })),
+        apiClient.get(`/seminars?${params.toString()}`).catch(() => ({ data: [] })),
+        apiClient.get(`/competitions?${params.toString()}`).catch(() => ({ data: [] }))
+      ];
+      
+      const [sessionsResponse, seminarsResponse, competitionsResponse] = await Promise.all(requests);
 
       // Add activity type to each item and combine
       const sessions = sessionsResponse.data.map(item => ({ ...item, activityType: 'session' }));
