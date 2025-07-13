@@ -10,7 +10,7 @@ import Paywall from '../../components/Paywall';
 export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
-  const [sessions, setSessions] = useState([]);
+  const [allActivities, setAllActivities] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const isPro = user?.isPro || false;
@@ -32,7 +32,7 @@ export default function HomeScreen() {
     );
   };
 
-  const fetchSessions = async () => {
+  const fetchAllActivities = async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -42,10 +42,26 @@ export default function HomeScreen() {
       if (selectedTags.length > 0 && isPro) {
         params.append('tags', selectedTags.join(','));
       }
-      const response = await apiClient.get(`/sessions?${params.toString()}`);
-      setSessions(response.data);
+      
+      // Fetch all three types of activities in parallel
+      const [sessionsResponse, seminarsResponse, competitionsResponse] = await Promise.all([
+        apiClient.get(`/sessions?${params.toString()}`),
+        apiClient.get(`/seminars?${params.toString()}`),
+        apiClient.get(`/competitions?${params.toString()}`)
+      ]);
+
+      // Add activity type to each item and combine
+      const sessions = sessionsResponse.data.map(item => ({ ...item, activityType: 'session' }));
+      const seminars = seminarsResponse.data.map(item => ({ ...item, activityType: 'seminar' }));
+      const competitions = competitionsResponse.data.map(item => ({ ...item, activityType: 'competition' }));
+
+      // Combine and sort by date (newest first)
+      const combined = [...sessions, ...seminars, ...competitions];
+      combined.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      setAllActivities(combined);
     } catch (error) {
-      console.error('Failed to fetch sessions', error);
+      console.error('Failed to fetch activities', error);
     } finally {
       setLoading(false);
     }
@@ -73,41 +89,88 @@ export default function HomeScreen() {
     React.useCallback(() => {
       fetchTags();
       fetchStats();
-      fetchSessions();
+      fetchAllActivities();
     }, [])
   );
 
   useEffect(() => {
     const handler = setTimeout(() => {
-        fetchSessions();
+        fetchAllActivities();
     }, 500);
 
     return () => clearTimeout(handler);
   }, [searchQuery, selectedTags, isPro]);
 
-  const renderItem = ({ item }) => (
-    <Pressable onPress={() => router.push({ 
-        pathname: '/logSession', 
-        params: { id: item._id, session: JSON.stringify(item) } 
-    })}>
-        <View style={styles.itemContainer}>
-            <View style={styles.itemHeader}>
-                <Text style={styles.itemTitle}>{new Date(item.date).toLocaleDateString()}</Text>
-                <Text style={styles.itemSubtitle}>{item.type} - {item.duration}h</Text>
-            </View>
-            <Text style={styles.notes} numberOfLines={2}>
-              {item.techniqueNotes || "No technique notes."}
-            </Text>
-            <View style={styles.tagRow}>
-                {item.tags.map(tag => (
-                    <View key={tag._id} style={styles.tag}>
-                        <Text style={styles.tagText}>{tag.name}</Text>
+  const getActivityDetails = (item) => {
+    switch (item.activityType) {
+      case 'session':
+        return {
+          pathname: '/logSession',
+          params: { id: item._id, session: JSON.stringify(item) },
+          subtitle: `${item.type} - ${item.duration}h`,
+          notes: item.techniqueNotes || "No technique notes.",
+          typeLabel: 'Training Session'
+        };
+      case 'seminar':
+        return {
+          pathname: '/logSeminar',
+          params: { id: item._id, seminar: JSON.stringify(item) },
+          subtitle: `${item.type} - ${item.professorName}`,
+          notes: item.techniqueNotes || "No technique notes.",
+          typeLabel: 'Seminar'
+        };
+      case 'competition':
+        return {
+          pathname: '/logCompetition',
+          params: { id: item._id, competition: JSON.stringify(item) },
+          subtitle: `${item.type} - ${item.organization}`,
+          notes: item.generalNotes || "No notes.",
+          typeLabel: 'Competition'
+        };
+      default:
+        return {
+          pathname: '/logSession',
+          params: { id: item._id, session: JSON.stringify(item) },
+          subtitle: item.type,
+          notes: "No notes.",
+          typeLabel: 'Activity'
+        };
+    }
+  };
+
+  const renderItem = ({ item }) => {
+    const details = getActivityDetails(item);
+    
+    return (
+      <Pressable onPress={() => router.push(details)}>
+          <View style={styles.itemContainer}>
+              <View style={styles.itemHeader}>
+                  <View style={styles.itemTitleRow}>
+                    <Text style={styles.itemTitle}>{new Date(item.date).toLocaleDateString()}</Text>
+                    <View style={[styles.activityTypeLabel, 
+                      item.activityType === 'session' ? styles.sessionTypeLabel :
+                      item.activityType === 'seminar' ? styles.seminarTypeLabel :
+                      styles.competitionTypeLabel
+                    ]}>
+                      <Text style={styles.activityTypeLabelText}>{details.typeLabel}</Text>
                     </View>
-                ))}
-            </View>
-        </View>
-    </Pressable>
-  );
+                  </View>
+                  <Text style={styles.itemSubtitle}>{details.subtitle}</Text>
+              </View>
+              <Text style={styles.notes} numberOfLines={2}>
+                {details.notes}
+              </Text>
+              <View style={styles.tagRow}>
+                  {item.tags.map(tag => (
+                      <View key={tag._id} style={styles.tag}>
+                          <Text style={styles.tagText}>{tag.name}</Text>
+                      </View>
+                  ))}
+              </View>
+          </View>
+      </Pressable>
+    );
+  };
 
   const [showPaywall, setShowPaywall] = useState(false);
 
@@ -123,7 +186,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <FlatList
-        data={sessions}
+        data={allActivities}
         keyExtractor={(item) => item._id}
         renderItem={renderItem}
         keyboardShouldPersistTaps="handled"
@@ -135,7 +198,7 @@ export default function HomeScreen() {
               <View style={styles.searchContainer}>
                   <TextInput
                     style={styles.searchInput}
-                    placeholder="Search notes..."
+                    placeholder="Search activities..."
                     placeholderTextColor={colors.mutedAccent}
                     value={searchQuery}
                     onChangeText={setSearchQuery}
@@ -166,13 +229,13 @@ export default function HomeScreen() {
                   />
                 </View>
               </Pressable>
-              <Text style={styles.sessionsTitle}>Recent Sessions</Text>
+              <Text style={styles.sessionsTitle}>Recent Activities</Text>
             </View>
           </>
         }
         ListEmptyComponent={
           <View>
-            <Text style={styles.emptyText}>No sessions found.</Text>
+            <Text style={styles.emptyText}>No activities found.</Text>
           </View>
         }
         style={{ backgroundColor: colors.primaryBackground }} 
@@ -295,5 +358,32 @@ const styles = StyleSheet.create({
     disabledTag: {
       backgroundColor: colors.lightBackground,
       opacity: 0.5,
+    },
+    itemTitleRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 4,
+    },
+    activityTypeLabel: {
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 10,
+      minWidth: 60,
+      alignItems: 'center',
+    },
+    sessionTypeLabel: {
+      backgroundColor: '#E3F2FD', // Light blue
+    },
+    seminarTypeLabel: {
+      backgroundColor: '#E8F5E8', // Light green
+    },
+    competitionTypeLabel: {
+      backgroundColor: '#FFF3E0', // Light orange
+    },
+    activityTypeLabelText: {
+      fontSize: 10,
+      fontWeight: 'bold',
+      color: colors.primaryText,
     },
 });
