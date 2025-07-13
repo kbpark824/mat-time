@@ -87,6 +87,13 @@ export default function ProfileScreen() {
           )}
         </View>
 
+        {/* Account Actions */}
+        <View style={styles.section}>
+          <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+            <Text style={styles.logoutButtonText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Legal Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Legal</Text>
@@ -104,10 +111,15 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Account Actions */}
+        {/* Support Section */}
         <View style={styles.section}>
-          <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-            <Text style={styles.logoutButtonText}>Logout</Text>
+          <Text style={styles.sectionTitle}>Support</Text>
+          <Text style={styles.supportText}>Need help? Please contact us at </Text>
+          <TouchableOpacity 
+            style={styles.linkButton}
+            onPress={() => Linking.openURL('mailto:support@mat-time.io')}
+          >
+            <Text style={styles.linkText}>support@mat-time.io</Text>
           </TouchableOpacity>
         </View>
 
@@ -230,6 +242,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.primaryText,
     textDecorationLine: 'underline',
+  },
+  supportText: {
+    fontSize: 16,
+    color: colors.primaryText,
+    marginBottom: 8,
   },
   logoutButton: {
     backgroundColor: 'transparent',

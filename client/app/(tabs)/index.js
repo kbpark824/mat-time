@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, Pressable, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, Pressable, TextInput, TouchableOpacity, Modal } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useAuth } from '../../auth/context';
 import apiClient from '../../api/client';
@@ -115,9 +115,9 @@ export default function HomeScreen() {
     setShowPaywall(false);
   };
 
-  if (showPaywall) {
-    return <Paywall onPurchaseCompleted={handlePurchase} onClose={() => setShowPaywall(false)} />;
-  }
+  const handlePaywallClose = () => {
+    setShowPaywall(false);
+  };
 
   return (
     <View style={styles.container}>
@@ -177,6 +177,18 @@ export default function HomeScreen() {
         style={{ backgroundColor: colors.primaryBackground }} 
       />
       {loading && <ActivityIndicator size="large" color={colors.primaryText} style={StyleSheet.absoluteFill} />}
+      
+      {/* Paywall Modal */}
+      <Modal
+        visible={showPaywall}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <Paywall
+          onPurchaseCompleted={handlePurchase}
+          onClose={handlePaywallClose}
+        />
+      </Modal>
     </View>
   );
 }
