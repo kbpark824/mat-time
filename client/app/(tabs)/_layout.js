@@ -42,12 +42,13 @@ export default function TabLayout() {
         }
         break;
       case 'competition':
-        // Placeholder for competition logging (future feature)
-        Alert.alert(
-          'Coming Soon', 
-          'Competition logging will be available in a future update!',
-          [{ text: 'OK' }]
-        );
+        if (isPro) {
+          // Navigate to competition logging page for pro users
+          router.push('/logCompetition');
+        } else {
+          // Show subscription prompt for non-pro users
+          setShowPaywall(true);
+        }
         break;
       default:
         break;

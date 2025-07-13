@@ -85,6 +85,7 @@ app.use('/api/health', require('./routes/health'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/sessions', require('./routes/sessions'));
 app.use('/api/seminars', require('./routes/seminars'));
+app.use('/api/competitions', require('./routes/competitions'));
 app.use('/api/tags', require('./routes/tags'));
 app.use('/api/stats', require('./routes/stats'));
 app.use('/api/revenuecat', require('./routes/revenuecat'));
