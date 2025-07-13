@@ -149,6 +149,7 @@ export default function TabLayout() {
       visible={showPaywall}
       animationType="slide"
       presentationStyle="pageSheet"
+      onRequestClose={handlePaywallClose}
     >
       <Paywall
         onPurchaseCompleted={handlePurchaseCompleted}

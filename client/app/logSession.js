@@ -79,7 +79,7 @@ export default function SessionLogScreen() {
     router.back();
   };
 
-  // Additional fields specific to sessions
+  // Additional fields specific to sessions (just duration now)
   const additionalFields = (
     <>
       <Text style={styles.label}>Duration (in hours)</Text>
@@ -89,16 +89,6 @@ export default function SessionLogScreen() {
         onChangeText={setDuration} 
         keyboardType="numeric" 
         placeholder="e.g., 1.5 for 90 minutes" 
-        placeholderTextColor={colors.mutedAccent} 
-      />
-      
-      <Text style={styles.label}>Rolling / Sparring Notes</Text>
-      <TextInput 
-        style={[styles.input, styles.textArea]} 
-        multiline 
-        value={rollingNotes} 
-        onChangeText={setRollingNotes} 
-        placeholder="How did rolling go?" 
         placeholderTextColor={colors.mutedAccent} 
       />
     </>
@@ -115,6 +105,8 @@ export default function SessionLogScreen() {
       setTechniqueNotes={setTechniqueNotes}
       tags={tags}
       setTags={setTags}
+      rollingNotes={rollingNotes}
+      setRollingNotes={setRollingNotes}
       additionalFields={additionalFields}
       onSave={handleSaveOrUpdate}
       onDelete={handleDelete}

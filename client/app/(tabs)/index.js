@@ -73,6 +73,7 @@ export default function HomeScreen() {
     React.useCallback(() => {
       fetchTags();
       fetchStats();
+      fetchSessions();
     }, [])
   );
 
@@ -183,6 +184,7 @@ export default function HomeScreen() {
         visible={showPaywall}
         animationType="slide"
         presentationStyle="pageSheet"
+        onRequestClose={handlePaywallClose}
       >
         <Paywall
           onPurchaseCompleted={handlePurchase}

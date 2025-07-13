@@ -19,6 +19,10 @@ export default function LogFormLayout({
   tags,
   setTags,
   
+  // Rolling notes (optional - only for sessions)
+  rollingNotes,
+  setRollingNotes,
+  
   // Additional fields (passed as render props)
   additionalFields,
   
@@ -58,13 +62,7 @@ export default function LogFormLayout({
   }
 
   return (
-    <KeyboardAwareScrollView
-      style={styles.container}
-      resetScrollToCoords={{ x: 0, y: 0 }}
-      contentContainerStyle={{ flexGrow: 1 }}
-      scrollEnabled={true}
-      keyboardShouldPersistTaps="handled"
-    >
+    <KeyboardAwareScrollView style={styles.container}>
       <Text style={styles.label}>Date</Text>
       <Pressable onPress={() => setShowDatePicker(true)}>
         <View style={styles.input}>
@@ -112,13 +110,28 @@ export default function LogFormLayout({
         <TagInput tags={tags} onTagsChange={setTags} />
       ) : (
         <>
-          <View style={styles.tagsTitleRow}>
+          <TouchableOpacity style={styles.tagsTitleRow} onPress={handleUpgrade}>
             <Text style={styles.label}>Tags</Text>
             <Text style={styles.proLabel}>PRO</Text>
-          </View>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.compactProFeatureContainer} onPress={handleUpgrade}>
             <Text style={styles.compactProFeatureText}>Tap to upgrade to Pro for tagging</Text>
           </TouchableOpacity>
+        </>
+      )}
+
+      {/* Rolling Notes - only show if rolling notes props are provided */}
+      {rollingNotes !== undefined && setRollingNotes && (
+        <>
+          <Text style={styles.label}>Rolling / Sparring Notes</Text>
+          <TextInput 
+            style={[styles.input, styles.textArea]} 
+            multiline 
+            value={rollingNotes} 
+            onChangeText={setRollingNotes} 
+            placeholder="How did rolling go?" 
+            placeholderTextColor={colors.mutedAccent} 
+          />
         </>
       )}
 
