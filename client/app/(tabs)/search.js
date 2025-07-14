@@ -3,6 +3,7 @@ import { View, Text, FlatList, StyleSheet, ActivityIndicator, TextInput, Touchab
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useAuth } from '../../auth/context';
 import apiClient from '../../api/client';
+import SearchableTagDropdown from '../../components/SearchableTagDropdown';
 import colors from '../../constants/colors';
 
 export default function SearchScreen() {
@@ -15,12 +16,13 @@ export default function SearchScreen() {
   const [allTags, setAllTags] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
 
-  const toggleTag = (tagName) => {
-    setSelectedTags(prev => 
-      prev.includes(tagName) 
-        ? prev.filter(t => t !== tagName) 
-        : [...prev, tagName]
-    );
+  const handleTagsChange = (newSelectedTags) => {
+    setSelectedTags(newSelectedTags);
+  };
+
+  const handleTagDeleted = (deletedTagId) => {
+    // Remove the deleted tag from the allTags list
+    setAllTags(prevTags => prevTags.filter(tag => tag._id !== deletedTagId));
   };
 
   const fetchAllActivities = async () => {
@@ -177,28 +179,13 @@ export default function SearchScreen() {
               />
             </View>
             
-            <View style={styles.filterSection}>
-              <View style={styles.filterTitleRow}>
-                <Text style={styles.filterTitle}>Filter by Tag</Text>
-              </View>
-              <FlatList
-                data={allTags}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                keyExtractor={(item) => item._id}
-                renderItem={({ item }) => {
-                  const isSelected = selectedTags.includes(item.name);
-                  return (
-                    <TouchableOpacity onPress={() => toggleTag(item.name)}>
-                      <View style={[styles.tag, isSelected && styles.tagSelected]}>
-                        <Text style={[styles.tagText, isSelected && styles.tagTextSelected]}>{item.name}</Text>
-                      </View>
-                    </TouchableOpacity>
-                  );
-                }}
-                ListEmptyComponent={<Text style={styles.noTagsText}>No tags created yet.</Text>}
-              />
-            </View>
+            <SearchableTagDropdown
+              allTags={allTags}
+              selectedTags={selectedTags}
+              onTagsChange={handleTagsChange}
+              onTagDeleted={handleTagDeleted}
+              placeholder="Filter by tags..."
+            />
             
             <Text style={styles.activitiesTitle}>All Activities</Text>
           </View>
@@ -248,43 +235,6 @@ const styles = StyleSheet.create({
     color: colors.primaryText,
     borderWidth: 1,
     borderColor: colors.mutedAccent,
-  },
-  filterSection: {
-    marginBottom: 20,
-  },
-  filterTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  filterTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.primaryText,
-  },
-  tag: {
-    backgroundColor: colors.mutedAccent,
-    borderRadius: 15,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    marginRight: 8,
-    marginVertical: 2,
-  },
-  tagSelected: {
-    backgroundColor: colors.accent,
-  },
-  tagText: {
-    color: colors.white,
-    fontSize: 14,
-  },
-  tagTextSelected: {
-    color: colors.white,
-    fontWeight: '600',
-  },
-  noTagsText: {
-    fontSize: 14,
-    color: colors.mutedAccent,
-    fontStyle: 'italic',
   },
   activitiesTitle: {
     fontSize: 18,

@@ -1,16 +1,18 @@
-import React, { useState } from 'react';
-import { TextInput, StyleSheet, Text, Alert } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useState, useRef, useImperativeHandle } from 'react';
+import { TextInput, StyleSheet, Text, Alert, View, TouchableOpacity, ScrollView, Modal } from 'react-native';
+import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import apiClient from '../api/client';
 import LogFormLayout from '../components/LogFormLayout';
 import colors from '../constants/colors';
 
 export default function SessionLogScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const params = useLocalSearchParams();
-  const sessionToEdit = params.id ? (() => {
+  const screenRef = useRef();
+  const sessionToEdit = params.id && params.data ? (() => {
     try {
-      return JSON.parse(params.session);
+      return JSON.parse(params.data);
     } catch (e) {
       console.error('Invalid session data:', e);
       return null;
@@ -18,7 +20,8 @@ export default function SessionLogScreen() {
   })() : null;
 
   const [date, setDate] = useState(sessionToEdit ? new Date(sessionToEdit.date) : new Date());
-  const [duration, setDuration] = useState(sessionToEdit ? sessionToEdit.duration.toString() : '1.5');
+  const [duration, setDuration] = useState(sessionToEdit ? sessionToEdit.duration : 1.5);
+  const [showDurationPicker, setShowDurationPicker] = useState(false);
   const [type, setType] = useState(sessionToEdit ? sessionToEdit.type : 'Gi');
   const [techniqueNotes, setTechniqueNotes] = useState(sessionToEdit ? sessionToEdit.techniqueNotes : '');
   const [rollingNotes, setRollingNotes] = useState(sessionToEdit ? sessionToEdit.rollingNotes : '');
@@ -29,14 +32,14 @@ export default function SessionLogScreen() {
 
 
   const handleSaveOrUpdate = async () => {
-    if (!duration || isNaN(parseFloat(duration))) {
-      Alert.alert('Invalid Input', 'Please enter a valid duration in hours.');
+    if (!duration || duration <= 0) {
+      Alert.alert('Invalid Input', 'Please select a valid duration.');
       return;
     }
 
     const sessionData = {
       date,
-      duration: parseFloat(duration),
+      duration: duration,
       type,
       techniqueNotes,
       rollingNotes,
@@ -75,22 +78,97 @@ export default function SessionLogScreen() {
     );
   };
 
-  const handleCancel = () => {
-    router.back();
+  // Expose handleSave to the header button via ref
+  useImperativeHandle(screenRef, () => ({
+    handleSave: handleSaveOrUpdate
+  }));
+
+  // Set the screen ref in navigation params so header can access it
+  React.useEffect(() => {
+    navigation.setParams({ screenRef });
+  }, [navigation]);
+
+  // Generate duration options (15 min increments from 15 min to 4 hours)
+  const generateDurationOptions = () => {
+    const options = [];
+    for (let i = 0.25; i <= 4; i += 0.25) {
+      const hours = Math.floor(i);
+      const minutes = (i % 1) * 60;
+      let label;
+      
+      if (hours === 0) {
+        label = `${minutes} min`;
+      } else if (minutes === 0) {
+        label = `${hours} ${hours === 1 ? 'hour' : 'hours'}`;
+      } else {
+        label = `${hours}h ${minutes}m`;
+      }
+      
+      options.push({ value: i, label });
+    }
+    return options;
   };
 
-  // Additional fields specific to sessions (just duration now)
+  const durationOptions = generateDurationOptions();
+  const selectedDurationLabel = durationOptions.find(opt => opt.value === duration)?.label || `${duration} hours`;
+
+  const onChangeDuration = (event, selectedDuration) => {
+    setShowDurationPicker(false);
+    if (selectedDuration !== undefined) {
+      setDuration(selectedDuration);
+    }
+  };
+
+  // Additional fields specific to sessions (duration picker)
   const additionalFields = (
     <>
-      <Text style={styles.label}>Duration (in hours)</Text>
-      <TextInput 
-        style={styles.input} 
-        value={duration} 
-        onChangeText={setDuration} 
-        keyboardType="numeric" 
-        placeholder="e.g., 1.5 for 90 minutes" 
-        placeholderTextColor={colors.mutedAccent} 
-      />
+      <Text style={styles.label}>Duration</Text>
+      <TouchableOpacity onPress={() => setShowDurationPicker(true)} style={styles.input}>
+        <Text style={styles.durationPickerText}>{selectedDurationLabel}</Text>
+      </TouchableOpacity>
+
+      <Modal
+        visible={showDurationPicker}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowDurationPicker(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <TouchableOpacity onPress={() => setShowDurationPicker(false)}>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <Text style={styles.modalTitle}>Select Duration</Text>
+              <TouchableOpacity onPress={() => setShowDurationPicker(false)}>
+                <Text style={styles.doneButtonText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.optionsList}>
+              {durationOptions.map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    styles.optionItem,
+                    duration === option.value && styles.selectedOption
+                  ]}
+                  onPress={() => setDuration(option.value)}
+                >
+                  <Text style={[
+                    styles.optionText,
+                    duration === option.value && styles.selectedOptionText
+                  ]}>
+                    {option.label}
+                  </Text>
+                  {duration === option.value && (
+                    <Text style={styles.checkmark}>✓</Text>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 
@@ -108,11 +186,8 @@ export default function SessionLogScreen() {
       rollingNotes={rollingNotes}
       setRollingNotes={setRollingNotes}
       additionalFields={additionalFields}
-      onSave={handleSaveOrUpdate}
       onDelete={handleDelete}
-      onCancel={handleCancel}
       isEditing={isEditing}
-      saveButtonText={isEditing ? "Save Changes" : "Save Session"}
       deleteButtonText="Delete Session"
       showPaywall={showPaywall}
       setShowPaywall={setShowPaywall}
@@ -137,6 +212,74 @@ const styles = StyleSheet.create({
       backgroundColor: colors.white,
       justifyContent: 'center',
       color: colors.primaryText,
+    },
+    durationPickerText: {
+      fontSize: 16,
+      color: colors.primaryText,
+      paddingVertical: 8,
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'flex-end',
+    },
+    modalContent: {
+      backgroundColor: colors.primaryBackground,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      height: '60%',
+      minHeight: 400,
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      paddingVertical: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.mutedAccent,
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: colors.primaryText,
+    },
+    cancelButtonText: {
+      fontSize: 16,
+      color: colors.mutedAccent,
+    },
+    doneButtonText: {
+      fontSize: 16,
+      color: colors.accent,
+      fontWeight: '600',
+    },
+    optionsList: {
+      flex: 1,
+      paddingVertical: 8,
+    },
+    optionItem: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      paddingVertical: 16,
+      backgroundColor: colors.primaryBackground,
+    },
+    selectedOption: {
+      backgroundColor: colors.accent + '20',
+    },
+    optionText: {
+      fontSize: 16,
+      color: colors.primaryText,
+    },
+    selectedOptionText: {
+      color: colors.accent,
+      fontWeight: '600',
+    },
+    checkmark: {
+      fontSize: 16,
+      color: colors.accent,
+      fontWeight: 'bold',
     },
     textArea: { 
       height: 100, 

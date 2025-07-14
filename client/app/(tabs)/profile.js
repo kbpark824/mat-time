@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, TextInput, Link
 import { useAuth } from '../../auth/context';
 import colors from '../../constants/colors';
 import Paywall from '../../components/Paywall';
-import TagManager from '../../components/TagManager';
 import apiClient from '../../api/client';
 
 export default function ProfileScreen() {
@@ -78,9 +77,12 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Subscription</Text>
           {isPro ? (
-            <TouchableOpacity style={[styles.button, styles.proButton]} disabled>
-              <Text style={styles.proButtonText}>✓ Pro Member</Text>
-            </TouchableOpacity>
+            <View style={styles.proBadgeContainer}>
+              <View style={styles.proBadge}>
+                <Text style={styles.proBadgeText}>⭐ PRO MEMBER</Text>
+              </View>
+              <Text style={styles.proDescription}>You have access to all premium features</Text>
+            </View>
           ) : (
             <TouchableOpacity style={styles.button} onPress={handleUpgradePress}>
               <Text style={styles.buttonText}>Upgrade to Pro</Text>
@@ -124,10 +126,6 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Tag Management */}
-        <View style={styles.section}>
-          <TagManager />
-        </View>
 
         {/* Danger Zone */}
         <View style={styles.dangerZone}>
@@ -231,15 +229,41 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  proButton: {
-    backgroundColor: colors.lightBackground,
+  proBadgeContainer: {
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.mutedAccent,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
   },
-  proButtonText: {
-    color: colors.primaryText,
-    fontSize: 16,
+  proBadge: {
+    backgroundColor: '#FFD700',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    shadowColor: '#FFD700',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+    marginBottom: 8,
+  },
+  proBadgeText: {
+    color: '#8B4513',
+    fontSize: 14,
     fontWeight: 'bold',
+    letterSpacing: 1,
+    textAlign: 'center',
+  },
+  proDescription: {
+    color: colors.mutedAccent,
+    fontSize: 14,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
   linkButton: {
     paddingVertical: 12,

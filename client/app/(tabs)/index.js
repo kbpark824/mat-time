@@ -11,8 +11,15 @@ export default function HomeScreen() {
   const router = useRouter();
   const [recentActivities, setRecentActivities] = useState([]);
   const [stats, setStats] = useState(null);
+  const [lastFetch, setLastFetch] = useState(null);
 
-  const fetchRecentActivities = async () => {
+  const fetchRecentActivities = async (force = false) => {
+    // Only fetch if we haven't fetched in the last 30 seconds (unless forced)
+    const now = Date.now();
+    if (!force && lastFetch && (now - lastFetch) < 30000) {
+      return;
+    }
+    
     try {
       // Fetch recent activities from all three types
       const requests = [
@@ -39,12 +46,23 @@ export default function HomeScreen() {
     }
   };
 
-  const fetchStats = async () => {
+  const fetchStats = async (force = false) => {
+    // Only fetch if we haven't fetched in the last 30 seconds (unless forced)
+    const now = Date.now();
+    if (!force && lastFetch && (now - lastFetch) < 30000) {
+      return;
+    }
+    
     try {
       const response = await apiClient.get('/stats/summary');
       setStats(response.data);
+      setLastFetch(now);
     } catch (error) {
       console.error('Failed to fetch stats', error);
+      // If it's a rate limit error, wait a bit longer before next attempt
+      if (error.response?.status === 429) {
+        setLastFetch(now + 60000); // Wait extra minute on rate limit
+      }
     }
   };
 
@@ -138,7 +156,6 @@ export default function HomeScreen() {
                 <Text style={styles.recentTitle}>Recent Activities</Text>
                 <TouchableOpacity 
                   onPress={() => router.push('/(tabs)/search')}
-                  style={styles.viewAllButton}
                 >
                   <Text style={styles.viewAllText}>View All</Text>
                 </TouchableOpacity>
@@ -151,18 +168,6 @@ export default function HomeScreen() {
             <Text style={styles.emptyText}>No recent activities</Text>
             <Text style={styles.emptySubtext}>Start logging your training sessions!</Text>
           </View>
-        }
-        ListFooterComponent={
-          recentActivities.length > 0 ? (
-            <View style={styles.footer}>
-              <TouchableOpacity 
-                onPress={() => router.push('/(tabs)/search')}
-                style={styles.viewAllFooterButton}
-              >
-                <Text style={styles.viewAllFooterText}>View All Activities</Text>
-              </TouchableOpacity>
-            </View>
-          ) : null
         }
         style={styles.list}
         showsVerticalScrollIndicator={false}
@@ -197,16 +202,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.primaryText,
   },
-  viewAllButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: colors.accent,
-    borderRadius: 6,
-  },
   viewAllText: {
     fontSize: 14,
     fontWeight: '500',
-    color: colors.white,
+    color: colors.accent,
   },
   activityCard: {
     backgroundColor: colors.secondaryBackground,
@@ -264,22 +263,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.mutedAccent,
     textAlign: 'center',
-  },
-  footer: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  viewAllFooterButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    backgroundColor: colors.secondaryBackground,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.accent,
-  },
-  viewAllFooterText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: colors.accent,
   },
 });

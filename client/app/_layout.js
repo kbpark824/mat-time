@@ -4,9 +4,10 @@ import authStorage from '../auth/storage';
 import { useEffect, useState } from 'react';
 import { SplashScreen } from 'expo-router';
 import Purchases from 'react-native-purchases';
-import { Platform } from 'react-native';
+import { Platform, Text, TouchableOpacity } from 'react-native';
 import { jwtDecode } from 'jwt-decode';
 import Constants from 'expo-constants';
+import colors from '../constants/colors';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -86,15 +87,79 @@ function Layout() {
       />
       <Stack.Screen
         name="logSession"
-        options={{ headerShown: true, title: 'Log a Session', presentation: 'modal' }}
+        options={({ navigation, route }) => ({
+          headerShown: true,
+          title: 'Log a Session',
+          presentation: 'modal',
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Text style={{ color: colors.mutedAccent, fontSize: 16 }}>Cancel</Text>
+            </TouchableOpacity>
+          ),
+          headerRight: () => (
+            <TouchableOpacity 
+              onPress={() => {
+                // This will be handled by the screen component
+                const screenRef = route.params?.screenRef;
+                if (screenRef?.current?.handleSave) {
+                  screenRef.current.handleSave();
+                }
+              }}
+            >
+              <Text style={{ color: colors.accent, fontSize: 16, fontWeight: '600' }}>Save</Text>
+            </TouchableOpacity>
+          ),
+        })}
       />
       <Stack.Screen
         name="logSeminar"
-        options={{ headerShown: true, title: 'Log a Seminar', presentation: 'modal' }}
+        options={({ navigation, route }) => ({
+          headerShown: true,
+          title: 'Log a Seminar',
+          presentation: 'modal',
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Text style={{ color: colors.mutedAccent, fontSize: 16 }}>Cancel</Text>
+            </TouchableOpacity>
+          ),
+          headerRight: () => (
+            <TouchableOpacity 
+              onPress={() => {
+                const screenRef = route.params?.screenRef;
+                if (screenRef?.current?.handleSave) {
+                  screenRef.current.handleSave();
+                }
+              }}
+            >
+              <Text style={{ color: colors.accent, fontSize: 16, fontWeight: '600' }}>Save</Text>
+            </TouchableOpacity>
+          ),
+        })}
       />
       <Stack.Screen
         name="logCompetition"
-        options={{ headerShown: true, title: 'Log a Competition', presentation: 'modal' }}
+        options={({ navigation, route }) => ({
+          headerShown: true,
+          title: 'Log a Competition',
+          presentation: 'modal',
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Text style={{ color: colors.mutedAccent, fontSize: 16 }}>Cancel</Text>
+            </TouchableOpacity>
+          ),
+          headerRight: () => (
+            <TouchableOpacity 
+              onPress={() => {
+                const screenRef = route.params?.screenRef;
+                if (screenRef?.current?.handleSave) {
+                  screenRef.current.handleSave();
+                }
+              }}
+            >
+              <Text style={{ color: colors.accent, fontSize: 16, fontWeight: '600' }}>Save</Text>
+            </TouchableOpacity>
+          ),
+        })}
       />
     </Stack>
   );

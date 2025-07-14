@@ -1,16 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useImperativeHandle } from 'react';
 import { TextInput, StyleSheet, Text, Alert } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import apiClient from '../api/client';
 import LogFormLayout from '../components/LogFormLayout';
 import colors from '../constants/colors';
 
 export default function SeminarLogScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const params = useLocalSearchParams();
-  const seminarToEdit = params.id ? (() => {
+  const screenRef = useRef();
+  const seminarToEdit = params.id && params.data ? (() => {
     try {
-      return JSON.parse(params.seminar);
+      return JSON.parse(params.data);
     } catch (e) {
       console.error('Invalid seminar data:', e);
       return null;
@@ -73,9 +75,15 @@ export default function SeminarLogScreen() {
     );
   };
 
-  const handleCancel = () => {
-    router.back();
-  };
+  // Expose handleSave to the header button via ref
+  useImperativeHandle(screenRef, () => ({
+    handleSave: handleSaveOrUpdate
+  }));
+
+  // Set the screen ref in navigation params so header can access it
+  React.useEffect(() => {
+    navigation.setParams({ screenRef });
+  }, [navigation]);
 
 
   // Additional fields specific to seminars
@@ -104,11 +112,8 @@ export default function SeminarLogScreen() {
       tags={tags}
       setTags={setTags}
       additionalFields={additionalFields}
-      onSave={handleSaveOrUpdate}
       onDelete={handleDelete}
-      onCancel={handleCancel}
       isEditing={isEditing}
-      saveButtonText={isEditing ? "Save Changes" : "Save Seminar"}
       deleteButtonText="Delete Seminar"
       showPaywall={showPaywall}
       setShowPaywall={setShowPaywall}

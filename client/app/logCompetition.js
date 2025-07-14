@@ -10,9 +10,9 @@ import colors from '../constants/colors';
 export default function CompetitionLogScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const competitionToEdit = params.id ? (() => {
+  const competitionToEdit = params.id && params.data ? (() => {
     try {
-      return JSON.parse(params.competition);
+      return JSON.parse(params.data);
     } catch (e) {
       console.error('Invalid competition data:', e);
       return null;
@@ -344,13 +344,6 @@ export default function CompetitionLogScreen() {
       <TagInput tags={tags} onTagsChange={setTags} />
 
       <View style={styles.spacer} />
-      <TouchableOpacity style={styles.primaryButton} onPress={handleSaveOrUpdate}>
-        <Text style={styles.primaryButtonText}>{isEditing ? "Save Changes" : "Save Competition"}</Text>
-      </TouchableOpacity>
-      <View style={styles.buttonSpacer} />
-      <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
-        <Text style={styles.cancelButtonText}>Cancel</Text>
-      </TouchableOpacity>
       <View style={styles.spacer} />
       
       {isEditing && (
@@ -435,17 +428,6 @@ const styles = StyleSheet.create({
       marginBottom: 15,
     },
     spacer: { height: 20 },
-    primaryButton: {
-      backgroundColor: colors.primaryText,
-      paddingVertical: 12,
-      borderRadius: 8,
-      alignItems: 'center',
-    },
-    primaryButtonText: {
-      color: colors.white,
-      fontSize: 16,
-      fontWeight: 'bold',
-    },
     deleteButton: {
       backgroundColor: colors.destructive,
       paddingVertical: 12,
@@ -487,19 +469,5 @@ const styles = StyleSheet.create({
       fontSize: 14,
       color: colors.mutedAccent,
       textAlign: 'center',
-    },
-    buttonSpacer: { 
-      height: 12 
-    },
-    cancelButton: {
-      backgroundColor: '#DFDFDF',
-      paddingVertical: 12,
-      borderRadius: 8,
-      alignItems: 'center',
-    },
-    cancelButtonText: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: colors.primaryText,
     },
 });

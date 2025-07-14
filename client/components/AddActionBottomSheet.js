@@ -1,46 +1,116 @@
 import React from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, Animated, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, Animated, Dimensions, PanResponder } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../constants/colors';
 
 const { height: screenHeight } = Dimensions.get('window');
 
 export default function AddActionBottomSheet({ visible, onClose, onSelectOption, isPro = false }) {
-  const slideAnim = React.useRef(new Animated.Value(screenHeight)).current;
+  const translateY = React.useRef(new Animated.Value(screenHeight)).current;
+  const [modalVisible, setModalVisible] = React.useState(visible);
 
   React.useEffect(() => {
     if (visible) {
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
+      setModalVisible(true);
+      // Small delay to ensure modal is rendered before animation
+      requestAnimationFrame(() => {
+        Animated.timing(translateY, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: false,
+        }).start();
+      });
     } else {
-      Animated.timing(slideAnim, {
+      // When parent wants to close, just animate out
+      Animated.timing(translateY, {
         toValue: screenHeight,
         duration: 250,
-        useNativeDriver: true,
-      }).start();
+        useNativeDriver: false,
+      }).start(() => {
+        setModalVisible(false);
+      });
     }
   }, [visible]);
 
   const handleOptionPress = (option) => {
     onSelectOption(option);
-    onClose();
+    closeWithAnimation();
   };
 
   const handleBackdropPress = () => {
-    onClose();
+    closeWithAnimation();
   };
+
+  const closeWithAnimation = () => {
+    Animated.timing(translateY, {
+      toValue: screenHeight,
+      duration: 250,
+      useNativeDriver: false,
+    }).start(() => {
+      setModalVisible(false);
+      // Reset for next time
+      translateY.setValue(screenHeight);
+      onClose();
+    });
+  };
+
+  const panResponder = React.useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (evt, gestureState) => {
+        // Only respond to downward swipes that are more vertical than horizontal
+        return Math.abs(gestureState.dy) > Math.abs(gestureState.dx) && gestureState.dy > 5;
+      },
+      onPanResponderGrant: () => {
+        // Stop any running animations and set offset
+        translateY.stopAnimation((value) => {
+          translateY.setOffset(value);
+          translateY.setValue(0);
+        });
+      },
+      onPanResponderMove: (evt, gestureState) => {
+        // Allow smooth dragging - follow finger exactly
+        translateY.setValue(Math.max(0, gestureState.dy));
+      },
+      onPanResponderRelease: (evt, gestureState) => {
+        translateY.flattenOffset();
+        
+        const shouldClose = gestureState.dy > 100 || gestureState.vy > 0.8;
+        
+        if (shouldClose) {
+          closeWithAnimation();
+        } else {
+          // Smooth snap back animation
+          Animated.spring(translateY, {
+            toValue: 0,
+            useNativeDriver: false,
+            tension: 300,
+            friction: 30,
+            mass: 0.8,
+          }).start();
+        }
+      },
+      onPanResponderTerminate: () => {
+        // Handle termination gracefully
+        translateY.flattenOffset();
+        Animated.spring(translateY, {
+          toValue: 0,
+          useNativeDriver: false,
+          tension: 300,
+          friction: 30,
+        }).start();
+      },
+    })
+  ).current;
 
   if (!visible) return null;
 
   return (
     <Modal
       transparent
-      visible={visible}
+      visible={modalVisible}
       animationType="none"
-      onRequestClose={onClose}
+      onRequestClose={closeWithAnimation}
     >
       {/* Backdrop */}
       <TouchableOpacity 
@@ -53,9 +123,12 @@ export default function AddActionBottomSheet({ visible, onClose, onSelectOption,
           style={[
             styles.bottomSheet,
             {
-              transform: [{ translateY: slideAnim }]
+              transform: [
+                { translateY: translateY }
+              ]
             }
           ]}
+          {...panResponder.panHandlers}
         >
           {/* Handle Bar */}
           <View style={styles.handleBar} />
@@ -121,15 +194,6 @@ export default function AddActionBottomSheet({ visible, onClose, onSelectOption,
             </TouchableOpacity>
 
           </View>
-
-          {/* Cancel Button */}
-          <TouchableOpacity 
-            style={styles.cancelButton}
-            onPress={onClose}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.cancelButtonText}>Cancel</Text>
-          </TouchableOpacity>
 
         </Animated.View>
       </TouchableOpacity>
@@ -231,16 +295,5 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     textAlign: 'center',
     overflow: 'hidden',
-  },
-  cancelButton: {
-    backgroundColor: colors.lightBackground,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.primaryText,
   },
 });
