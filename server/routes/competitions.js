@@ -161,8 +161,8 @@ router.post('/', auth, asyncHandler(async (req, res) => {
 // @desc    Get all competitions for a user
 // @access  Private
 router.get('/', auth, asyncHandler(async (req, res) => {
-  // Check for search query
-  const { keyword, tags } = req.query;
+  // Check for search query and pagination
+  const { keyword, tags, limit, offset } = req.query;
 
   let query = { user: req.user.id };
 
@@ -181,10 +181,19 @@ router.get('/', auth, asyncHandler(async (req, res) => {
       query.tags = { $all: tagIds }; // $all ensures all specified tags are present
   }
 
-  const competitions = await Competition.find(query)
+  let competitionsQuery = Competition.find(query)
     .populate('tags')
     .sort({ date: -1 });
 
+  // Apply pagination if provided
+  if (limit) {
+    competitionsQuery = competitionsQuery.limit(parseInt(limit));
+  }
+  if (offset) {
+    competitionsQuery = competitionsQuery.skip(parseInt(offset));
+  }
+
+  const competitions = await competitionsQuery;
   res.json(competitions);
 }));
 

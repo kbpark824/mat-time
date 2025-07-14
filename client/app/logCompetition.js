@@ -5,9 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import apiClient from '../api/client';
 import TagInput from '../components/TagInput';
-import Paywall from '../components/Paywall';
 import colors from '../constants/colors';
-import { useProStatus } from '../hooks/useProStatus';
 
 export default function CompetitionLogScreen() {
   const router = useRouter();
@@ -46,11 +44,8 @@ export default function CompetitionLogScreen() {
   
   const [generalNotes, setGeneralNotes] = useState(competitionToEdit ? competitionToEdit.generalNotes : '');
   const [tags, setTags] = useState(competitionToEdit ? competitionToEdit.tags.map(t => t.name) : []);
-  const [showPaywall, setShowPaywall] = useState(false);
   
   const isEditing = !!competitionToEdit;
-  const { isPro, setIsPro } = useProStatus();
-
   const onChangeDate = (event, selectedDate) => {
     setShowDatePicker(false);
     if (selectedDate) {
@@ -58,14 +53,6 @@ export default function CompetitionLogScreen() {
     }
   };
 
-  const handleUpgrade = () => {
-    setShowPaywall(true);
-  };
-
-  const handlePurchaseCompleted = () => {
-    setIsPro(true);
-    setShowPaywall(false);
-  };
 
   // Update match notes arrays when number of matches changes
   const updateMatchesInDivision = (value) => {
@@ -191,9 +178,6 @@ export default function CompetitionLogScreen() {
     router.back();
   };
 
-  if (showPaywall) {
-    return <Paywall onPurchaseCompleted={handlePurchaseCompleted} onClose={() => setShowPaywall(false)} />;
-  }
 
   return (
     <KeyboardAwareScrollView style={styles.container}>
@@ -357,19 +341,7 @@ export default function CompetitionLogScreen() {
         placeholderTextColor={colors.mutedAccent} 
       />
 
-      {isPro ? (
-        <TagInput tags={tags} onTagsChange={setTags} />
-      ) : (
-        <>
-          <TouchableOpacity style={styles.tagsTitleRow} onPress={handleUpgrade}>
-            <Text style={styles.label}>Tags</Text>
-            <Text style={styles.proLabel}>PRO</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.compactProFeatureContainer} onPress={handleUpgrade}>
-            <Text style={styles.compactProFeatureText}>Tap to upgrade to Pro for tagging</Text>
-          </TouchableOpacity>
-        </>
-      )}
+      <TagInput tags={tags} onTagsChange={setTags} />
 
       <View style={styles.spacer} />
       <TouchableOpacity style={styles.primaryButton} onPress={handleSaveOrUpdate}>

@@ -1,80 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, Pressable, TextInput, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useAuth } from '../../auth/context';
 import apiClient from '../../api/client';
 import Dashboard from '../../components/Dashboard';
 import colors from '../../constants/colors';
-import Paywall from '../../components/Paywall';
 
 export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
-  const [allActivities, setAllActivities] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const isPro = user?.isPro || false;
-
-  const [searchQuery, setSearchQuery] = useState('');
-  const [allTags, setAllTags] = useState([]);
-  const [selectedTags, setSelectedTags] = useState([]);
-
+  const [recentActivities, setRecentActivities] = useState([]);
   const [stats, setStats] = useState(null);
 
-  const toggleTag = (tagName) => {
-    if (!isPro) {
-      return;
-    }
-    setSelectedTags(prev => 
-      prev.includes(tagName) 
-        ? prev.filter(t => t !== tagName) 
-        : [...prev, tagName]
-    );
-  };
-
-  const fetchAllActivities = async () => {
+  const fetchRecentActivities = async () => {
     try {
-      setLoading(true);
-      const params = new URLSearchParams();
-      if (searchQuery) {
-        params.append('keyword', searchQuery);
-      }
-      if (selectedTags.length > 0 && isPro) {
-        params.append('tags', selectedTags.join(','));
-      }
-      
-      // Fetch all three types of activities in parallel with error handling
+      // Fetch recent activities from all three types
       const requests = [
-        apiClient.get(`/sessions?${params.toString()}`).catch(() => ({ data: [] })),
-        apiClient.get(`/seminars?${params.toString()}`).catch(() => ({ data: [] })),
-        apiClient.get(`/competitions?${params.toString()}`).catch(() => ({ data: [] }))
+        apiClient.get('/sessions?limit=3').catch(() => ({ data: [] })),
+        apiClient.get('/seminars?limit=3').catch(() => ({ data: [] })),
+        apiClient.get('/competitions?limit=3').catch(() => ({ data: [] }))
       ];
-      
+
       const [sessionsResponse, seminarsResponse, competitionsResponse] = await Promise.all(requests);
 
-      // Add activity type to each item and combine
-      const sessions = sessionsResponse.data.map(item => ({ ...item, activityType: 'session' }));
-      const seminars = seminarsResponse.data.map(item => ({ ...item, activityType: 'seminar' }));
-      const competitions = competitionsResponse.data.map(item => ({ ...item, activityType: 'competition' }));
+      // Tag each activity with its type
+      const sessions = (sessionsResponse.data || []).map(session => ({ ...session, activityType: 'session' }));
+      const seminars = (seminarsResponse.data || []).map(seminar => ({ ...seminar, activityType: 'seminar' }));
+      const competitions = (competitionsResponse.data || []).map(competition => ({ ...competition, activityType: 'competition' }));
 
-      // Combine and sort by date (newest first)
-      const combined = [...sessions, ...seminars, ...competitions];
-      combined.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-      setAllActivities(combined);
+      // Combine and sort by date, limit to 5 most recent
+      const combined = [...sessions, ...seminars, ...competitions]
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 5);
+      
+      setRecentActivities(combined);
     } catch (error) {
-      console.error('Failed to fetch activities', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchTags = async () => {
-    try {
-        const response = await apiClient.get('/tags');
-        setAllTags(response.data);
-    } catch (error) {
-        console.error('Failed to fetch tags', error);
+      console.error('Error fetching recent activities:', error);
     }
   };
 
@@ -89,303 +50,236 @@ export default function HomeScreen() {
 
   useFocusEffect(
     React.useCallback(() => {
-      fetchTags();
       fetchStats();
-      fetchAllActivities();
+      fetchRecentActivities();
     }, [])
   );
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-        fetchAllActivities();
-    }, 500);
-
-    return () => clearTimeout(handler);
-  }, [searchQuery, selectedTags, isPro]);
-
-  const getActivityDetails = (item) => {
-    switch (item.activityType) {
+  const getActivityTypeLabel = (activity) => {
+    switch (activity.activityType) {
       case 'session':
-        return {
-          pathname: '/logSession',
-          params: { id: item._id, session: JSON.stringify(item) },
-          subtitle: `${item.type} - ${item.duration}h`,
-          notes: item.techniqueNotes || "No technique notes.",
-          typeLabel: 'Training Session'
-        };
+        return 'Training Session';
       case 'seminar':
-        return {
-          pathname: '/logSeminar',
-          params: { id: item._id, seminar: JSON.stringify(item) },
-          subtitle: `${item.type} - ${item.professorName}`,
-          notes: item.techniqueNotes || "No technique notes.",
-          typeLabel: 'Seminar'
-        };
+        return 'Seminar';
       case 'competition':
-        return {
-          pathname: '/logCompetition',
-          params: { id: item._id, competition: JSON.stringify(item) },
-          subtitle: `${item.type} - ${item.organization}`,
-          notes: item.generalNotes || "No notes.",
-          typeLabel: 'Competition'
-        };
+        return 'Competition';
       default:
-        return {
-          pathname: '/logSession',
-          params: { id: item._id, session: JSON.stringify(item) },
-          subtitle: item.type,
-          notes: "No notes.",
-          typeLabel: 'Activity'
-        };
+        return 'Activity';
     }
   };
 
-  const renderItem = ({ item }) => {
-    const details = getActivityDetails(item);
+  const getActivityTypeColor = (activity) => {
+    switch (activity.activityType) {
+      case 'session':
+        return '#E3F2FD'; // Light blue
+      case 'seminar':
+        return '#E8F5E8'; // Light green
+      case 'competition':
+        return '#FFF3E0'; // Light orange
+      default:
+        return colors.tertiaryBackground;
+    }
+  };
+
+  const getActivitySubtitle = (activity) => {
+    switch (activity.activityType) {
+      case 'session':
+        return `${activity.type} - ${activity.duration} min`;
+      case 'seminar':
+        return `${activity.type} - ${activity.professor}`;
+      case 'competition':
+        return `${activity.type} - ${activity.organization}`;
+      default:
+        return '';
+    }
+  };
+
+  const handleActivityPress = (activity) => {
+    const routeMap = {
+      session: 'logSession',
+      seminar: 'logSeminar', 
+      competition: 'logCompetition'
+    };
     
-    return (
-      <Pressable onPress={() => router.push(details)}>
-          <View style={styles.itemContainer}>
-              <View style={styles.itemHeader}>
-                  <View style={styles.itemTitleRow}>
-                    <Text style={styles.itemTitle}>{new Date(item.date).toLocaleDateString()}</Text>
-                    <View style={[styles.activityTypeLabel, 
-                      item.activityType === 'session' ? styles.sessionTypeLabel :
-                      item.activityType === 'seminar' ? styles.seminarTypeLabel :
-                      styles.competitionTypeLabel
-                    ]}>
-                      <Text style={styles.activityTypeLabelText}>{details.typeLabel}</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.itemSubtitle}>{details.subtitle}</Text>
-              </View>
-              <Text style={styles.notes} numberOfLines={2}>
-                {details.notes}
-              </Text>
-              <View style={styles.tagRow}>
-                  {item.tags.map(tag => (
-                      <View key={tag._id} style={styles.tag}>
-                          <Text style={styles.tagText}>{tag.name}</Text>
-                      </View>
-                  ))}
-              </View>
-          </View>
-      </Pressable>
-    );
+    const route = routeMap[activity.activityType];
+    if (route) {
+      router.push(`/${route}?id=${activity._id}&data=${encodeURIComponent(JSON.stringify(activity))}`);
+    }
   };
 
-  const [showPaywall, setShowPaywall] = useState(false);
-
-  const handlePurchase = () => {
-    // This will be handled by the paywall component
-    setShowPaywall(false);
-  };
-
-  const handlePaywallClose = () => {
-    setShowPaywall(false);
-  };
+  const renderRecentActivity = ({ item }) => (
+    <TouchableOpacity onPress={() => handleActivityPress(item)} style={styles.activityCard}>
+      <View style={styles.activityHeader}>
+        <Text style={styles.activityDate}>{new Date(item.date).toLocaleDateString()}</Text>
+        <View style={[styles.activityTypeLabel, { backgroundColor: getActivityTypeColor(item) }]}>
+          <Text style={styles.activityTypeText}>{getActivityTypeLabel(item)}</Text>
+        </View>
+      </View>
+      <Text style={styles.activitySubtitle}>{getActivitySubtitle(item)}</Text>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
       <FlatList
-        data={allActivities}
-        keyExtractor={(item) => item._id}
-        renderItem={renderItem}
-        keyboardShouldPersistTaps="handled"
+        data={recentActivities}
+        renderItem={renderRecentActivity}
+        keyExtractor={(item) => `${item.activityType}-${item._id}`}
         ListHeaderComponent={
-          <>
-            <Dashboard stats={stats} />
-
-            <View style={styles.listHeader}>
-              <View style={styles.searchContainer}>
-                  <TextInput
-                    style={styles.searchInput}
-                    placeholder="Search activities..."
-                    placeholderTextColor={colors.mutedAccent}
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                  />
-              </View>
-              <Pressable onPress={() => !isPro && setShowPaywall(true)}>
-                <View>
-                  <View style={styles.filterTitleRow}>
-                    <Text style={styles.filterTitle}>Filter by Tag</Text>
-                    {!isPro && <Text style={styles.proLabel}>PRO</Text>}
-                  </View>
-                  <FlatList
-                      data={allTags}
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                      keyExtractor={(item) => item._id}
-                      renderItem={({ item }) => {
-                          const isSelected = selectedTags.includes(item.name);
-                          return (
-                              <TouchableOpacity onPress={() => toggleTag(item.name)} disabled={!isPro}>
-                                  <View style={[styles.tag, isSelected && styles.tagSelected, !isPro && styles.disabledTag]}>
-                                      <Text style={[styles.tagText, isSelected && styles.tagTextSelected]}>{item.name}</Text>
-                                  </View>
-                              </TouchableOpacity>
-                          );
-                      }}
-                      ListEmptyComponent={<Text style={styles.noTagsText}>No tags created yet.</Text>}
-                  />
-                </View>
-              </Pressable>
-              <Text style={styles.sessionsTitle}>Recent Activities</Text>
-            </View>
-          </>
-        }
-        ListEmptyComponent={
           <View>
-            <Text style={styles.emptyText}>No activities found.</Text>
+            {/* Dashboard Section */}
+            <View style={styles.dashboardSection}>
+              <Dashboard stats={stats} />
+            </View>
+
+            {/* Recent Activities Section */}
+            <View style={styles.recentSection}>
+              <View style={styles.recentHeader}>
+                <Text style={styles.recentTitle}>Recent Activities</Text>
+                <TouchableOpacity 
+                  onPress={() => router.push('/(tabs)/search')}
+                  style={styles.viewAllButton}
+                >
+                  <Text style={styles.viewAllText}>View All</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
         }
-        style={{ backgroundColor: colors.primaryBackground }} 
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No recent activities</Text>
+            <Text style={styles.emptySubtext}>Start logging your training sessions!</Text>
+          </View>
+        }
+        ListFooterComponent={
+          recentActivities.length > 0 ? (
+            <View style={styles.footer}>
+              <TouchableOpacity 
+                onPress={() => router.push('/(tabs)/search')}
+                style={styles.viewAllFooterButton}
+              >
+                <Text style={styles.viewAllFooterText}>View All Activities</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null
+        }
+        style={styles.list}
+        showsVerticalScrollIndicator={false}
       />
-      {loading && <ActivityIndicator size="large" color={colors.primaryText} style={StyleSheet.absoluteFill} />}
-      
-      {/* Paywall Modal */}
-      <Modal
-        visible={showPaywall}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={handlePaywallClose}
-      >
-        <Paywall
-          onPurchaseCompleted={handlePurchase}
-          onClose={handlePaywallClose}
-        />
-      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.primaryBackground },
-    itemContainer: { 
-        padding: 15, 
-        backgroundColor: colors.white, 
-        marginBottom: 10, 
-        borderRadius: 8,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.22,
-        shadowRadius: 2.22,
-        elevation: 3,
+  container: {
+    flex: 1,
+    backgroundColor: colors.primaryBackground,
+  },
+  list: {
+    flex: 1,
+  },
+  dashboardSection: {
+    marginBottom: 20,
+  },
+  recentSection: {
+    paddingHorizontal: 20,
+    marginBottom: 15,
+  },
+  recentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  recentTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.primaryText,
+  },
+  viewAllButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: colors.accent,
+    borderRadius: 6,
+  },
+  viewAllText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.white,
+  },
+  activityCard: {
+    backgroundColor: colors.secondaryBackground,
+    marginHorizontal: 20,
+    marginBottom: 12,
+    padding: 15,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.mutedAccent,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
     },
-    itemHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 8,
-    },
-    itemTitle: { fontSize: 16, fontWeight: 'bold', color: colors.primaryText },
-    itemSubtitle: { fontSize: 14, color: colors.mutedAccent },
-    notes: { fontStyle: 'italic', color: colors.primaryText, marginBottom: 10 },
-    emptyText: { textAlign: 'center', marginTop: 50, fontSize: 16, color: colors.mutedAccent, paddingBottom: 200 },
-    tagRow: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-    },
-    tag: {
-        backgroundColor: colors.lightBackground,
-        borderRadius: 15,
-        paddingVertical: 4,
-        paddingHorizontal: 10,
-        marginRight: 5,
-        marginBottom: 5,
-    },
-    tagText: {
-        color: colors.primaryText,
-        fontSize: 12,
-    },
-    searchContainer: {
-      paddingHorizontal: 0,
-      marginBottom: 10,
-    },
-    searchInput: {
-      height: 40,
-      borderColor: colors.lightBackground,
-      borderWidth: 1,
-      borderRadius: 8,
-      paddingHorizontal: 10,
-      backgroundColor: colors.white,
-      color: colors.primaryText,
-    },
-    filterTitleRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 5,
-    },
-    filterTitle: {
-      fontSize: 16,
-      fontWeight: '600',
-      marginHorizontal: 0,
-      color: colors.primaryText,
-    },
-    proLabel: {
-      fontSize: 10,
-      fontWeight: 'bold',
-      color: colors.white,
-      backgroundColor: colors.mutedAccent,
-      paddingHorizontal: 6,
-      paddingVertical: 2,
-      borderRadius: 8,
-      marginLeft: 8,
-      textAlign: 'center',
-      overflow: 'hidden',
-    },
-    tagSelected: {
-      backgroundColor: colors.primaryText,
-    },
-    tagTextSelected: {
-      color: colors.white,
-    },
-    noTagsText: {
-      paddingHorizontal: 10,
-      color: colors.mutedAccent,
-      fontStyle: 'italic',
-    },
-    listHeader: {
-      padding: 10,
-      backgroundColor: colors.primaryBackground,
-    },
-    sessionsTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      marginTop: 20,
-      marginBottom: 10,
-      paddingHorizontal: 5,
-      color: colors.primaryText,
-    },
-    disabledTag: {
-      backgroundColor: colors.lightBackground,
-      opacity: 0.5,
-    },
-    itemTitleRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 4,
-    },
-    activityTypeLabel: {
-      paddingHorizontal: 8,
-      paddingVertical: 2,
-      borderRadius: 10,
-      minWidth: 60,
-      alignItems: 'center',
-    },
-    sessionTypeLabel: {
-      backgroundColor: '#E3F2FD', // Light blue
-    },
-    seminarTypeLabel: {
-      backgroundColor: '#E8F5E8', // Light green
-    },
-    competitionTypeLabel: {
-      backgroundColor: '#FFF3E0', // Light orange
-    },
-    activityTypeLabelText: {
-      fontSize: 10,
-      fontWeight: 'bold',
-      color: colors.primaryText,
-    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  activityHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  activityDate: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.primaryText,
+  },
+  activityTypeLabel: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+  },
+  activityTypeText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors.primaryText,
+  },
+  activitySubtitle: {
+    fontSize: 14,
+    color: colors.mutedAccent,
+  },
+  emptyContainer: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: colors.mutedAccent,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: colors.mutedAccent,
+    textAlign: 'center',
+  },
+  footer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  viewAllFooterButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    backgroundColor: colors.secondaryBackground,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.accent,
+  },
+  viewAllFooterText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.accent,
+  },
 });

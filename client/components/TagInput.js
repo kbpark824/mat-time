@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TextInput, Text, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
+import { View, TextInput, Text, StyleSheet, Pressable } from 'react-native';
 import colors from '../constants/colors';
 
 export default function TagInput({ tags, onTagsChange }) {

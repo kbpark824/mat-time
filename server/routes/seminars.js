@@ -86,8 +86,8 @@ router.post('/', auth, asyncHandler(async (req, res) => {
 // @desc    Get all seminars for a user
 // @access  Private
 router.get('/', auth, asyncHandler(async (req, res) => {
-  // Check for search query
-  const { keyword, tags } = req.query;
+  // Check for search query and pagination
+  const { keyword, tags, limit, offset } = req.query;
 
   let query = { user: req.user.id };
 
@@ -106,10 +106,19 @@ router.get('/', auth, asyncHandler(async (req, res) => {
       query.tags = { $all: tagIds }; // $all ensures all specified tags are present
   }
 
-  const seminars = await Seminar.find(query)
+  let seminarsQuery = Seminar.find(query)
     .populate('tags')
     .sort({ date: -1 });
 
+  // Apply pagination if provided
+  if (limit) {
+    seminarsQuery = seminarsQuery.limit(parseInt(limit));
+  }
+  if (offset) {
+    seminarsQuery = seminarsQuery.skip(parseInt(offset));
+  }
+
+  const seminars = await seminarsQuery;
   res.json(seminars);
 }));
 

@@ -89,8 +89,8 @@ router.post('/', auth, asyncHandler(async (req, res) => {
 // @desc    Get all sessions for a user
 // @access  Private
 router.get('/', auth, asyncHandler(async (req, res) => {
-  // Check for search query
-  const { keyword, tags } = req.query;
+  // Check for search query and pagination
+  const { keyword, tags, limit, offset } = req.query;
 
   let query = { user: req.user.id };
 
@@ -109,10 +109,19 @@ router.get('/', auth, asyncHandler(async (req, res) => {
       query.tags = { $all: tagIds }; // $all ensures all specified tags are present
   }
 
-  const sessions = await Session.find(query)
+  let sessionsQuery = Session.find(query)
     .populate('tags')
     .sort({ date: -1 });
 
+  // Apply pagination if provided
+  if (limit) {
+    sessionsQuery = sessionsQuery.limit(parseInt(limit));
+  }
+  if (offset) {
+    sessionsQuery = sessionsQuery.skip(parseInt(offset));
+  }
+
+  const sessions = await sessionsQuery;
   res.json(sessions);
 }));
 

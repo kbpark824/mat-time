@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, TextInput, Link
 import { useAuth } from '../../auth/context';
 import colors from '../../constants/colors';
 import Paywall from '../../components/Paywall';
+import TagManager from '../../components/TagManager';
 import apiClient from '../../api/client';
 
 export default function ProfileScreen() {
@@ -121,6 +122,11 @@ export default function ProfileScreen() {
           >
             <Text style={styles.linkText}>support@mat-time.io</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* Tag Management */}
+        <View style={styles.section}>
+          <TagManager />
         </View>
 
         {/* Danger Zone */}

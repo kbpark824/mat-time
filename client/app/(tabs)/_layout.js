@@ -94,28 +94,34 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="search"
+        options={{
+          title: 'Search',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="search" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="add"
         options={{
-          title: '',
+          title: 'Add',
           tabBarIcon: ({ color, size, focused }) => (
             <View style={{
-              width: size + 2,
-              height: size + 2,
-              backgroundColor: 'transparent',
-              borderWidth: 2.5,
-              borderColor: focused ? colors.primaryText : colors.mutedAccent,
-              borderRadius: 6,
+              width: size,
+              height: size,
+              backgroundColor: focused ? colors.primaryText : colors.mutedAccent,
+              borderRadius: 4,
               justifyContent: 'center',
               alignItems: 'center'
             }}>
               <Ionicons 
                 name="add" 
-                size={size - 3} 
-                color={focused ? colors.primaryText : colors.mutedAccent} 
+                size={size - 8} 
+                color={colors.white}
               />
             </View>
           ),
-          tabBarLabel: () => null, // Hide the label
         }}
         listeners={{
           tabPress: (e) => {
@@ -124,6 +130,15 @@ export default function TabLayout() {
             // Show bottom sheet instead
             showAddMenu();
           },
+        }}
+      />
+      <Tabs.Screen
+        name="stats"
+        options={{
+          title: 'Stats',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="stats-chart" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen

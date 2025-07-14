@@ -39,7 +39,6 @@ export default function LogFormLayout({
   setShowPaywall,
 }) {
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const { isPro, setIsPro } = useProStatus();
 
   const onChangeDate = (event, selectedDate) => {
     setShowDatePicker(false);
@@ -48,18 +47,6 @@ export default function LogFormLayout({
     }
   };
 
-  const handleUpgrade = () => {
-    setShowPaywall(true);
-  };
-
-  const handlePurchaseCompleted = () => {
-    setIsPro(true);
-    setShowPaywall(false);
-  };
-
-  if (showPaywall) {
-    return <Paywall onPurchaseCompleted={handlePurchaseCompleted} onClose={() => setShowPaywall(false)} />;
-  }
 
   return (
     <KeyboardAwareScrollView style={styles.container}>
@@ -106,19 +93,7 @@ export default function LogFormLayout({
         placeholderTextColor={colors.mutedAccent} 
       />
 
-      {isPro ? (
-        <TagInput tags={tags} onTagsChange={setTags} />
-      ) : (
-        <>
-          <TouchableOpacity style={styles.tagsTitleRow} onPress={handleUpgrade}>
-            <Text style={styles.label}>Tags</Text>
-            <Text style={styles.proLabel}>PRO</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.compactProFeatureContainer} onPress={handleUpgrade}>
-            <Text style={styles.compactProFeatureText}>Tap to upgrade to Pro for tagging</Text>
-          </TouchableOpacity>
-        </>
-      )}
+      <TagInput tags={tags} onTagsChange={setTags} />
 
       {/* Rolling Notes - only show if rolling notes props are provided */}
       {rollingNotes !== undefined && setRollingNotes && (
