@@ -1,6 +1,7 @@
 import React, { useState, useRef, useImperativeHandle } from 'react';
-import { TextInput, StyleSheet, Text, Alert, View, TouchableOpacity, ScrollView, Modal } from 'react-native';
+import { TextInput, StyleSheet, Text, Alert, View, TouchableOpacity, ScrollView, Modal, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import apiClient from '../api/client';
 import LogFormLayout from '../components/LogFormLayout';
 import colors from '../constants/colors';
@@ -112,10 +113,31 @@ export default function SessionLogScreen() {
   const durationOptions = generateDurationOptions();
   const selectedDurationLabel = durationOptions.find(opt => opt.value === duration)?.label || `${duration} hours`;
 
-  const onChangeDuration = (event, selectedDuration) => {
-    setShowDurationPicker(false);
-    if (selectedDuration !== undefined) {
-      setDuration(selectedDuration);
+  // Convert duration (in hours) to Date object for DateTimePicker
+  const durationToDate = (durationHours) => {
+    const totalMinutes = durationHours * 60;
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    const date = new Date();
+    date.setHours(hours);
+    date.setMinutes(minutes);
+    date.setSeconds(0);
+    return date;
+  };
+
+  // Convert Date object back to duration in hours
+  const dateToDuration = (date) => {
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    return hours + (minutes / 60);
+  };
+
+  const onChangeDuration = (event, selectedDate) => {
+    if (event.type === 'dismissed') {
+      setShowDurationPicker(false);
+    } else if (selectedDate) {
+      const newDuration = dateToDuration(selectedDate);
+      setDuration(newDuration);
     }
   };
 
@@ -127,48 +149,18 @@ export default function SessionLogScreen() {
         <Text style={styles.durationPickerText}>{selectedDurationLabel}</Text>
       </TouchableOpacity>
 
-      <Modal
-        visible={showDurationPicker}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowDurationPicker(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <TouchableOpacity onPress={() => setShowDurationPicker(false)}>
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <Text style={styles.modalTitle}>Select Duration</Text>
-              <TouchableOpacity onPress={() => setShowDurationPicker(false)}>
-                <Text style={styles.doneButtonText}>Done</Text>
-              </TouchableOpacity>
-            </View>
-            <ScrollView style={styles.optionsList}>
-              {durationOptions.map((option) => (
-                <TouchableOpacity
-                  key={option.value}
-                  style={[
-                    styles.optionItem,
-                    duration === option.value && styles.selectedOption
-                  ]}
-                  onPress={() => setDuration(option.value)}
-                >
-                  <Text style={[
-                    styles.optionText,
-                    duration === option.value && styles.selectedOptionText
-                  ]}>
-                    {option.label}
-                  </Text>
-                  {duration === option.value && (
-                    <Text style={styles.checkmark}>✓</Text>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
+      {showDurationPicker && (
+        <DateTimePicker
+          value={durationToDate(duration)}
+          mode="countdown"
+          is24Hour={true}
+          onChange={onChangeDuration}
+          style={styles.datePicker}
+          textColor="#333333"
+          accentColor="#007AFF"
+          themeVariant="light"
+        />
+      )}
     </>
   );
 
@@ -253,33 +245,9 @@ const styles = StyleSheet.create({
       color: colors.accent,
       fontWeight: '600',
     },
-    optionsList: {
-      flex: 1,
-      paddingVertical: 8,
-    },
-    optionItem: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingHorizontal: 20,
-      paddingVertical: 16,
-      backgroundColor: colors.primaryBackground,
-    },
-    selectedOption: {
-      backgroundColor: colors.accent + '20',
-    },
-    optionText: {
-      fontSize: 16,
-      color: colors.primaryText,
-    },
-    selectedOptionText: {
-      color: colors.accent,
-      fontWeight: '600',
-    },
-    checkmark: {
-      fontSize: 16,
-      color: colors.accent,
-      fontWeight: 'bold',
+    datePicker: {
+      alignSelf: 'center',
+      marginVertical: 10,
     },
     textArea: { 
       height: 100, 

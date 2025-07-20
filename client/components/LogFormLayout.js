@@ -38,8 +38,9 @@ export default function LogFormLayout({
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const onChangeDate = (event, selectedDate) => {
-    setShowDatePicker(false);
-    if (selectedDate) {
+    if (event.type === 'dismissed') {
+      setShowDatePicker(false);
+    } else if (selectedDate) {
       setDate(selectedDate);
     }
   };
@@ -61,6 +62,8 @@ export default function LogFormLayout({
           display="spinner"
           onChange={onChangeDate}
           textColor="#333333"
+          accentColor="#007AFF"
+          themeVariant="light"
         />
       )}
       

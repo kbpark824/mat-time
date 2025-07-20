@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { PieChart } from 'react-native-chart-kit';
+import StreakDisplay from './StreakDisplay';
 import colors from '../constants/colors';
 
 // Get the screen width for responsive chart sizing
@@ -14,6 +15,8 @@ const StatCard = ({ title, value }) => (
 );
 
 export default function Dashboard({ stats }) {
+  console.log('Dashboard received stats:', stats);
+  
   // A loading/default state for the chart
   const chartData = (stats && stats.typeDistribution && stats.typeDistribution.length > 0)
     ? stats.typeDistribution
@@ -25,6 +28,9 @@ export default function Dashboard({ stats }) {
         <StatCard title="Total Hours" value={stats?.totalHours.toFixed(1) || '0.0'} />
         <StatCard title="Hours This Month" value={stats?.hoursThisMonth.toFixed(1) || '0.0'} />
       </View>
+      
+      <StreakDisplay streaks={stats?.streaks} />
+      
       <View style={styles.chartContainer}>
         <Text style={styles.chartTitle}>Activity Breakdown</Text>
         <PieChart

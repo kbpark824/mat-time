@@ -8,11 +8,114 @@ const Competition = require('../models/Competition');
 const mongoose = require('mongoose');
 const logger = require('../config/logger');
 
+// Helper function to calculate training streaks
+async function calculateTrainingStreak(userId) {
+    try {
+        // Get all training sessions (sessions, seminars, competitions) ordered by date
+        const [sessions, seminars, competitions] = await Promise.all([
+            Session.find({ user: userId }).select('date').sort({ date: -1 }),
+            Seminar.find({ user: userId }).select('date').sort({ date: -1 }),
+            Competition.find({ user: userId }).select('date').sort({ date: -1 })
+        ]);
+
+        // Combine all activities and sort by date (most recent first)
+        const allActivities = [
+            ...sessions.map(s => s.date),
+            ...seminars.map(s => s.date),
+            ...competitions.map(c => c.date)
+        ].sort((a, b) => b - a);
+
+        if (allActivities.length === 0) {
+            return {
+                currentStreak: 0,
+                longestStreak: 0,
+                lastTrainingDate: null
+            };
+        }
+
+        // Convert dates to day strings for easier comparison (YYYY-MM-DD)
+        const uniqueDays = [...new Set(allActivities.map(date => 
+            date.toISOString().split('T')[0]
+        ))].sort((a, b) => new Date(b) - new Date(a));
+
+        const today = new Date().toISOString().split('T')[0];
+        const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+        let currentStreak = 0;
+        let longestStreak = 0;
+        let tempStreak = 0;
+
+        // Calculate current streak
+        for (let i = 0; i < uniqueDays.length; i++) {
+            const dayDate = uniqueDays[i];
+            
+            if (i === 0) {
+                // First day (most recent)
+                if (dayDate === today || dayDate === yesterday) {
+                    currentStreak = 1;
+                    tempStreak = 1;
+                } else {
+                    // No recent activity, current streak is 0
+                    currentStreak = 0;
+                    break;
+                }
+            } else {
+                // Check if this day is consecutive to the previous day
+                const prevDate = new Date(uniqueDays[i - 1]);
+                const currDate = new Date(dayDate);
+                const dayDiff = Math.floor((prevDate - currDate) / (1000 * 60 * 60 * 24));
+                
+                if (dayDiff === 1) {
+                    // Consecutive day
+                    currentStreak++;
+                    tempStreak++;
+                } else {
+                    // Gap in training, stop current streak calculation
+                    break;
+                }
+            }
+        }
+
+        // Calculate longest streak by checking all consecutive sequences
+        tempStreak = 0;
+        for (let i = 0; i < uniqueDays.length; i++) {
+            if (i === 0) {
+                tempStreak = 1;
+                longestStreak = Math.max(longestStreak, tempStreak);
+            } else {
+                const prevDate = new Date(uniqueDays[i - 1]);
+                const currDate = new Date(uniqueDays[i]);
+                const dayDiff = Math.floor((prevDate - currDate) / (1000 * 60 * 60 * 24));
+                
+                if (dayDiff === 1) {
+                    tempStreak++;
+                    longestStreak = Math.max(longestStreak, tempStreak);
+                } else {
+                    tempStreak = 1;
+                }
+            }
+        }
+
+        return {
+            currentStreak,
+            longestStreak,
+            lastTrainingDate: uniqueDays[0] || null
+        };
+    } catch (error) {
+        logger.error('Error calculating training streak:', error);
+        return {
+            currentStreak: 0,
+            longestStreak: 0,
+            lastTrainingDate: null
+        };
+    }
+}
+
 // @route   GET api/stats/summary
 // @desc    Get training statistics for the user
 // @access  Private
 router.get('/summary', auth, asyncHandler(async (req, res) => {
-    const userId = new mongoose.Types.ObjectId(req.user.id);
+    const userId = mongoose.Types.ObjectId.createFromHexString(req.user.id);
 
     // Get the start and end of the current month
     const now = new Date();
@@ -77,10 +180,15 @@ router.get('/summary', auth, asyncHandler(async (req, res) => {
     const seminarData = seminarStats[0] || { giSeminars: 0, noGiSeminars: 0 };
     const competitionData = competitionStats[0] || { giCompetitions: 0, noGiCompetitions: 0 };
 
+    // Calculate training streaks (sessions only for simplicity)
+    const streakData = await calculateTrainingStreak(userId);
+    logger.info('Streak data calculated:', streakData);
+
     // Combine all activity types
     const result = {
         totalHours: sessionData.totalHours,
         hoursThisMonth: sessionData.hoursThisMonth,
+        streaks: streakData,
         typeDistribution: [
             { 
               name: "Gi Training", 
