@@ -245,4 +245,204 @@ router.get('/summary', auth, asyncHandler(async (req, res) => {
     res.json(result);
 }));
 
+// @route   GET api/stats/advanced
+// @desc    Get advanced analytics for pro users
+// @access  Private
+router.get('/advanced', auth, asyncHandler(async (req, res) => {
+    const userId = mongoose.Types.ObjectId.createFromHexString(req.user.id);
+    const { timeframe = '6months' } = req.query; // 1month, 3months, 6months, 1year, all
+
+    // Calculate date range based on timeframe
+    const now = new Date();
+    let startDate;
+    
+    switch (timeframe) {
+        case '1month':
+            startDate = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+            break;
+        case '3months':
+            startDate = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+            break;
+        case '6months':
+            startDate = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
+            break;
+        case '1year':
+            startDate = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+            break;
+        default:
+            startDate = new Date(2020, 0, 1); // Far enough back to include all data
+    }
+
+    // Get training frequency data (sessions by week)
+    const weeklyTrainingData = await Session.aggregate([
+        { $match: { user: userId, date: { $gte: startDate } } },
+        {
+            $group: {
+                _id: {
+                    year: { $year: '$date' },
+                    week: { $week: '$date' }
+                },
+                sessionsCount: { $sum: 1 },
+                totalHours: { $sum: '$duration' },
+                avgDuration: { $avg: '$duration' }
+            }
+        },
+        { $sort: { '_id.year': 1, '_id.week': 1 } },
+        { $limit: 50 } // Limit to prevent huge responses
+    ]);
+
+    // Get training consistency (training days per month)
+    const monthlyConsistency = await Session.aggregate([
+        { $match: { user: userId, date: { $gte: startDate } } },
+        {
+            $group: {
+                _id: {
+                    year: { $year: '$date' },
+                    month: { $month: '$date' },
+                    day: { $dayOfMonth: '$date' }
+                }
+            }
+        },
+        {
+            $group: {
+                _id: {
+                    year: '$_id.year',
+                    month: '$_id.month'
+                },
+                trainingDays: { $sum: 1 }
+            }
+        },
+        { $sort: { '_id.year': 1, '_id.month': 1 } }
+    ]);
+
+    // Get technique focus areas (from tags)
+    const techniqueFocus = await Session.aggregate([
+        { $match: { user: userId, date: { $gte: startDate } } },
+        { $unwind: '$tags' },
+        {
+            $group: {
+                _id: '$tags.name',
+                frequency: { $sum: 1 },
+                lastPracticed: { $max: '$date' }
+            }
+        },
+        { $sort: { frequency: -1 } },
+        { $limit: 20 }
+    ]);
+
+    // Get training time distribution
+    const timeDistribution = await Session.aggregate([
+        { $match: { user: userId, date: { $gte: startDate } } },
+        {
+            $group: {
+                _id: {
+                    hour: { $hour: '$date' }
+                },
+                sessionsCount: { $sum: 1 }
+            }
+        },
+        { $sort: { '_id.hour': 1 } }
+    ]);
+
+    // Get performance metrics
+    const performanceMetrics = await Session.aggregate([
+        { $match: { user: userId, date: { $gte: startDate } } },
+        {
+            $group: {
+                _id: null,
+                totalSessions: { $sum: 1 },
+                avgDuration: { $avg: '$duration' },
+                totalHours: { $sum: '$duration' },
+                longestSession: { $max: '$duration' },
+                shortestSession: { $min: '$duration' }
+            }
+        }
+    ]);
+
+    // Get monthly progression
+    const monthlyProgression = await Session.aggregate([
+        { $match: { user: userId, date: { $gte: startDate } } },
+        {
+            $group: {
+                _id: {
+                    year: { $year: '$date' },
+                    month: { $month: '$date' }
+                },
+                sessions: { $sum: 1 },
+                hours: { $sum: '$duration' },
+                avgDuration: { $avg: '$duration' }
+            }
+        },
+        { $sort: { '_id.year': 1, '_id.month': 1 } }
+    ]);
+
+    // Calculate training streaks for advanced view
+    const streakData = await calculateTrainingStreak(userId);
+
+    const result = {
+        timeframe,
+        dateRange: {
+            start: startDate,
+            end: now
+        },
+        weeklyTraining: weeklyTrainingData,
+        monthlyConsistency,
+        techniqueFocus,
+        timeDistribution,
+        performanceMetrics: performanceMetrics[0] || {
+            totalSessions: 0,
+            avgDuration: 0,
+            totalHours: 0,
+            longestSession: 0,
+            shortestSession: 0
+        },
+        monthlyProgression,
+        streaks: streakData,
+        insights: generateInsights(performanceMetrics[0], monthlyConsistency, techniqueFocus)
+    };
+
+    res.json(result);
+}));
+
+// Helper function to generate insights
+function generateInsights(performance, consistency, techniques) {
+    const insights = [];
+
+    if (performance?.avgDuration > 1.5) {
+        insights.push({
+            type: 'positive',
+            title: 'Great Session Length',
+            message: `Your average session is ${performance.avgDuration.toFixed(1)} hours - excellent commitment!`
+        });
+    }
+
+    if (consistency?.length > 0) {
+        const avgDaysPerMonth = consistency.reduce((sum, month) => sum + month.trainingDays, 0) / consistency.length;
+        if (avgDaysPerMonth >= 12) {
+            insights.push({
+                type: 'positive', 
+                title: 'Consistent Training',
+                message: `You train ${avgDaysPerMonth.toFixed(0)} days per month on average - amazing consistency!`
+            });
+        } else if (avgDaysPerMonth < 6) {
+            insights.push({
+                type: 'suggestion',
+                title: 'Consistency Opportunity',
+                message: 'Try to increase training frequency for faster progress.'
+            });
+        }
+    }
+
+    if (techniques?.length > 0) {
+        const topTechnique = techniques[0];
+        insights.push({
+            type: 'info',
+            title: 'Most Practiced',
+            message: `You've focused heavily on "${topTechnique._id}" - consider diversifying your practice.`
+        });
+    }
+
+    return insights;
+}
+
 module.exports = router;
