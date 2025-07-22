@@ -1,8 +1,8 @@
 # 🥋 Mat Time
 
-**A comprehensive martial arts training tracker for serious practitioners**
+**A comprehensive jiujitsu training tracker for serious practitioners**
 
-Mat Time is a modern, full-stack mobile application designed specifically for Brazilian Jiu-Jitsu practitioners and martial artists who want to systematically track their training journey. Built with React Native and Node.js, it combines intuitive session logging with powerful analytics to help you understand and improve your training patterns.
+Mat Time is a modern, full-stack mobile application designed specifically for Brazilian Jiu-Jitsu practitioners who want to systematically track their training journey. Built with React Native and Node.js, it combines intuitive session logging with powerful analytics to help you understand and improve your training patterns.
 
 [![Production Ready](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)](https://github.com/yourusername/mat-time)
 [![Security Verified](https://img.shields.io/badge/Security-Enterprise%20Grade-blue)](https://github.com/yourusername/mat-time)
@@ -12,7 +12,7 @@ Mat Time is a modern, full-stack mobile application designed specifically for Br
 
 ## 📝 What is Mat Time?
 
-Mat Time transforms how martial artists track their progress by providing:
+Mat Time transforms how jiujitsu practitioners track their progress by providing:
 
 - **Smart Session Logging**: Log training sessions, seminars, and competitions with detailed notes
 - **Advanced Tagging System**: Categorize techniques with a searchable, scalable tag interface
@@ -20,7 +20,7 @@ Mat Time transforms how martial artists track their progress by providing:
 - **Unified Search**: Find any training session across your entire history instantly
 - **Pro Features**: Advanced analytics, seminar tracking, and competition logging for serious practitioners
 
-**Perfect for**: BJJ practitioners, martial arts students, academy owners, and anyone serious about tracking their training progression.
+**Perfect for**: BJJ practitioners, BJJ competitors, and anyone serious about tracking their training progression.
 
 ---
 
@@ -300,7 +300,7 @@ We welcome contributions! Please follow these guidelines:
 ## 🙌 Acknowledgements
 
 - **React Native & Expo Team** - Exceptional cross-platform development framework
-- **MongoDB** - Flexible document database perfect for martial arts data
+- **MongoDB** - Flexible document database perfect for training data
 - **RevenueCat** - Seamless subscription management and analytics
 - **Brazilian Jiu-Jitsu Community** - Inspiration and feedback for feature development
 - **Open Source Contributors** - The amazing packages that make this possible
@@ -326,4 +326,4 @@ We welcome contributions! Please follow these guidelines:
 
 ---
 
-*Built with ❤️ for the martial arts community*
+*Built with ❤️ for the jiujitsu community*

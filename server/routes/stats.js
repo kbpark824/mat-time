@@ -320,8 +320,17 @@ router.get('/advanced', auth, asyncHandler(async (req, res) => {
         { $match: { user: userId, date: { $gte: startDate } } },
         { $unwind: '$tags' },
         {
+            $lookup: {
+                from: 'tags',
+                localField: 'tags',
+                foreignField: '_id',
+                as: 'tagDetails'
+            }
+        },
+        { $unwind: '$tagDetails' },
+        {
             $group: {
-                _id: '$tags.name',
+                _id: '$tagDetails.name',
                 frequency: { $sum: 1 },
                 lastPracticed: { $max: '$date' }
             }
