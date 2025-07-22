@@ -147,7 +147,7 @@ export default function AdvancedAnalytics() {
   };
 
   const techniqueData = analytics.techniqueFocus.slice(0, 5).map(tech => ({
-    name: tech._id.substring(0, 12) + (tech._id.length > 12 ? '...' : ''),
+    name: tech._id ? (tech._id.substring(0, 12) + (tech._id.length > 12 ? '...' : '')) : 'Unknown',
     frequency: tech.frequency,
     color: `hsl(${Math.random() * 360}, 70%, 60%)`,
     legendFontColor: colors.primaryText,

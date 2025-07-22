@@ -11,7 +11,7 @@ const requestLogger = require('./middleware/requestLogger');
 dotenv.config();
 
 // Validate required environment variables
-const requiredEnvVars = ['MONGO_URI', 'JWT_SECRET'];
+const requiredEnvVars = ['MONGO_URI', 'JWT_SECRET', 'REVENUECAT_WEBHOOK_SECRET'];
 const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
 
 if (missingEnvVars.length > 0) {
@@ -51,6 +51,7 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' })); // Body parser for JSON with size limit
+app.use(express.urlencoded({ extended: true, parameterLimit: 20 })); // Limit URL parameters to prevent HPP
 
 // Request logging middleware
 app.use(requestLogger);

@@ -6,7 +6,7 @@ import { useProStatus } from '../../hooks/useProStatus';
 import colors from '../../constants/colors';
 
 export default function StatsScreen() {
-  const { isProUser } = useProStatus();
+  const { isPro: isProUser } = useProStatus();
   const [showPaywall, setShowPaywall] = useState(false);
 
   // If user is pro, show the advanced analytics

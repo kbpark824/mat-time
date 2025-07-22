@@ -19,8 +19,18 @@ const verifySignature = (req, res, next) => {
     .digest('hex');
   
   // Use timing-safe comparison to prevent timing attacks
-  if (!crypto.timingSafeEqual(Buffer.from(signature, 'hex'), Buffer.from(expectedSignature, 'hex'))) {
-    return res.status(401).json({ msg: 'Unauthorized - Invalid signature' });
+  const signatureBuffer = Buffer.alloc(32); // Fixed length for SHA256
+  const expectedBuffer = Buffer.alloc(32);
+  
+  try {
+    Buffer.from(signature, 'hex').copy(signatureBuffer);
+    Buffer.from(expectedSignature, 'hex').copy(expectedBuffer);
+    
+    if (!crypto.timingSafeEqual(signatureBuffer, expectedBuffer)) {
+      return res.status(401).json({ msg: 'Unauthorized - Invalid signature' });
+    }
+  } catch (error) {
+    return res.status(401).json({ msg: 'Unauthorized - Invalid signature format' });
   }
   
   next();

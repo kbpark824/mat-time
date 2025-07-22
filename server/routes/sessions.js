@@ -95,7 +95,11 @@ router.get('/', auth, asyncHandler(async (req, res) => {
   let query = { user: req.user.id };
 
   if (keyword) {
-    query.$text = { $search: keyword };
+    // Sanitize keyword to prevent MongoDB operator injection
+    const sanitizedKeyword = keyword.replace(/[\$\{\}]/g, '').trim();
+    if (sanitizedKeyword.length > 0) {
+      query.$text = { $search: sanitizedKeyword };
+    }
   }
   
   if (tags) {

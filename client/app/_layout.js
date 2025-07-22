@@ -13,8 +13,8 @@ import colors from '../constants/colors';
 SplashScreen.preventAutoHideAsync();
 
 const revenueCatKeys = {
-  apple: Constants.expoConfig?.extra?.revenueCatAppleKey,
-  google: Constants.expoConfig?.extra?.revenueCatGoogleKey,
+  apple: process.env.EXPO_PUBLIC_REVENUECAT_APPLE_KEY || Constants.expoConfig?.extra?.revenueCatAppleKey || 'appl_FrctCCLTynKgxasefzLYLewAUpz',
+  google: process.env.EXPO_PUBLIC_REVENUECAT_GOOGLE_KEY || Constants.expoConfig?.extra?.revenueCatGoogleKey || 'goog_PxjVqJelFyQQBVPtpRKVzdNDdwE',
 };
 
 function Layout() {
