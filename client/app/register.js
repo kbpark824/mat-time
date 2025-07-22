@@ -41,7 +41,7 @@ export default function RegisterScreen() {
     }
     try {
       const revenueCatId = __DEV__ 
-        ? `preview-user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        ? `preview-user-${Date.now()}-${Array.from({length: 32}, () => Math.floor(Math.random() * 16).toString(16)).join('')}`
         : await Purchases.getAppUserID();
       await register(email.toLowerCase(), password, revenueCatId);
     } catch (error) {

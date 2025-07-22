@@ -1,8 +1,22 @@
 const express = require('express');
 const crypto = require('crypto');
+const rateLimit = require('express-rate-limit');
 const router = express.Router();
 const User = require('../models/User');
 const logger = require('../config/logger');
+
+// Rate limiting for webhook endpoint - more restrictive than general API
+const webhookLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 10, // Limit each IP to 10 webhook requests per 5 minutes
+  message: {
+    error: 'Too many webhook requests from this IP, please try again later.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Skip rate limiting for localhost in development
+  skip: (req) => process.env.NODE_ENV !== 'production' && req.ip === '127.0.0.1'
+});
 
 // Middleware to verify RevenueCat webhook signature
 const verifySignature = (req, res, next) => {
@@ -38,8 +52,8 @@ const verifySignature = (req, res, next) => {
 
 // @route   POST /api/revenuecat/webhook
 // @desc    Handle RevenueCat webhooks
-// @access  Public (but signature verified)
-router.post('/webhook', verifySignature, async (req, res) => {
+// @access  Public (but signature verified and rate limited)
+router.post('/webhook', webhookLimiter, verifySignature, async (req, res) => {
   const { event } = req.body;
   const { app_user_id, entitlements } = event;
 

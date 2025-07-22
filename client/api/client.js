@@ -1,6 +1,7 @@
 import axios from 'axios';
 import authStorage from '../auth/storage';
 import getApiUrl from '../config/api';
+import { jwtDecode } from 'jwt-decode';
 
 const apiClient = axios.create({
   baseURL: getApiUrl(),
@@ -13,23 +14,7 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(async (config) => {
   const token = await authStorage.getToken();
   if (token) {
-    // Check token expiration before each request
-    try {
-      const { jwtDecode } = await import('jwt-decode');
-      const decodedToken = jwtDecode(token);
-      const currentTime = Date.now() / 1000;
-      
-      if (decodedToken.exp && decodedToken.exp < currentTime) {
-        // Token is expired, remove it
-        await authStorage.removeToken();
-        // Don't add expired token to headers
-      } else {
-        config.headers['x-auth-token'] = token;
-      }
-    } catch (error) {
-      // If token decode fails, remove invalid token
-      await authStorage.removeToken();
-    }
+    config.headers['x-auth-token'] = token;
   }
   return config;
 });

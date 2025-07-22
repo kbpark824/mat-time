@@ -17,7 +17,12 @@ export const AuthProvider = ({ children }) => {
       // Always store token for persistent login
       await authStorage.storeToken(token);
     } catch (error) {
-      console.error("Login failed", error.response.data);
+      // Only log error details in development, not production
+      if (__DEV__) {
+        console.error("Login failed", error.response?.data);
+      } else {
+        console.error("Login failed");
+      }
       throw error;
     }
   };
@@ -30,7 +35,12 @@ export const AuthProvider = ({ children }) => {
       setUser(decodedToken.user);
       await authStorage.storeToken(token);
     } catch (error) {
-        console.error("Registration failed", error.response.data);
+        // Only log error details in development, not production
+        if (__DEV__) {
+            console.error("Registration failed", error.response?.data);
+        } else {
+            console.error("Registration failed");
+        }
         throw error;
     }
   };

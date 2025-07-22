@@ -50,7 +50,10 @@ router.get('/detailed', async (req, res) => {
   } catch (error) {
     healthCheck.success = false;
     healthCheck.services.database.status = 'unhealthy';
-    healthCheck.services.database.error = error.message;
+    // Don't expose database error details in production
+    if (process.env.NODE_ENV !== 'production') {
+      healthCheck.services.database.error = error.message;
+    }
   }
 
   const statusCode = healthCheck.success ? 200 : 503;
@@ -86,7 +89,8 @@ router.get('/ready', async (req, res) => {
     res.status(503).json({
       success: false,
       message: 'Application is not ready',
-      error: error.message,
+      // Don't expose error details in production
+      ...(process.env.NODE_ENV !== 'production' && { error: error.message }),
       timestamp: new Date().toISOString()
     });
   }
