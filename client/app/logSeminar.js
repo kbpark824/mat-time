@@ -1,4 +1,4 @@
-import React, { useState, useRef, useImperativeHandle } from 'react';
+import React, { useState, useRef, useImperativeHandle, useEffect } from 'react';
 import { TextInput, StyleSheet, Text, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import apiClient from '../api/client';
@@ -10,20 +10,41 @@ export default function SeminarLogScreen() {
   const navigation = useNavigation();
   const params = useLocalSearchParams();
   const screenRef = useRef();
-  const seminarToEdit = params.id && params.data ? (() => {
-    try {
-      return JSON.parse(params.data);
-    } catch (e) {
-      console.error('Invalid seminar data:', e);
-      return null;
-    }
-  })() : null;
+  const [seminarToEdit, setSeminarToEdit] = useState(null);
+  const [loading, setLoading] = useState(!!params.id);
 
-  const [date, setDate] = useState(seminarToEdit ? new Date(seminarToEdit.date) : new Date());
-  const [professorName, setProfessorName] = useState(seminarToEdit ? seminarToEdit.professorName : '');
-  const [type, setType] = useState(seminarToEdit ? seminarToEdit.type : 'Gi');
-  const [techniqueNotes, setTechniqueNotes] = useState(seminarToEdit ? seminarToEdit.techniqueNotes : '');
-  const [tags, setTags] = useState(seminarToEdit ? seminarToEdit.tags.map(t => t.name) : []);
+  const [date, setDate] = useState(new Date());
+  const [professorName, setProfessorName] = useState('');
+  const [type, setType] = useState('Gi');
+  const [techniqueNotes, setTechniqueNotes] = useState('');
+  const [tags, setTags] = useState([]);
+
+  useEffect(() => {
+    if (params.id) {
+      fetchSeminarData();
+    }
+  }, [params.id]);
+
+  const fetchSeminarData = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.get(`/seminars/${params.id}`);
+      const seminar = response.data;
+      
+      setSeminarToEdit(seminar);
+      setDate(new Date(seminar.date));
+      setProfessorName(seminar.professorName || '');
+      setType(seminar.type);
+      setTechniqueNotes(seminar.techniqueNotes || '');
+      setTags(seminar.tags.map(t => t.name));
+    } catch (error) {
+      console.error('Error fetching seminar:', error);
+      Alert.alert('Error', 'Failed to load seminar data');
+      router.back();
+    } finally {
+      setLoading(false);
+    }
+  };
   const [showPaywall, setShowPaywall] = useState(false);
   
   const isEditing = !!seminarToEdit;

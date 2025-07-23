@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/authMiddleware');
 const asyncHandler = require('../middleware/asyncHandler');
+const validateObjectId = require('../middleware/validateObjectId');
 const Tag = require('../models/Tag');
 const Session = require('../models/Session');
 const Seminar = require('../models/Seminar');
@@ -19,7 +20,7 @@ router.get('/', auth, asyncHandler(async (req, res) => {
 // @route   DELETE api/tags/:id
 // @desc    Delete a tag and remove it from all associated activities
 // @access  Private
-router.delete('/:id', auth, asyncHandler(async (req, res) => {
+router.delete('/:id', auth, validateObjectId, asyncHandler(async (req, res) => {
     const { id } = req.params;
     
     // Verify the tag exists and belongs to the user

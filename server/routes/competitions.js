@@ -3,9 +3,11 @@ const router = express.Router();
 const Joi = require('joi');
 const auth = require('../middleware/authMiddleware');
 const asyncHandler = require('../middleware/asyncHandler');
+const validateObjectId = require('../middleware/validateObjectId');
 const Competition = require('../models/Competition');
 const Tag = require('../models/Tag');
 const logger = require('../config/logger');
+const { createOrFindTags } = require('../utils/tagUtils');
 
 // Validation schemas
 const competitionSchema = Joi.object({
@@ -86,19 +88,7 @@ const competitionSchema = Joi.object({
 
 // A helper function to find or create tags and return their IDs
 const getTagIds = async (tagNames, userId) => {
-  if (!tagNames || tagNames.length === 0) {
-    return [];
-  }
-  
-  const tagPromises = tagNames.map(name => {
-    return Tag.findOneAndUpdate(
-      { name: name.trim().toLowerCase(), user: userId },
-      { $setOnInsert: { name: name.trim().toLowerCase(), user: userId } },
-      { upsert: true, new: true }
-    );
-  });
-  
-  const tags = await Promise.all(tagPromises);
+  const tags = await createOrFindTags(tagNames, userId);
   return tags.map(tag => tag._id);
 };
 
@@ -167,7 +157,11 @@ router.get('/', auth, asyncHandler(async (req, res) => {
   let query = { user: req.user.id };
 
   if (keyword) {
-    query.$text = { $search: keyword };
+    // Sanitize keyword to prevent MongoDB operator injection
+    const sanitizedKeyword = keyword.replace(/[\$\{\}]/g, '').trim();
+    if (sanitizedKeyword.length > 0) {
+      query.$text = { $search: sanitizedKeyword };
+    }
   }
   
   if (tags) {
@@ -200,7 +194,7 @@ router.get('/', auth, asyncHandler(async (req, res) => {
 // @route   PUT api/competitions/:id
 // @desc    Update a competition
 // @access  Private
-router.put('/:id', auth, asyncHandler(async (req, res) => {
+router.put('/:id', auth, validateObjectId, asyncHandler(async (req, res) => {
     // Validate input
     const { error } = competitionSchema.validate(req.body);
     if (error) {
@@ -265,7 +259,7 @@ router.put('/:id', auth, asyncHandler(async (req, res) => {
 // @route   DELETE api/competitions/:id
 // @desc    Delete a competition
 // @access  Private
-router.delete('/:id', auth, asyncHandler(async (req, res) => {
+router.delete('/:id', auth, validateObjectId, asyncHandler(async (req, res) => {
     let competition = await Competition.findById(req.params.id);
     if (!competition) return res.status(404).json({ msg: 'Competition not found' });
 

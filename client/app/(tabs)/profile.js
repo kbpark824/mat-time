@@ -88,7 +88,7 @@ export default function ProfileScreen() {
             <View style={styles.upgradeContainer}>
               <TouchableOpacity style={styles.button} onPress={handleUpgradePress}>
                 <View style={styles.buttonContent}>
-                  <Ionicons name="star" size={16} color="#8B4513" />
+                  <Text style={styles.starIcon}>⭐</Text>
                   <Text style={styles.buttonText}>Upgrade to Pro</Text>
                 </View>
               </TouchableOpacity>
@@ -257,11 +257,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  starIcon: {
+    fontSize: 16,
+    marginRight: 8,
+  },
   buttonText: {
     color: '#8B4513',
     fontSize: 16,
     fontWeight: 'bold',
-    marginLeft: 8,
     letterSpacing: 1,
   },
   proBadgeContainer: {

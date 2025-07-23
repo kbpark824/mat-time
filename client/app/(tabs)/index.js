@@ -143,7 +143,7 @@ export default function HomeScreen() {
     
     const route = routeMap[activity.activityType];
     if (route) {
-      router.push(`/${route}?id=${activity._id}&data=${encodeURIComponent(JSON.stringify(activity))}`);
+      router.push(`/${route}?id=${activity._id}`);
     }
   };
 

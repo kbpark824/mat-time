@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, TextInput, StyleSheet, Text, Alert, TouchableOpacity, Switch } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -10,40 +10,62 @@ import colors from '../constants/colors';
 export default function CompetitionLogScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const competitionToEdit = params.id && params.data ? (() => {
-    try {
-      return JSON.parse(params.data);
-    } catch (e) {
-      console.error('Invalid competition data:', e);
-      return null;
-    }
-  })() : null;
+  const [competitionToEdit, setCompetitionToEdit] = useState(null);
+  const [loading, setLoading] = useState(!!params.id);
 
-  const [date, setDate] = useState(competitionToEdit ? new Date(competitionToEdit.date) : new Date());
+  const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [name, setName] = useState(competitionToEdit ? competitionToEdit.name : '');
-  const [organization, setOrganization] = useState(competitionToEdit ? competitionToEdit.organization : '');
-  const [type, setType] = useState(competitionToEdit ? competitionToEdit.type : 'Gi');
-  const [weightDivision, setWeightDivision] = useState(competitionToEdit ? competitionToEdit.weightDivision : '');
-  const [resultsInDivision, setResultsInDivision] = useState(competitionToEdit ? competitionToEdit.resultsInDivision : '');
-  const [matchesInDivision, setMatchesInDivision] = useState(competitionToEdit ? competitionToEdit.matchesInDivision.toString() : '1');
-  const [matchNotesInDivision, setMatchNotesInDivision] = useState(
-    competitionToEdit 
-      ? competitionToEdit.matchNotesInDivision.map(note => note.notes)
-      : ['']
-  );
+  const [name, setName] = useState('');
+  const [organization, setOrganization] = useState('');
+  const [type, setType] = useState('Gi');
+  const [weightDivision, setWeightDivision] = useState('');
+  const [resultsInDivision, setResultsInDivision] = useState('');
+  const [matchesInDivision, setMatchesInDivision] = useState('1');
+  const [matchNotesInDivision, setMatchNotesInDivision] = useState(['']);
   
-  const [competedInOpenClass, setCompetedInOpenClass] = useState(competitionToEdit ? competitionToEdit.competedInOpenClass : false);
-  const [resultsInOpenClass, setResultsInOpenClass] = useState(competitionToEdit ? competitionToEdit.resultsInOpenClass : '');
-  const [matchesInOpenClass, setMatchesInOpenClass] = useState(competitionToEdit ? competitionToEdit.matchesInOpenClass.toString() : '0');
-  const [matchNotesInOpenClass, setMatchNotesInOpenClass] = useState(
-    competitionToEdit 
-      ? competitionToEdit.matchNotesInOpenClass.map(note => note.notes)
-      : []
-  );
+  const [competedInOpenClass, setCompetedInOpenClass] = useState(false);
+  const [resultsInOpenClass, setResultsInOpenClass] = useState('');
+  const [matchesInOpenClass, setMatchesInOpenClass] = useState('0');
+  const [matchNotesInOpenClass, setMatchNotesInOpenClass] = useState([]);
+
+  useEffect(() => {
+    if (params.id) {
+      fetchCompetitionData();
+    }
+  }, [params.id]);
+
+  const fetchCompetitionData = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.get(`/competitions/${params.id}`);
+      const competition = response.data;
+      
+      setCompetitionToEdit(competition);
+      setDate(new Date(competition.date));
+      setName(competition.name || '');
+      setOrganization(competition.organization || '');
+      setType(competition.type);
+      setWeightDivision(competition.weightDivision || '');
+      setResultsInDivision(competition.resultsInDivision || '');
+      setMatchesInDivision(competition.matchesInDivision.toString());
+      setMatchNotesInDivision(competition.matchNotesInDivision.map(note => note.notes));
+      setCompetedInOpenClass(competition.competedInOpenClass || false);
+      setResultsInOpenClass(competition.resultsInOpenClass || '');
+      setMatchesInOpenClass(competition.matchesInOpenClass.toString());
+      setMatchNotesInOpenClass(competition.matchNotesInOpenClass.map(note => note.notes));
+      setGeneralNotes(competition.generalNotes || '');
+      setTags(competition.tags.map(t => t.name));
+    } catch (error) {
+      console.error('Error fetching competition:', error);
+      Alert.alert('Error', 'Failed to load competition data');
+      router.back();
+    } finally {
+      setLoading(false);
+    }
+  };
   
-  const [generalNotes, setGeneralNotes] = useState(competitionToEdit ? competitionToEdit.generalNotes : '');
-  const [tags, setTags] = useState(competitionToEdit ? competitionToEdit.tags.map(t => t.name) : []);
+  const [generalNotes, setGeneralNotes] = useState('');
+  const [tags, setTags] = useState([]);
   
   const isEditing = !!competitionToEdit;
   const onChangeDate = (event, selectedDate) => {

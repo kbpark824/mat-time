@@ -1,4 +1,4 @@
-import React, { useState, useRef, useImperativeHandle } from 'react';
+import React, { useState, useRef, useImperativeHandle, useEffect } from 'react';
 import { TextInput, StyleSheet, Text, Alert, View, TouchableOpacity, ScrollView, Modal, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -11,22 +11,44 @@ export default function SessionLogScreen() {
   const navigation = useNavigation();
   const params = useLocalSearchParams();
   const screenRef = useRef();
-  const sessionToEdit = params.id && params.data ? (() => {
-    try {
-      return JSON.parse(params.data);
-    } catch (e) {
-      console.error('Invalid session data:', e);
-      return null;
-    }
-  })() : null;
+  const [sessionToEdit, setSessionToEdit] = useState(null);
+  const [loading, setLoading] = useState(!!params.id);
 
-  const [date, setDate] = useState(sessionToEdit ? new Date(sessionToEdit.date) : new Date());
-  const [duration, setDuration] = useState(sessionToEdit ? sessionToEdit.duration : 1.5);
+  const [date, setDate] = useState(new Date());
+  const [duration, setDuration] = useState(1.5);
   const [showDurationPicker, setShowDurationPicker] = useState(false);
-  const [type, setType] = useState(sessionToEdit ? sessionToEdit.type : 'Gi');
-  const [techniqueNotes, setTechniqueNotes] = useState(sessionToEdit ? sessionToEdit.techniqueNotes : '');
-  const [rollingNotes, setRollingNotes] = useState(sessionToEdit ? sessionToEdit.rollingNotes : '');
-  const [tags, setTags] = useState(sessionToEdit ? sessionToEdit.tags.map(t => t.name) : []);
+  const [type, setType] = useState('Gi');
+  const [techniqueNotes, setTechniqueNotes] = useState('');
+  const [rollingNotes, setRollingNotes] = useState('');
+  const [tags, setTags] = useState([]);
+
+  useEffect(() => {
+    if (params.id) {
+      fetchSessionData();
+    }
+  }, [params.id]);
+
+  const fetchSessionData = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.get(`/sessions/${params.id}`);
+      const session = response.data;
+      
+      setSessionToEdit(session);
+      setDate(new Date(session.date));
+      setDuration(session.duration);
+      setType(session.type);
+      setTechniqueNotes(session.techniqueNotes || '');
+      setRollingNotes(session.rollingNotes || '');
+      setTags(session.tags.map(t => t.name));
+    } catch (error) {
+      console.error('Error fetching session:', error);
+      Alert.alert('Error', 'Failed to load session data');
+      router.back();
+    } finally {
+      setLoading(false);
+    }
+  };
   const [showPaywall, setShowPaywall] = useState(false);
   
   const isEditing = !!sessionToEdit;

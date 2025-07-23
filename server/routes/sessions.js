@@ -3,9 +3,11 @@ const router = express.Router();
 const Joi = require('joi');
 const auth = require('../middleware/authMiddleware');
 const asyncHandler = require('../middleware/asyncHandler');
+const validateObjectId = require('../middleware/validateObjectId');
 const Session = require('../models/Session');
 const Tag = require('../models/Tag');
 const logger = require('../config/logger');
+const { createOrFindTags } = require('../utils/tagUtils');
 
 // Validation schemas
 const sessionSchema = Joi.object({
@@ -37,19 +39,7 @@ const sessionSchema = Joi.object({
 
 // A helper function to find or create tags and return their IDs
 const getTagIds = async (tagNames, userId) => {
-  if (!tagNames || tagNames.length === 0) {
-    return [];
-  }
-  
-  const tagPromises = tagNames.map(name => {
-    return Tag.findOneAndUpdate(
-      { name: name.trim().toLowerCase(), user: userId },
-      { $setOnInsert: { name: name.trim().toLowerCase(), user: userId } },
-      { upsert: true, new: true }
-    );
-  });
-  
-  const tags = await Promise.all(tagPromises);
+  const tags = await createOrFindTags(tagNames, userId);
   return tags.map(tag => tag._id);
 };
 
@@ -133,7 +123,7 @@ router.get('/', auth, asyncHandler(async (req, res) => {
 // @route   PUT api/sessions/:id
 // @desc    Update a session
 // @access  Private
-router.put('/:id', auth, asyncHandler(async (req, res) => {
+router.put('/:id', auth, validateObjectId, asyncHandler(async (req, res) => {
     // Validate input
     const { error } = sessionSchema.validate(req.body);
     if (error) {
@@ -175,7 +165,7 @@ router.put('/:id', auth, asyncHandler(async (req, res) => {
 // @route   DELETE api/sessions/:id
 // @desc    Delete a session
 // @access  Private
-router.delete('/:id', auth, asyncHandler(async (req, res) => {
+router.delete('/:id', auth, validateObjectId, asyncHandler(async (req, res) => {
     let session = await Session.findById(req.params.id);
     if (!session) return res.status(404).json({ msg: 'Session not found' });
 
