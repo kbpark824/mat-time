@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TextInput, StyleSheet, Text, Alert, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
+import { View, TextInput, StyleSheet, Text, Alert, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, TouchableOpacity, Image } from 'react-native';
 import { useAuth } from '../auth/context';
 import { useRouter } from 'expo-router';
 import colors from '../constants/colors';
@@ -26,6 +26,11 @@ export default function LoginScreen() {
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
+          <Image 
+            source={require('../assets/images/logo.png')} 
+            style={styles.logo}
+            resizeMode="contain"
+          />
           <Text style={styles.title}>Welcome Back!</Text>
           <Text style={styles.label}>Email Address</Text>
           <TextInput
@@ -70,6 +75,13 @@ const styles = StyleSheet.create({
     padding: 20, 
     backgroundColor: colors.primaryBackground 
   },
+  logo: {
+    width: 80,
+    height: 80,
+    alignSelf: 'center',
+    marginBottom: 30,
+    borderRadius: 16,
+  },
   title: { 
     fontSize: 24, 
     fontWeight: 'bold', 
@@ -85,17 +97,20 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 40,
-    borderColor: colors.mutedAccent,
-    borderWidth: 1,
     marginBottom: 12,
     paddingHorizontal: 8,
-    borderRadius: 5,
+    borderRadius: 8,
     backgroundColor: colors.white,
     color: colors.primaryText,
+    shadowColor: colors.shadow.color,
+    shadowOffset: colors.shadow.offset,
+    shadowOpacity: colors.shadow.opacity,
+    shadowRadius: colors.shadow.radius,
+    elevation: colors.shadow.elevation,
   },
   spacer: { height: 20 },
   primaryButton: {
-    backgroundColor: colors.primaryText,
+    backgroundColor: colors.accent,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',

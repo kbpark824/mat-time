@@ -104,12 +104,34 @@ export default function HomeScreen() {
       case 'session':
         return `${activity.type} - ${activity.duration} min`;
       case 'seminar':
-        return `${activity.type} - ${activity.professor}`;
+        return `${activity.type} - ${activity.professorName}`;
       case 'competition':
         return `${activity.type} - ${activity.organization}`;
       default:
         return '';
     }
+  };
+
+  const getNotesExcerpt = (activity) => {
+    let notes = '';
+    switch (activity.activityType) {
+      case 'session':
+        notes = activity.techniqueNotes || '';
+        break;
+      case 'seminar':
+        notes = activity.techniqueNotes || '';
+        break;
+      case 'competition':
+        notes = activity.generalNotes || '';
+        break;
+    }
+    
+    if (!notes || notes.trim() === '') {
+      return 'No notes added';
+    }
+    
+    // Return first 80 characters with ellipsis if longer
+    return notes.length > 80 ? notes.substring(0, 80) + '...' : notes;
   };
 
   const handleActivityPress = (activity) => {
@@ -134,6 +156,7 @@ export default function HomeScreen() {
         </View>
       </View>
       <Text style={styles.activitySubtitle}>{getActivitySubtitle(item)}</Text>
+      <Text style={styles.activityNotes}>{getNotesExcerpt(item)}</Text>
     </TouchableOpacity>
   );
 
@@ -212,17 +235,12 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 12,
     padding: 15,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.mutedAccent,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    borderRadius: 12,
+    shadowColor: colors.shadow.color,
+    shadowOffset: colors.shadow.offset,
+    shadowOpacity: colors.shadow.opacity,
+    shadowRadius: colors.shadow.radius,
+    elevation: colors.shadow.elevation,
   },
   activityHeader: {
     flexDirection: 'row',
@@ -248,6 +266,14 @@ const styles = StyleSheet.create({
   activitySubtitle: {
     fontSize: 14,
     color: colors.mutedAccent,
+    marginBottom: 6,
+  },
+  activityNotes: {
+    fontSize: 13,
+    color: colors.primaryText,
+    fontStyle: 'italic',
+    marginBottom: 8,
+    lineHeight: 18,
   },
   emptyContainer: {
     padding: 40,

@@ -107,11 +107,15 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 40,
-    borderColor: colors.mutedAccent,
-    borderWidth: 1,
     paddingHorizontal: 8,
-    borderRadius: 5,
+    borderRadius: 8,
+    backgroundColor: colors.white,
     color: colors.primaryText,
+    shadowColor: colors.shadow.color,
+    shadowOffset: colors.shadow.offset,
+    shadowOpacity: colors.shadow.opacity,
+    shadowRadius: colors.shadow.radius,
+    elevation: colors.shadow.elevation,
   },
   inputError: {
     borderColor: '#ff4444',

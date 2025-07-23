@@ -86,7 +86,6 @@ export default function AddActionBottomSheet({ visible, onClose, onSelectOption,
             useNativeDriver: false,
             tension: 300,
             friction: 30,
-            mass: 0.8,
           }).start();
         }
       },
@@ -146,7 +145,7 @@ export default function AddActionBottomSheet({ visible, onClose, onSelectOption,
               activeOpacity={0.7}
             >
               <View style={styles.optionIconContainer}>
-                <Ionicons name="fitness" size={24} color={colors.primaryText} />
+                <Ionicons name="fitness" size={24} color={colors.accent} />
               </View>
               <View style={styles.optionTextContainer}>
                 <Text style={styles.optionTitle}>Log New Session</Text>
@@ -162,7 +161,7 @@ export default function AddActionBottomSheet({ visible, onClose, onSelectOption,
               activeOpacity={0.7}
             >
               <View style={[styles.optionIconContainer, !isPro && styles.proIconContainer]}>
-                <Ionicons name="school" size={24} color={!isPro ? colors.mutedAccent : colors.primaryText} />
+                <Ionicons name="school" size={24} color={!isPro ? colors.mutedAccent : colors.accent} />
               </View>
               <View style={styles.optionTextContainer}>
                 <View style={styles.optionTitleRow}>
@@ -181,7 +180,7 @@ export default function AddActionBottomSheet({ visible, onClose, onSelectOption,
               activeOpacity={0.7}
             >
               <View style={[styles.optionIconContainer, !isPro && styles.proIconContainer]}>
-                <Ionicons name="trophy" size={24} color={!isPro ? colors.mutedAccent : colors.primaryText} />
+                <Ionicons name="trophy" size={24} color={!isPro ? colors.mutedAccent : colors.accent} />
               </View>
               <View style={styles.optionTextContainer}>
                 <View style={styles.optionTitleRow}>
@@ -208,7 +207,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   bottomSheet: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.primaryBackground,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingTop: 10,
@@ -239,9 +238,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 16,
-    backgroundColor: colors.primaryBackground,
+    backgroundColor: colors.white,
     borderRadius: 12,
     marginBottom: 12,
+    shadowColor: colors.shadow.color,
+    shadowOffset: colors.shadow.offset,
+    shadowOpacity: colors.shadow.opacity,
+    shadowRadius: colors.shadow.radius,
+    elevation: colors.shadow.elevation,
   },
   optionIconContainer: {
     width: 48,

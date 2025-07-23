@@ -4,7 +4,7 @@ import authStorage from '../auth/storage';
 import { useEffect, useState } from 'react';
 import { SplashScreen } from 'expo-router';
 import Purchases from 'react-native-purchases';
-import { Platform, Text, TouchableOpacity } from 'react-native';
+import { Platform, Text, TouchableOpacity, View } from 'react-native';
 import { jwtDecode } from 'jwt-decode';
 import Constants from 'expo-constants';
 import colors from '../constants/colors';
@@ -79,8 +79,48 @@ function Layout() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="login" />
-      <Stack.Screen name="register" />
+      <Stack.Screen 
+        name="login" 
+        options={{
+          headerShown: true,
+          title: 'Login',
+          headerStyle: {
+            backgroundColor: colors.accent,
+          },
+          headerTintColor: colors.white,
+          headerTitleAlign: 'left',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+            fontSize: 28,
+          },
+          headerTitle: () => (
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ color: colors.white, fontSize: 28, fontWeight: 'bold' }}>Login</Text>
+            </View>
+          ),
+        }}
+      />
+      <Stack.Screen 
+        name="register" 
+        options={{
+          headerShown: true,
+          title: 'Register',
+          headerStyle: {
+            backgroundColor: colors.accent,
+          },
+          headerTintColor: colors.white,
+          headerTitleAlign: 'left',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+            fontSize: 28,
+          },
+          headerTitle: () => (
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ color: colors.white, fontSize: 28, fontWeight: 'bold' }}>Register</Text>
+            </View>
+          ),
+        }}
+      />
       <Stack.Screen
         name="(tabs)"
         options={{ headerShown: false }}
@@ -93,7 +133,7 @@ function Layout() {
           presentation: 'modal',
           headerLeft: () => (
             <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Text style={{ color: colors.mutedAccent, fontSize: 16 }}>Cancel</Text>
+              <Text style={{ color: colors.destructive, fontSize: 16 }}>Cancel</Text>
             </TouchableOpacity>
           ),
           headerRight: () => (
@@ -119,7 +159,7 @@ function Layout() {
           presentation: 'modal',
           headerLeft: () => (
             <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Text style={{ color: colors.mutedAccent, fontSize: 16 }}>Cancel</Text>
+              <Text style={{ color: colors.destructive, fontSize: 16 }}>Cancel</Text>
             </TouchableOpacity>
           ),
           headerRight: () => (
@@ -144,7 +184,7 @@ function Layout() {
           presentation: 'modal',
           headerLeft: () => (
             <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Text style={{ color: colors.mutedAccent, fontSize: 16 }}>Cancel</Text>
+              <Text style={{ color: colors.destructive, fontSize: 16 }}>Cancel</Text>
             </TouchableOpacity>
           ),
           headerRight: () => (

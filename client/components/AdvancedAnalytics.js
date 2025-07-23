@@ -194,7 +194,7 @@ export default function AdvancedAnalytics() {
           <View style={styles.chartContainer}>
             <LineChart
               data={lineChartData}
-              width={screenWidth - 40}
+              width={screenWidth - 60}
               height={220}
               chartConfig={chartConfig}
               bezier
@@ -211,7 +211,7 @@ export default function AdvancedAnalytics() {
           <View style={styles.chartContainer}>
             <PieChart
               data={techniqueData}
-              width={screenWidth - 40}
+              width={screenWidth - 60}
               height={200}
               chartConfig={chartConfig}
               accessor="frequency"
@@ -328,11 +328,11 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 12,
     flex: 0.48,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowColor: colors.shadow.color,
+    shadowOffset: colors.shadow.offset,
+    shadowOpacity: colors.shadow.opacity,
+    shadowRadius: colors.shadow.radius,
+    elevation: colors.shadow.elevation,
   },
   metricTitle: {
     fontSize: 12,
@@ -359,11 +359,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: 12,
     padding: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowColor: colors.shadow.color,
+    shadowOffset: colors.shadow.offset,
+    shadowOpacity: colors.shadow.opacity,
+    shadowRadius: colors.shadow.radius,
+    elevation: colors.shadow.elevation,
   },
   chart: {
     borderRadius: 8,
@@ -374,11 +374,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 10,
     borderLeftWidth: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowColor: colors.shadow.color,
+    shadowOffset: colors.shadow.offset,
+    shadowOpacity: colors.shadow.opacity,
+    shadowRadius: colors.shadow.radius,
+    elevation: colors.shadow.elevation,
   },
   insightTitle: {
     fontSize: 14,
@@ -395,11 +395,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: 12,
     padding: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowColor: colors.shadow.color,
+    shadowOffset: colors.shadow.offset,
+    shadowOpacity: colors.shadow.opacity,
+    shadowRadius: colors.shadow.radius,
+    elevation: colors.shadow.elevation,
   },
   consistencyItem: {
     marginBottom: 15,

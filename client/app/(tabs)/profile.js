@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, TextInput, Linking, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../auth/context';
 import colors from '../../constants/colors';
 import Paywall from '../../components/Paywall';
@@ -84,16 +85,24 @@ export default function ProfileScreen() {
               <Text style={styles.proDescription}>You have access to all premium features</Text>
             </View>
           ) : (
-            <TouchableOpacity style={styles.button} onPress={handleUpgradePress}>
-              <Text style={styles.buttonText}>Upgrade to Pro</Text>
-            </TouchableOpacity>
+            <View style={styles.upgradeContainer}>
+              <TouchableOpacity style={styles.button} onPress={handleUpgradePress}>
+                <View style={styles.buttonContent}>
+                  <Ionicons name="star" size={16} color="#8B4513" />
+                  <Text style={styles.buttonText}>Upgrade to Pro</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
 
         {/* Account Actions */}
         <View style={styles.section}>
           <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-            <Text style={styles.logoutButtonText}>Logout</Text>
+            <View style={styles.logoutButtonContent}>
+              <Ionicons name="log-out-outline" size={20} color={colors.white} />
+              <Text style={styles.logoutButtonText}>Logout</Text>
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -217,25 +226,54 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.mutedAccent,
   },
+  upgradeContainer: {
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    borderRadius: 12,
+    shadowColor: colors.shadow.color,
+    shadowOffset: colors.shadow.offset,
+    shadowOpacity: colors.shadow.opacity,
+    shadowRadius: colors.shadow.radius,
+    elevation: colors.shadow.elevation,
+  },
   button: {
-    backgroundColor: colors.primaryText,
+    backgroundColor: '#FFD700',
     paddingVertical: 12,
     paddingHorizontal: 20,
-    borderRadius: 8,
+    borderRadius: 20,
     alignItems: 'center',
+    shadowColor: '#FFD700',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   buttonText: {
-    color: colors.white,
+    color: '#8B4513',
     fontSize: 16,
     fontWeight: 'bold',
+    marginLeft: 8,
+    letterSpacing: 1,
   },
   proBadgeContainer: {
     alignItems: 'center',
     padding: 20,
     backgroundColor: 'rgba(255, 215, 0, 0.1)',
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
+    shadowColor: colors.shadow.color,
+    shadowOffset: colors.shadow.offset,
+    shadowOpacity: colors.shadow.opacity,
+    shadowRadius: colors.shadow.radius,
+    elevation: colors.shadow.elevation,
   },
   proBadge: {
     backgroundColor: '#FFD700',
@@ -279,33 +317,40 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   logoutButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: colors.accent,
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.primaryText,
     alignItems: 'center',
+    shadowColor: colors.shadow.color,
+    shadowOffset: colors.shadow.offset,
+    shadowOpacity: colors.shadow.opacity,
+    shadowRadius: colors.shadow.radius,
+    elevation: colors.shadow.elevation,
+  },
+  logoutButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   logoutButtonText: {
-    color: colors.primaryText,
+    color: colors.white,
     fontSize: 16,
     fontWeight: 'bold',
+    marginLeft: 8,
   },
   dangerZone: {
     marginTop: 40,
     paddingTop: 20,
-    borderTopWidth: 1,
-    borderTopColor: colors.mutedAccent,
   },
   dangerTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#D9534F',
+    color: colors.destructive,
     marginBottom: 15,
   },
   deleteButton: {
-    backgroundColor: '#D9534F',
+    backgroundColor: colors.destructive,
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -332,7 +377,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#D9534F',
+    color: colors.destructive,
     textAlign: 'center',
     marginBottom: 15,
   },
@@ -350,14 +395,18 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   confirmInput: {
-    borderWidth: 1,
-    borderColor: colors.mutedAccent,
+    backgroundColor: colors.white,
     borderRadius: 8,
     paddingHorizontal: 15,
     paddingVertical: 12,
     fontSize: 16,
     marginBottom: 20,
     color: colors.primaryText,
+    shadowColor: colors.shadow.color,
+    shadowOffset: colors.shadow.offset,
+    shadowOpacity: colors.shadow.opacity,
+    shadowRadius: colors.shadow.radius,
+    elevation: colors.shadow.elevation,
   },
   modalButtons: {
     flexDirection: 'row',
@@ -368,9 +417,13 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: 'center',
     marginRight: 10,
-    borderWidth: 1,
-    borderColor: colors.mutedAccent,
+    backgroundColor: colors.white,
     borderRadius: 8,
+    shadowColor: colors.shadow.color,
+    shadowOffset: colors.shadow.offset,
+    shadowOpacity: colors.shadow.opacity,
+    shadowRadius: colors.shadow.radius,
+    elevation: colors.shadow.elevation,
   },
   cancelButtonText: {
     color: colors.primaryText,
@@ -379,7 +432,7 @@ const styles = StyleSheet.create({
   },
   confirmDeleteButton: {
     flex: 1,
-    backgroundColor: '#D9534F',
+    backgroundColor: colors.destructive,
     paddingVertical: 12,
     alignItems: 'center',
     marginLeft: 10,

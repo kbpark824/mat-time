@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Tabs, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Alert, View, Modal } from 'react-native';
+import { Alert, View, Modal, Text } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../auth/context';
 import colors from '../../constants/colors';
@@ -68,7 +68,7 @@ export default function TabLayout() {
     <>
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.primaryText,
+        tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.mutedAccent,
         tabBarStyle: {
           backgroundColor: colors.primaryBackground,
@@ -76,11 +76,13 @@ export default function TabLayout() {
           borderTopWidth: 1,
         },
         headerStyle: {
-          backgroundColor: colors.primaryBackground,
+          backgroundColor: colors.accent,
         },
-        headerTintColor: colors.primaryText,
+        headerTintColor: colors.white,
+        headerTitleAlign: 'left',
         headerTitleStyle: {
           fontWeight: 'bold',
+          fontSize: 28,
         },
       }}
     >
@@ -88,6 +90,12 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
+          headerTitle: () => (
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="home" size={24} color={colors.white} style={{ marginRight: 8 }} />
+              <Text style={{ color: colors.white, fontSize: 28, fontWeight: 'bold' }}>Home</Text>
+            </View>
+          ),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
           ),
@@ -97,6 +105,12 @@ export default function TabLayout() {
         name="search"
         options={{
           title: 'Search',
+          headerTitle: () => (
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="search" size={24} color={colors.white} style={{ marginRight: 8 }} />
+              <Text style={{ color: colors.white, fontSize: 28, fontWeight: 'bold' }}>Search</Text>
+            </View>
+          ),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="search" size={size} color={color} />
           ),
@@ -105,19 +119,28 @@ export default function TabLayout() {
       <Tabs.Screen
         name="add"
         options={{
-          title: 'Add',
+          title: '',
           tabBarIcon: ({ color, size, focused }) => (
             <View style={{
-              width: size,
-              height: size,
-              backgroundColor: focused ? colors.primaryText : colors.mutedAccent,
-              borderRadius: 4,
+              width: size + 24,
+              height: size + 24,
+              backgroundColor: colors.accent,
+              borderRadius: (size + 24) / 2,
               justifyContent: 'center',
-              alignItems: 'center'
+              alignItems: 'center',
+              marginTop: -12,
+              shadowColor: '#000',
+              shadowOffset: {
+                width: 0,
+                height: 2,
+              },
+              shadowOpacity: 0.25,
+              shadowRadius: 4,
+              elevation: 5,
             }}>
               <Ionicons 
                 name="add" 
-                size={size - 8} 
+                size={size + 4} 
                 color={colors.white}
               />
             </View>
@@ -136,6 +159,12 @@ export default function TabLayout() {
         name="stats"
         options={{
           title: 'Stats',
+          headerTitle: () => (
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="stats-chart" size={24} color={colors.white} style={{ marginRight: 8 }} />
+              <Text style={{ color: colors.white, fontSize: 28, fontWeight: 'bold' }}>Stats</Text>
+            </View>
+          ),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="stats-chart" size={size} color={color} />
           ),
@@ -145,6 +174,12 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
+          headerTitle: () => (
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="person" size={24} color={colors.white} style={{ marginRight: 8 }} />
+              <Text style={{ color: colors.white, fontSize: 28, fontWeight: 'bold' }}>Profile</Text>
+            </View>
+          ),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person" size={size} color={color} />
           ),
