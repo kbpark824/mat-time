@@ -191,6 +191,24 @@ router.get('/', auth, asyncHandler(async (req, res) => {
   res.json(competitions);
 }));
 
+// @route   GET api/competitions/:id
+// @desc    Get a single competition by ID
+// @access  Private
+router.get('/:id', auth, validateObjectId, asyncHandler(async (req, res) => {
+    const competition = await Competition.findById(req.params.id).populate('tags');
+    
+    if (!competition) {
+        return res.status(404).json({ msg: 'Competition not found' });
+    }
+    
+    // Verify the competition belongs to the user
+    if (competition.user.toString() !== req.user.id) {
+        return res.status(401).json({ msg: 'Not authorized' });
+    }
+    
+    res.json(competition);
+}));
+
 // @route   PUT api/competitions/:id
 // @desc    Update a competition
 // @access  Private

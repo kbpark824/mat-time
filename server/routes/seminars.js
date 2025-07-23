@@ -116,6 +116,24 @@ router.get('/', auth, asyncHandler(async (req, res) => {
   res.json(seminars);
 }));
 
+// @route   GET api/seminars/:id
+// @desc    Get a single seminar by ID
+// @access  Private
+router.get('/:id', auth, validateObjectId, asyncHandler(async (req, res) => {
+    const seminar = await Seminar.findById(req.params.id).populate('tags');
+    
+    if (!seminar) {
+        return res.status(404).json({ msg: 'Seminar not found' });
+    }
+    
+    // Verify the seminar belongs to the user
+    if (seminar.user.toString() !== req.user.id) {
+        return res.status(401).json({ msg: 'Not authorized' });
+    }
+    
+    res.json(seminar);
+}));
+
 // @route   PUT api/seminars/:id
 // @desc    Update a seminar
 // @access  Private

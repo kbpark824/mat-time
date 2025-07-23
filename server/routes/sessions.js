@@ -120,6 +120,24 @@ router.get('/', auth, asyncHandler(async (req, res) => {
 }));
 
 
+// @route   GET api/sessions/:id
+// @desc    Get a single session by ID
+// @access  Private
+router.get('/:id', auth, validateObjectId, asyncHandler(async (req, res) => {
+    const session = await Session.findById(req.params.id).populate('tags');
+    
+    if (!session) {
+        return res.status(404).json({ msg: 'Session not found' });
+    }
+    
+    // Verify the session belongs to the user
+    if (session.user.toString() !== req.user.id) {
+        return res.status(401).json({ msg: 'Not authorized' });
+    }
+    
+    res.json(session);
+}));
+
 // @route   PUT api/sessions/:id
 // @desc    Update a session
 // @access  Private
