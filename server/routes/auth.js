@@ -33,6 +33,26 @@ const loginSchema = Joi.object({
   })
 });
 
+const beltRankSchema = Joi.object({
+  rank: Joi.string().valid('white', 'blue', 'purple', 'brown', 'black').required().messages({
+    'any.only': 'Belt rank must be one of: white, blue, purple, brown, black',
+    'any.required': 'Belt rank is required'
+  }),
+  stripes: Joi.number().integer().min(0).max(4).required().messages({
+    'number.base': 'Stripes must be a number',
+    'number.integer': 'Stripes must be an integer',
+    'number.min': 'Stripes cannot be negative',
+    'number.max': 'Stripes cannot exceed 4',
+    'any.required': 'Stripes count is required'
+  }),
+  achievedDate: Joi.date().iso().max('now').required().messages({
+    'date.base': 'Achieved date must be a valid date',
+    'date.format': 'Achieved date must be in ISO format',
+    'date.max': 'Achieved date cannot be in the future',
+    'any.required': 'Achieved date is required'
+  })
+});
+
 // @route   POST api/auth/register
 // @desc    Register a new user
 // @access  Public
@@ -121,6 +141,68 @@ router.post('/login', asyncHandler(async (req, res, next) => {
         createdAt: user.createdAt,
         isPro: user.isPro
       }
+    }
+  });
+}));
+
+// @route   GET api/auth/belt-rank
+// @desc    Get user's current belt rank
+// @access  Private
+router.get('/belt-rank', auth, asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id);
+  if (!user) {
+    return res.status(404).json({ 
+      success: false, 
+      error: 'User not found' 
+    });
+  }
+
+  res.json({
+    success: true,
+    data: {
+      beltRank: user.beltRank
+    }
+  });
+}));
+
+// @route   PUT api/auth/belt-rank
+// @desc    Update user's belt rank
+// @access  Private
+router.put('/belt-rank', auth, asyncHandler(async (req, res) => {
+  // Validate input
+  const { error } = beltRankSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ 
+      success: false, 
+      error: error.details[0].message 
+    });
+  }
+
+  const { rank, stripes, achievedDate } = req.body;
+
+  const user = await User.findByIdAndUpdate(
+    req.user.id,
+    {
+      beltRank: {
+        rank,
+        stripes,
+        achievedDate: new Date(achievedDate)
+      }
+    },
+    { new: true }
+  );
+
+  if (!user) {
+    return res.status(404).json({ 
+      success: false, 
+      error: 'User not found' 
+    });
+  }
+
+  res.json({
+    success: true,
+    data: {
+      beltRank: user.beltRank
     }
   });
 }));

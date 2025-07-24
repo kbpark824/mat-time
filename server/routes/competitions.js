@@ -8,6 +8,7 @@ const Competition = require('../models/Competition');
 const Tag = require('../models/Tag');
 const logger = require('../config/logger');
 const { createOrFindTags } = require('../utils/tagUtils');
+const constants = require('../config/constants');
 
 // Validation schemas
 const competitionSchema = Joi.object({
@@ -32,16 +33,14 @@ const competitionSchema = Joi.object({
     'any.only': 'Type must be one of: Gi, No-Gi',
     'any.required': 'Type is required'
   }),
-  weightDivision: Joi.string().trim().min(1).max(50).required().messages({
+  weightDivision: Joi.string().trim().min(1).max(constants.VALIDATION.MAX_WEIGHT_DIVISION_LENGTH).required().messages({
     'string.empty': 'Weight division cannot be empty',
     'string.min': 'Weight division is required',
-    'string.max': 'Weight division cannot exceed 50 characters',
+    'string.max': constants.ERROR_MESSAGES.WEIGHT_DIVISION_TOO_LONG,
     'any.required': 'Weight division is required'
   }),
-  resultsInDivision: Joi.string().trim().min(1).max(100).required().messages({
-    'string.empty': 'Results in division cannot be empty',
-    'string.min': 'Results in division is required',
-    'string.max': 'Results in division cannot exceed 100 characters',
+  resultsInDivision: Joi.string().valid('gold', 'silver', 'bronze', 'none').required().messages({
+    'any.only': 'Results in division must be one of: gold, silver, bronze, none',
     'any.required': 'Results in division is required'
   }),
   matchesInDivision: Joi.number().integer().min(0).max(20).required().messages({
@@ -60,8 +59,8 @@ const competitionSchema = Joi.object({
     'array.max': 'Cannot have more than 20 match notes'
   }),
   competedInOpenClass: Joi.boolean().optional(),
-  resultsInOpenClass: Joi.string().trim().max(100).allow('').optional().messages({
-    'string.max': 'Results in open class cannot exceed 100 characters'
+  resultsInOpenClass: Joi.string().valid('gold', 'silver', 'bronze', 'none').allow('').optional().messages({
+    'any.only': 'Results in open class must be one of: gold, silver, bronze, none'
   }),
   matchesInOpenClass: Joi.number().integer().min(0).max(20).optional().messages({
     'number.base': 'Matches in open class must be a number',
@@ -77,12 +76,12 @@ const competitionSchema = Joi.object({
   ).max(20).optional().messages({
     'array.max': 'Cannot have more than 20 open class match notes'
   }),
-  generalNotes: Joi.string().max(5000).allow('').optional().messages({
-    'string.max': 'General notes cannot exceed 5000 characters'
+  generalNotes: Joi.string().max(constants.VALIDATION.MAX_NOTE_LENGTH).allow('').optional().messages({
+    'string.max': constants.ERROR_MESSAGES.GENERAL_NOTES_TOO_LONG
   }),
-  tags: Joi.array().items(Joi.string().max(50).trim()).max(20).optional().messages({
-    'string.max': 'Each tag cannot exceed 50 characters',
-    'array.max': 'Cannot have more than 20 tags'
+  tags: Joi.array().items(Joi.string().max(constants.VALIDATION.MAX_TAG_LENGTH).trim()).max(constants.VALIDATION.MAX_TAGS_PER_ITEM).optional().messages({
+    'string.max': constants.ERROR_MESSAGES.TAG_TOO_LONG,
+    'array.max': constants.ERROR_MESSAGES.TOO_MANY_TAGS
   })
 });
 

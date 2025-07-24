@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, TextInput, TouchableOpacity } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useAuth } from '../../auth/context';
@@ -16,14 +16,14 @@ export default function SearchScreen() {
   const [allTags, setAllTags] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
 
-  const handleTagsChange = (newSelectedTags) => {
+  const handleTagsChange = useCallback((newSelectedTags) => {
     setSelectedTags(newSelectedTags);
-  };
+  }, []);
 
-  const handleTagDeleted = (deletedTagId) => {
+  const handleTagDeleted = useCallback((deletedTagId) => {
     // Remove the deleted tag from the allTags list
     setAllTags(prevTags => prevTags.filter(tag => tag._id !== deletedTagId));
-  };
+  }, []);
 
   const fetchAllActivities = async () => {
     try {
@@ -82,7 +82,7 @@ export default function SearchScreen() {
     fetchAllActivities();
   }, [searchQuery, selectedTags]);
 
-  const getActivityTypeLabel = (activity) => {
+  const getActivityTypeLabel = useCallback((activity) => {
     switch (activity.activityType) {
       case 'session':
         return 'Training Session';
@@ -93,9 +93,9 @@ export default function SearchScreen() {
       default:
         return 'Activity';
     }
-  };
+  }, []);
 
-  const getActivityTypeColor = (activity) => {
+  const getActivityTypeColor = useCallback((activity) => {
     switch (activity.activityType) {
       case 'session':
         return '#E3F2FD'; // Light blue
@@ -106,9 +106,9 @@ export default function SearchScreen() {
       default:
         return colors.tertiaryBackground;
     }
-  };
+  }, []);
 
-  const getActivitySubtitle = (activity) => {
+  const getActivitySubtitle = useCallback((activity) => {
     switch (activity.activityType) {
       case 'session':
         return `${activity.type} - ${activity.duration} min`;
@@ -119,9 +119,9 @@ export default function SearchScreen() {
       default:
         return '';
     }
-  };
+  }, []);
 
-  const getNotesExcerpt = (activity) => {
+  const getNotesExcerpt = useCallback((activity) => {
     let notes = '';
     switch (activity.activityType) {
       case 'session':
@@ -141,9 +141,9 @@ export default function SearchScreen() {
     
     // Return first 80 characters with ellipsis if longer
     return notes.length > 80 ? notes.substring(0, 80) + '...' : notes;
-  };
+  }, []);
 
-  const handleActivityPress = (activity) => {
+  const handleActivityPress = useCallback((activity) => {
     const routeMap = {
       session: 'logSession',
       seminar: 'logSeminar', 
@@ -152,9 +152,9 @@ export default function SearchScreen() {
     
     const route = routeMap[activity.activityType];
     if (route) {
-      router.push(`/${route}?id=${activity._id}&data=${encodeURIComponent(JSON.stringify(activity))}`);
+      router.push(`/${route}?id=${activity._id}`);
     }
-  };
+  }, [router]);
 
   const renderItem = ({ item }) => (
     <TouchableOpacity onPress={() => handleActivityPress(item)} style={styles.activityCard}>

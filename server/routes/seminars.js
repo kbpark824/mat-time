@@ -8,6 +8,7 @@ const Seminar = require('../models/Seminar');
 const Tag = require('../models/Tag');
 const logger = require('../config/logger');
 const { createOrFindTags } = require('../utils/tagUtils');
+const constants = require('../config/constants');
 
 // Validation schemas
 const seminarSchema = Joi.object({
@@ -26,12 +27,12 @@ const seminarSchema = Joi.object({
     'any.only': 'Type must be one of: Gi, No-Gi',
     'any.required': 'Type is required'
   }),
-  techniqueNotes: Joi.string().max(5000).allow('').optional().messages({
-    'string.max': 'Technique notes cannot exceed 5000 characters'
+  techniqueNotes: Joi.string().max(constants.VALIDATION.MAX_NOTE_LENGTH).allow('').optional().messages({
+    'string.max': constants.ERROR_MESSAGES.TECHNIQUE_NOTES_TOO_LONG
   }),
-  tags: Joi.array().items(Joi.string().max(50).trim()).max(20).optional().messages({
-    'string.max': 'Each tag cannot exceed 50 characters',
-    'array.max': 'Cannot have more than 20 tags'
+  tags: Joi.array().items(Joi.string().max(constants.VALIDATION.MAX_TAG_LENGTH).trim()).max(constants.VALIDATION.MAX_TAGS_PER_ITEM).optional().messages({
+    'string.max': constants.ERROR_MESSAGES.TAG_TOO_LONG,
+    'array.max': constants.ERROR_MESSAGES.TOO_MANY_TAGS
   })
 });
 

@@ -4,11 +4,12 @@ const rateLimit = require('express-rate-limit');
 const router = express.Router();
 const User = require('../models/User');
 const logger = require('../config/logger');
+const constants = require('../config/constants');
 
 // Rate limiting for webhook endpoint - more restrictive than general API
 const webhookLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 10, // Limit each IP to 10 webhook requests per 5 minutes
+  windowMs: 5 * 60 * 1000, // 5 minutes (more restrictive than general API)
+  max: constants.RATE_LIMITING.WEBHOOK_MAX_REQUESTS,
   message: {
     error: 'Too many webhook requests from this IP, please try again later.'
   },

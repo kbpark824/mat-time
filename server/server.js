@@ -6,6 +6,7 @@ const helmet = require('helmet');
 const connectDB = require('./config/db');
 const logger = require('./config/logger');
 const requestLogger = require('./middleware/requestLogger');
+const constants = require('./config/constants');
 
 // Load environment variables
 dotenv.config();
@@ -16,6 +17,12 @@ const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
 
 if (missingEnvVars.length > 0) {
   console.error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
+  process.exit(1);
+}
+
+// Validate JWT secret strength
+if (process.env.JWT_SECRET.length < constants.SECURITY.MIN_JWT_SECRET_LENGTH) {
+  console.error(`JWT_SECRET must be at least ${constants.SECURITY.MIN_JWT_SECRET_LENGTH} characters long for security`);
   process.exit(1);
 }
 
@@ -36,7 +43,7 @@ app.use(helmet({
   },
   crossOriginEmbedderPolicy: false, // Disable for mobile app compatibility
   hsts: {
-    maxAge: 31536000, // 1 year
+    maxAge: constants.SECURITY.HSTS_MAX_AGE,
     includeSubDomains: true,
     preload: true
   }
@@ -50,28 +57,28 @@ const corsOptions = {
   credentials: true
 };
 app.use(cors(corsOptions));
-app.use(express.json({ limit: '10mb' })); // Body parser for JSON with size limit
-app.use(express.urlencoded({ extended: true, parameterLimit: 20 })); // Limit URL parameters to prevent HPP
+app.use(express.json({ limit: constants.SECURITY.BODY_SIZE_LIMIT })); // Body parser for JSON with size limit
+app.use(express.urlencoded({ extended: true, parameterLimit: constants.VALIDATION.MAX_URL_PARAMETERS })); // Limit URL parameters to prevent HPP
 
 // Request logging middleware
 app.use(requestLogger);
 
 // Rate limiting middleware
 const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 500, // Limit each IP to 500 requests per windowMs (increased for unified search)
+  windowMs: constants.RATE_LIMITING.WINDOW_MS,
+  max: constants.RATE_LIMITING.GENERAL_MAX_REQUESTS,
   message: {
-    error: 'Too many requests from this IP, please try again later.'
+    error: constants.ERROR_MESSAGES.RATE_LIMIT_GENERAL
   },
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 });
 
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each IP to 5 login attempts per windowMs
+  windowMs: constants.RATE_LIMITING.WINDOW_MS,
+  max: constants.RATE_LIMITING.AUTH_MAX_ATTEMPTS,
   message: {
-    error: 'Too many authentication attempts from this IP, please try again later.'
+    error: constants.ERROR_MESSAGES.RATE_LIMIT_AUTH
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -95,7 +102,7 @@ app.use('/api/revenuecat', require('./routes/revenuecat'));
 // Error handling middleware (must be last)
 app.use(require('./middleware/errorHandler'));
 
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || constants.SERVER.DEFAULT_PORT;
 
 app.listen(PORT, () => {
   logger.info(`🚀 Server started on port ${PORT}`);

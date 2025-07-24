@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { View, TextInput, StyleSheet, Text, Alert, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, TouchableOpacity, Image } from 'react-native';
+import { View, TextInput, StyleSheet, Text, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, TouchableOpacity, Image } from 'react-native';
 import { useAuth } from '../auth/context';
 import { useRouter } from 'expo-router';
 import colors from '../constants/colors';
+import commonStyles from '../constants/commonStyles';
+import ErrorHandler from '../utils/errorHandler';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -14,8 +16,7 @@ export default function LoginScreen() {
     try {
       await login(email.toLowerCase(), password);
     } catch (error) {
-      const message = error.response?.data?.error || error.response?.data?.msg || 'Please check your email and password.';
-      Alert.alert('Login Failed', message);
+      ErrorHandler.authentication(error);
     }
   };
 
@@ -25,16 +26,16 @@ export default function LoginScreen() {
       style={styles.keyboardAvoidingContainer}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.container}>
+        <View style={commonStyles.paddedContainer}>
           <Image 
             source={require('../assets/images/logo.png')} 
             style={styles.logo}
             resizeMode="contain"
           />
-          <Text style={styles.title}>Welcome Back!</Text>
-          <Text style={styles.label}>Email Address</Text>
+          <Text style={commonStyles.title}>Welcome Back!</Text>
+          <Text style={commonStyles.label}>Email Address</Text>
           <TextInput
-            style={styles.input}
+            style={commonStyles.input}
             placeholder="e.g., your.name@email.com"
             placeholderTextColor={colors.mutedAccent}
             value={email}
@@ -42,17 +43,17 @@ export default function LoginScreen() {
             autoCapitalize="none"
             keyboardType="email-address"
           />
-          <Text style={styles.label}>Password</Text>
+          <Text style={commonStyles.label}>Password</Text>
           <TextInput
-            style={styles.input}
+            style={commonStyles.input}
             placeholder="Enter your password"
             placeholderTextColor={colors.mutedAccent}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
           />
-          <TouchableOpacity style={styles.primaryButton} onPress={handleLogin}>
-            <Text style={styles.primaryButtonText}>Login</Text>
+          <TouchableOpacity style={commonStyles.primaryButton} onPress={handleLogin}>
+            <Text style={commonStyles.primaryButtonText}>Login</Text>
           </TouchableOpacity>
           <View style={styles.spacer} />
           <TouchableOpacity style={styles.secondaryButton} onPress={() => router.push('/register')}>
@@ -82,45 +83,7 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     borderRadius: 16,
   },
-  title: { 
-    fontSize: 24, 
-    fontWeight: 'bold', 
-    textAlign: 'center', 
-    marginBottom: 20, 
-    color: colors.primaryText 
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 5,
-    color: colors.primaryText,
-  },
-  input: {
-    height: 40,
-    marginBottom: 12,
-    paddingHorizontal: 8,
-    borderRadius: 8,
-    backgroundColor: colors.white,
-    color: colors.primaryText,
-    shadowColor: colors.shadow.color,
-    shadowOffset: colors.shadow.offset,
-    shadowOpacity: colors.shadow.opacity,
-    shadowRadius: colors.shadow.radius,
-    elevation: colors.shadow.elevation,
-  },
   spacer: { height: 20 },
-  primaryButton: {
-    backgroundColor: colors.accent,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  primaryButtonText: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
   secondaryButton: {
     paddingVertical: 12,
     borderRadius: 8,

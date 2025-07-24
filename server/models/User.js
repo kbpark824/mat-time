@@ -25,6 +25,23 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  beltRank: {
+    rank: {
+      type: String,
+      enum: ['white', 'blue', 'purple', 'brown', 'black'],
+      default: 'white'
+    },
+    stripes: {
+      type: Number,
+      min: 0,
+      max: 4,
+      default: 0
+    },
+    achievedDate: {
+      type: Date,
+      default: Date.now
+    }
+  },
 });
 
 // Hash password before saving the user

@@ -1,27 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
-import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import apiClient from '../api/client';
 import colors from '../constants/colors';
+import ErrorBoundary from './ErrorBoundary';
+import TrainingProgressionChart from './TrainingProgressionChart';
+import TechniqueFocusChart from './TechniqueFocusChart';
+import PerformanceOverview from './PerformanceOverview';
+import TrainingInsights from './TrainingInsights';
+import TrainingConsistency from './TrainingConsistency';
+import MedalStatistics from './MedalStatistics';
 
-const screenWidth = Dimensions.get('window').width;
-
-const chartConfig = {
-  backgroundColor: colors.white,
-  backgroundGradientFrom: colors.white,
-  backgroundGradientTo: colors.white,
-  decimalPlaces: 1,
-  color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
-  labelColor: (opacity = 1) => `rgba(74, 74, 74, ${opacity})`,
-  style: {
-    borderRadius: 16,
-  },
-  propsForDots: {
-    r: "4",
-    strokeWidth: "2",
-    stroke: colors.accent
-  }
-};
 
 const TimeframeSelector = ({ selected, onSelect }) => {
   const timeframes = [
@@ -55,43 +43,13 @@ const TimeframeSelector = ({ selected, onSelect }) => {
   );
 };
 
-const InsightCard = ({ insight }) => {
-  const getInsightColor = (type) => {
-    switch (type) {
-      case 'positive': return colors.success || '#4CAF50';
-      case 'suggestion': return colors.warning || '#FF9800';
-      case 'info': return colors.accent;
-      default: return colors.mutedAccent;
-    }
-  };
-
-  return (
-    <View style={[styles.insightCard, { borderLeftColor: getInsightColor(insight.type) }]}>
-      <Text style={styles.insightTitle}>{insight.title}</Text>
-      <Text style={styles.insightMessage}>{insight.message}</Text>
-    </View>
-  );
-};
-
-const MetricCard = ({ title, value, subtitle, trend }) => (
-  <View style={styles.metricCard}>
-    <Text style={styles.metricTitle}>{title}</Text>
-    <Text style={styles.metricValue}>{value}</Text>
-    {subtitle && <Text style={styles.metricSubtitle}>{subtitle}</Text>}
-    {trend && (
-      <Text style={[styles.metricTrend, { color: trend > 0 ? colors.success : colors.destructive }]}>
-        {trend > 0 ? '↗' : '↘'} {Math.abs(trend).toFixed(1)}%
-      </Text>
-    )}
-  </View>
-);
 
 export default function AdvancedAnalytics() {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [timeframe, setTimeframe] = useState('6months');
 
-  const fetchAnalytics = async (selectedTimeframe = timeframe) => {
+  const fetchAnalytics = useCallback(async (selectedTimeframe = timeframe) => {
     try {
       setLoading(true);
       const response = await apiClient.get(`/stats/advanced?timeframe=${selectedTimeframe}`);
@@ -101,16 +59,51 @@ export default function AdvancedAnalytics() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [timeframe]);
 
   useEffect(() => {
     fetchAnalytics();
   }, []);
 
-  const handleTimeframeChange = (newTimeframe) => {
+  const handleTimeframeChange = useCallback((newTimeframe) => {
     setTimeframe(newTimeframe);
     fetchAnalytics(newTimeframe);
-  };
+  }, [fetchAnalytics]);
+
+  // Prepare chart data - memoized for performance (MUST be before early returns)
+  const monthlyData = useMemo(() => {
+    if (!analytics?.monthlyProgression) return [];
+    return analytics.monthlyProgression.map(month => ({
+      label: `${month._id.month}/${month._id.year.toString().slice(-2)}`,
+      sessions: month.sessions,
+      hours: month.hours
+    }));
+  }, [analytics?.monthlyProgression]);
+
+  const lineChartData = useMemo(() => {
+    const lastSixMonths = monthlyData.slice(-6);
+    return {
+      labels: lastSixMonths.map(d => d.label),
+      datasets: [
+        {
+          data: lastSixMonths.map(d => d.sessions),
+          color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
+          strokeWidth: 2
+        }
+      ]
+    };
+  }, [monthlyData]);
+
+  const techniqueData = useMemo(() => {
+    if (!analytics?.techniqueFocus) return [];
+    return analytics.techniqueFocus.slice(0, 5).map((tech, index) => ({
+      name: tech._id ? (tech._id.substring(0, 12) + (tech._id.length > 12 ? '...' : '')) : 'Unknown',
+      frequency: tech.frequency,
+      color: `hsl(${(index * 72) % 360}, 70%, 60%)`, // Consistent colors instead of random
+      legendFontColor: colors.primaryText,
+      legendFontSize: 12
+    }));
+  }, [analytics?.techniqueFocus]);
 
   if (loading) {
     return (
@@ -128,133 +121,40 @@ export default function AdvancedAnalytics() {
     );
   }
 
-  // Prepare chart data
-  const monthlyData = analytics.monthlyProgression.map(month => ({
-    label: `${month._id.month}/${month._id.year.toString().slice(-2)}`,
-    sessions: month.sessions,
-    hours: month.hours
-  }));
-
-  const lineChartData = {
-    labels: monthlyData.slice(-6).map(d => d.label), // Last 6 months
-    datasets: [
-      {
-        data: monthlyData.slice(-6).map(d => d.sessions),
-        color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
-        strokeWidth: 2
-      }
-    ]
-  };
-
-  const techniqueData = analytics.techniqueFocus.slice(0, 5).map(tech => ({
-    name: tech._id ? (tech._id.substring(0, 12) + (tech._id.length > 12 ? '...' : '')) : 'Unknown',
-    frequency: tech.frequency,
-    color: `hsl(${Math.random() * 360}, 70%, 60%)`,
-    legendFontColor: colors.primaryText,
-    legendFontSize: 12
-  }));
-
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Timeframe Selector */}
       <TimeframeSelector selected={timeframe} onSelect={handleTimeframeChange} />
 
-      {/* Performance Metrics */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Performance Overview</Text>
-        <View style={styles.metricsRow}>
-          <MetricCard 
-            title="Total Sessions" 
-            value={analytics.performanceMetrics.totalSessions}
-            subtitle={`${analytics.performanceMetrics.totalHours.toFixed(1)} hours total`}
-          />
-          <MetricCard 
-            title="Avg Duration" 
-            value={`${analytics.performanceMetrics.avgDuration.toFixed(1)}h`}
-            subtitle="per session"
-          />
-        </View>
-        <View style={styles.metricsRow}>
-          <MetricCard 
-            title="Longest Session" 
-            value={`${analytics.performanceMetrics.longestSession.toFixed(1)}h`}
-          />
-          <MetricCard 
-            title="Training Streak" 
-            value={analytics.streaks.currentStreak}
-            subtitle={`Best: ${analytics.streaks.longestStreak} days`}
-          />
-        </View>
-      </View>
+      {/* Performance Overview */}
+      <ErrorBoundary fallbackMessage="Unable to load performance overview.">
+        <PerformanceOverview analytics={analytics} styles={styles} />
+      </ErrorBoundary>
 
       {/* Training Progression Chart */}
-      {monthlyData.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Training Progression</Text>
-          <View style={styles.chartContainer}>
-            <LineChart
-              data={lineChartData}
-              width={screenWidth - 60}
-              height={220}
-              chartConfig={chartConfig}
-              bezier
-              style={styles.chart}
-            />
-          </View>
-        </View>
-      )}
+      <ErrorBoundary fallbackMessage="Unable to load training progression chart.">
+        <TrainingProgressionChart lineChartData={lineChartData} styles={styles} />
+      </ErrorBoundary>
 
-      {/* Technique Focus */}
-      {techniqueData.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Technique Focus</Text>
-          <View style={styles.chartContainer}>
-            <PieChart
-              data={techniqueData}
-              width={screenWidth - 60}
-              height={200}
-              chartConfig={chartConfig}
-              accessor="frequency"
-              backgroundColor="transparent"
-              paddingLeft="15"
-              style={styles.chart}
-            />
-          </View>
-        </View>
-      )}
+      {/* Technique Focus Chart */}
+      <ErrorBoundary fallbackMessage="Unable to load technique focus chart.">
+        <TechniqueFocusChart techniqueData={techniqueData} styles={styles} />
+      </ErrorBoundary>
 
-      {/* Insights */}
-      {analytics.insights.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Training Insights</Text>
-          {analytics.insights.map((insight, index) => (
-            <InsightCard key={index} insight={insight} />
-          ))}
-        </View>
-      )}
+      {/* Training Insights */}
+      <ErrorBoundary fallbackMessage="Unable to load training insights.">
+        <TrainingInsights analytics={analytics} styles={styles} />
+      </ErrorBoundary>
 
-      {/* Consistency Metrics */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Training Consistency</Text>
-        <View style={styles.consistencyContainer}>
-          {analytics.monthlyConsistency.slice(-6).map((month, index) => (
-            <View key={index} style={styles.consistencyItem}>
-              <Text style={styles.consistencyLabel}>
-                {month._id.month}/{month._id.year.toString().slice(-2)}
-              </Text>
-              <View style={styles.consistencyBar}>
-                <View 
-                  style={[
-                    styles.consistencyFill, 
-                    { width: `${Math.min(month.trainingDays * 3.33, 100)}%` }
-                  ]} 
-                />
-              </View>
-              <Text style={styles.consistencyValue}>{month.trainingDays} days</Text>
-            </View>
-          ))}
-        </View>
-      </View>
+      {/* Medal Statistics */}
+      <ErrorBoundary fallbackMessage="Unable to load medal statistics.">
+        <MedalStatistics analytics={analytics} styles={styles} />
+      </ErrorBoundary>
+
+      {/* Training Consistency */}
+      <ErrorBoundary fallbackMessage="Unable to load training consistency data.">
+        <TrainingConsistency analytics={analytics} styles={styles} />
+      </ErrorBoundary>
     </ScrollView>
   );
 }
@@ -325,9 +225,11 @@ const styles = StyleSheet.create({
   },
   metricCard: {
     backgroundColor: colors.white,
-    padding: 15,
+    padding: 20,
     borderRadius: 12,
     flex: 0.48,
+    minHeight: 100,
+    justifyContent: 'center',
     shadowColor: colors.shadow.color,
     shadowOffset: colors.shadow.offset,
     shadowOpacity: colors.shadow.opacity,

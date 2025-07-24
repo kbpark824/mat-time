@@ -7,8 +7,94 @@ const Seminar = require('../models/Seminar');
 const Competition = require('../models/Competition');
 const mongoose = require('mongoose');
 const logger = require('../config/logger');
+const constants = require('../config/constants');
 
-// Helper function to calculate training streaks
+// Helper function to parse activity dates into unique day strings
+function parseActivityDates(allActivities) {
+    if (allActivities.length === 0) {
+        return [];
+    }
+
+    // Convert dates to day strings for easier comparison (YYYY-MM-DD)
+    const uniqueDays = [...new Set(allActivities.map(date => 
+        date.toISOString().split('T')[0]
+    ))].sort((a, b) => new Date(b) - new Date(a));
+
+    return uniqueDays;
+}
+
+// Helper function to calculate current training streak
+function calculateCurrentStreak(uniqueDays) {
+    if (uniqueDays.length === 0) {
+        return 0;
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    const yesterday = new Date(Date.now() - constants.TIME.ONE_DAY_MS).toISOString().split('T')[0];
+    
+    let currentStreak = 0;
+
+    for (let i = 0; i < uniqueDays.length; i++) {
+        const dayDate = uniqueDays[i];
+        
+        if (i === 0) {
+            // First day (most recent) - must be today or yesterday to start a streak
+            if (dayDate === today || dayDate === yesterday) {
+                currentStreak = 1;
+            } else {
+                // No recent activity, current streak is 0
+                break;
+            }
+        } else {
+            // Check if this day is consecutive to the previous day
+            const prevDate = new Date(uniqueDays[i - 1]);
+            const currDate = new Date(dayDate);
+            const dayDiff = Math.floor((prevDate - currDate) / (1000 * 60 * 60 * 24));
+            
+            if (dayDiff === 1) {
+                // Consecutive day
+                currentStreak++;
+            } else {
+                // Gap in training, stop current streak calculation
+                break;
+            }
+        }
+    }
+
+    return currentStreak;
+}
+
+// Helper function to calculate longest training streak
+function calculateLongestStreak(uniqueDays) {
+    if (uniqueDays.length === 0) {
+        return 0;
+    }
+
+    let longestStreak = 0;
+    let tempStreak = 0;
+
+    for (let i = 0; i < uniqueDays.length; i++) {
+        if (i === 0) {
+            tempStreak = 1;
+            longestStreak = Math.max(longestStreak, tempStreak);
+        } else {
+            const prevDate = new Date(uniqueDays[i - 1]);
+            const currDate = new Date(uniqueDays[i]);
+            const dayDiff = Math.floor((prevDate - currDate) / (1000 * 60 * 60 * 24));
+            
+            if (dayDiff === 1) {
+                tempStreak++;
+                longestStreak = Math.max(longestStreak, tempStreak);
+            } else {
+                tempStreak = 1;
+            }
+        }
+    }
+
+    return longestStreak;
+}
+
+// Main function to calculate training streaks
 async function calculateTrainingStreak(userId) {
     try {
         // Get all training sessions (sessions, seminars, competitions) ordered by date
@@ -33,68 +119,12 @@ async function calculateTrainingStreak(userId) {
             };
         }
 
-        // Convert dates to day strings for easier comparison (YYYY-MM-DD)
-        const uniqueDays = [...new Set(allActivities.map(date => 
-            date.toISOString().split('T')[0]
-        ))].sort((a, b) => new Date(b) - new Date(a));
+        // Parse activities into unique day strings
+        const uniqueDays = parseActivityDates(allActivities);
 
-        const today = new Date().toISOString().split('T')[0];
-        const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-
-        let currentStreak = 0;
-        let longestStreak = 0;
-        let tempStreak = 0;
-
-        // Calculate current streak
-        for (let i = 0; i < uniqueDays.length; i++) {
-            const dayDate = uniqueDays[i];
-            
-            if (i === 0) {
-                // First day (most recent)
-                if (dayDate === today || dayDate === yesterday) {
-                    currentStreak = 1;
-                    tempStreak = 1;
-                } else {
-                    // No recent activity, current streak is 0
-                    currentStreak = 0;
-                    break;
-                }
-            } else {
-                // Check if this day is consecutive to the previous day
-                const prevDate = new Date(uniqueDays[i - 1]);
-                const currDate = new Date(dayDate);
-                const dayDiff = Math.floor((prevDate - currDate) / (1000 * 60 * 60 * 24));
-                
-                if (dayDiff === 1) {
-                    // Consecutive day
-                    currentStreak++;
-                    tempStreak++;
-                } else {
-                    // Gap in training, stop current streak calculation
-                    break;
-                }
-            }
-        }
-
-        // Calculate longest streak by checking all consecutive sequences
-        tempStreak = 0;
-        for (let i = 0; i < uniqueDays.length; i++) {
-            if (i === 0) {
-                tempStreak = 1;
-                longestStreak = Math.max(longestStreak, tempStreak);
-            } else {
-                const prevDate = new Date(uniqueDays[i - 1]);
-                const currDate = new Date(uniqueDays[i]);
-                const dayDiff = Math.floor((prevDate - currDate) / (1000 * 60 * 60 * 24));
-                
-                if (dayDiff === 1) {
-                    tempStreak++;
-                    longestStreak = Math.max(longestStreak, tempStreak);
-                } else {
-                    tempStreak = 1;
-                }
-            }
-        }
+        // Calculate streaks using dedicated functions
+        const currentStreak = calculateCurrentStreak(uniqueDays);
+        const longestStreak = calculateLongestStreak(uniqueDays);
 
         return {
             currentStreak,
@@ -162,14 +192,22 @@ router.get('/summary', auth, asyncHandler(async (req, res) => {
         }
       ]),
       
-      // Competitions aggregation (count only, no duration)
+      // Competitions aggregation (count and medal stats)
       Competition.aggregate([
         { $match: { user: userId } },
         {
           $group: {
             _id: null,
             giCompetitions: { $sum: { $cond: [{ $eq: ['$type', 'Gi'] }, 1, 0] }},
-            noGiCompetitions: { $sum: { $cond: [{ $eq: ['$type', 'No-Gi'] }, 1, 0] }}
+            noGiCompetitions: { $sum: { $cond: [{ $eq: ['$type', 'No-Gi'] }, 1, 0] }},
+            // Medal counts for division results
+            goldDivision: { $sum: { $cond: [{ $eq: ['$resultsInDivision', 'gold'] }, 1, 0] }},
+            silverDivision: { $sum: { $cond: [{ $eq: ['$resultsInDivision', 'silver'] }, 1, 0] }},
+            bronzeDivision: { $sum: { $cond: [{ $eq: ['$resultsInDivision', 'bronze'] }, 1, 0] }},
+            // Medal counts for open class results
+            goldOpen: { $sum: { $cond: [{ $and: [{ $eq: ['$competedInOpenClass', true] }, { $eq: ['$resultsInOpenClass', 'gold'] }] }, 1, 0] }},
+            silverOpen: { $sum: { $cond: [{ $and: [{ $eq: ['$competedInOpenClass', true] }, { $eq: ['$resultsInOpenClass', 'silver'] }] }, 1, 0] }},
+            bronzeOpen: { $sum: { $cond: [{ $and: [{ $eq: ['$competedInOpenClass', true] }, { $eq: ['$resultsInOpenClass', 'bronze'] }] }, 1, 0] }}
           }
         }
       ])
@@ -178,7 +216,16 @@ router.get('/summary', auth, asyncHandler(async (req, res) => {
     // Extract data with defaults
     const sessionData = sessionStats[0] || { totalHours: 0, hoursThisMonth: 0, giCount: 0, noGiCount: 0, openMatCount: 0 };
     const seminarData = seminarStats[0] || { giSeminars: 0, noGiSeminars: 0 };
-    const competitionData = competitionStats[0] || { giCompetitions: 0, noGiCompetitions: 0 };
+    const competitionData = competitionStats[0] || { 
+      giCompetitions: 0, 
+      noGiCompetitions: 0,
+      goldDivision: 0,
+      silverDivision: 0,
+      bronzeDivision: 0,
+      goldOpen: 0,
+      silverOpen: 0,
+      bronzeOpen: 0
+    };
 
     // Calculate training streaks (sessions only for simplicity)
     const streakData = await calculateTrainingStreak(userId);
@@ -189,6 +236,25 @@ router.get('/summary', auth, asyncHandler(async (req, res) => {
         totalHours: sessionData.totalHours,
         hoursThisMonth: sessionData.hoursThisMonth,
         streaks: streakData,
+        medals: {
+          total: competitionData.goldDivision + competitionData.silverDivision + competitionData.bronzeDivision + 
+                 competitionData.goldOpen + competitionData.silverOpen + competitionData.bronzeOpen,
+          totalGold: competitionData.goldDivision + competitionData.goldOpen,
+          totalSilver: competitionData.silverDivision + competitionData.silverOpen,
+          totalBronze: competitionData.bronzeDivision + competitionData.bronzeOpen,
+          division: {
+            total: competitionData.goldDivision + competitionData.silverDivision + competitionData.bronzeDivision,
+            gold: competitionData.goldDivision,
+            silver: competitionData.silverDivision,
+            bronze: competitionData.bronzeDivision
+          },
+          openClass: {
+            total: competitionData.goldOpen + competitionData.silverOpen + competitionData.bronzeOpen,
+            gold: competitionData.goldOpen,
+            silver: competitionData.silverOpen,
+            bronze: competitionData.bronzeOpen
+          }
+        },
         typeDistribution: [
             { 
               name: "Gi Training", 
@@ -388,6 +454,33 @@ router.get('/advanced', auth, asyncHandler(async (req, res) => {
     // Calculate training streaks for advanced view
     const streakData = await calculateTrainingStreak(userId);
 
+    // Get medal statistics for competitions
+    const medalStats = await Competition.aggregate([
+        { $match: { user: userId, date: { $gte: startDate } } },
+        {
+            $group: {
+                _id: null,
+                totalCompetitions: { $sum: 1 },
+                goldDivision: { $sum: { $cond: [{ $eq: ['$resultsInDivision', 'gold'] }, 1, 0] }},
+                silverDivision: { $sum: { $cond: [{ $eq: ['$resultsInDivision', 'silver'] }, 1, 0] }},
+                bronzeDivision: { $sum: { $cond: [{ $eq: ['$resultsInDivision', 'bronze'] }, 1, 0] }},
+                goldOpen: { $sum: { $cond: [{ $and: [{ $eq: ['$competedInOpenClass', true] }, { $eq: ['$resultsInOpenClass', 'gold'] }] }, 1, 0] }},
+                silverOpen: { $sum: { $cond: [{ $and: [{ $eq: ['$competedInOpenClass', true] }, { $eq: ['$resultsInOpenClass', 'silver'] }] }, 1, 0] }},
+                bronzeOpen: { $sum: { $cond: [{ $and: [{ $eq: ['$competedInOpenClass', true] }, { $eq: ['$resultsInOpenClass', 'bronze'] }] }, 1, 0] }}
+            }
+        }
+    ]);
+
+    const medalData = medalStats[0] || {
+        totalCompetitions: 0,
+        goldDivision: 0,
+        silverDivision: 0,
+        bronzeDivision: 0,
+        goldOpen: 0,
+        silverOpen: 0,
+        bronzeOpen: 0
+    };
+
     const result = {
         timeframe,
         dateRange: {
@@ -407,6 +500,25 @@ router.get('/advanced', auth, asyncHandler(async (req, res) => {
         },
         monthlyProgression,
         streaks: streakData,
+        medals: {
+          total: medalData.goldDivision + medalData.silverDivision + medalData.bronzeDivision + 
+                 medalData.goldOpen + medalData.silverOpen + medalData.bronzeOpen,
+          totalGold: medalData.goldDivision + medalData.goldOpen,
+          totalSilver: medalData.silverDivision + medalData.silverOpen,
+          totalBronze: medalData.bronzeDivision + medalData.bronzeOpen,
+          division: {
+            total: medalData.goldDivision + medalData.silverDivision + medalData.bronzeDivision,
+            gold: medalData.goldDivision,
+            silver: medalData.silverDivision,
+            bronze: medalData.bronzeDivision
+          },
+          openClass: {
+            total: medalData.goldOpen + medalData.silverOpen + medalData.bronzeOpen,
+            gold: medalData.goldOpen,
+            silver: medalData.silverOpen,
+            bronze: medalData.bronzeOpen
+          }
+        },
         insights: generateInsights(performanceMetrics[0], monthlyConsistency, techniqueFocus)
     };
 

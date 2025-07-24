@@ -1,76 +1,99 @@
-import React, { useState, useEffect } from 'react';
-import { View, TextInput, StyleSheet, Text, Alert, TouchableOpacity, Switch } from 'react-native';
+import React, { useState } from 'react';
+import { View, TextInput, StyleSheet, Text, TouchableOpacity, Switch } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { useLocalSearchParams, useRouter } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import apiClient from '../api/client';
 import TagInput from '../components/TagInput';
+import MedalSelector from '../components/MedalSelector';
+import useLogFormHandler from '../hooks/useLogFormHandler';
 import colors from '../constants/colors';
 
 export default function CompetitionLogScreen() {
-  const router = useRouter();
-  const params = useLocalSearchParams();
-  const [competitionToEdit, setCompetitionToEdit] = useState(null);
-  const [loading, setLoading] = useState(!!params.id);
-
+  // Form state
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [name, setName] = useState('');
   const [organization, setOrganization] = useState('');
   const [type, setType] = useState('Gi');
   const [weightDivision, setWeightDivision] = useState('');
-  const [resultsInDivision, setResultsInDivision] = useState('');
+  const [resultsInDivision, setResultsInDivision] = useState('none');
   const [matchesInDivision, setMatchesInDivision] = useState('1');
   const [matchNotesInDivision, setMatchNotesInDivision] = useState(['']);
-  
   const [competedInOpenClass, setCompetedInOpenClass] = useState(false);
-  const [resultsInOpenClass, setResultsInOpenClass] = useState('');
+  const [resultsInOpenClass, setResultsInOpenClass] = useState('none');
   const [matchesInOpenClass, setMatchesInOpenClass] = useState('0');
   const [matchNotesInOpenClass, setMatchNotesInOpenClass] = useState([]);
+  const [generalNotes, setGeneralNotes] = useState('');
+  const [tags, setTags] = useState([]);
 
-  useEffect(() => {
-    if (params.id) {
-      fetchCompetitionData();
-    }
-  }, [params.id]);
-
-  const fetchCompetitionData = async () => {
-    try {
-      setLoading(true);
-      const response = await apiClient.get(`/competitions/${params.id}`);
-      const competition = response.data;
-      
-      setCompetitionToEdit(competition);
+  // Hook configuration
+  const { isEditing, handleDelete, handleSaveOrUpdate, setupFormHandler } = useLogFormHandler({
+    endpoint: 'competitions',
+    itemName: 'competition',
+    validateData: (data) => {
+      if (!data.name.trim()) return 'Please enter the competition name.';
+      if (!data.organization.trim()) return 'Please enter the organization.';
+      if (!data.weightDivision.trim()) return 'Please enter your weight division.';
+      if (data.resultsInDivision === 'none') return 'Please select your results in the division.';
+      if (!data.matchesInDivision || isNaN(parseInt(data.matchesInDivision))) {
+        return 'Please enter a valid number of matches in your division.';
+      }
+      if (data.competedInOpenClass && (!data.matchesInOpenClass || isNaN(parseInt(data.matchesInOpenClass)))) {
+        return 'Please enter a valid number of matches in open class.';
+      }
+      return null;
+    },
+    transformDataForEdit: (competition) => {
       setDate(new Date(competition.date));
       setName(competition.name || '');
       setOrganization(competition.organization || '');
       setType(competition.type);
       setWeightDivision(competition.weightDivision || '');
-      setResultsInDivision(competition.resultsInDivision || '');
+      setResultsInDivision(competition.resultsInDivision || 'none');
       setMatchesInDivision(competition.matchesInDivision.toString());
       setMatchNotesInDivision(competition.matchNotesInDivision.map(note => note.notes));
       setCompetedInOpenClass(competition.competedInOpenClass || false);
-      setResultsInOpenClass(competition.resultsInOpenClass || '');
+      setResultsInOpenClass(competition.resultsInOpenClass || 'none');
       setMatchesInOpenClass(competition.matchesInOpenClass.toString());
       setMatchNotesInOpenClass(competition.matchNotesInOpenClass.map(note => note.notes));
       setGeneralNotes(competition.generalNotes || '');
       setTags(competition.tags.map(t => t.name));
-    } catch (error) {
-      console.error('Error fetching competition:', error);
-      Alert.alert('Error', 'Failed to load competition data');
-      router.back();
-    } finally {
-      setLoading(false);
+    },
+    transformDataForSave: (formData) => {
+      // Prepare match notes data
+      const formattedMatchNotesInDivision = formData.matchNotesInDivision.map((note, index) => ({
+        matchNumber: index + 1,
+        notes: note
+      }));
+
+      const formattedMatchNotesInOpenClass = formData.competedInOpenClass 
+        ? formData.matchNotesInOpenClass.map((note, index) => ({
+            matchNumber: index + 1,
+            notes: note
+          }))
+        : [];
+
+      return {
+        date: formData.date,
+        name: formData.name.trim(),
+        organization: formData.organization.trim(),
+        type: formData.type,
+        weightDivision: formData.weightDivision.trim(),
+        resultsInDivision: formData.resultsInDivision,
+        matchesInDivision: parseInt(formData.matchesInDivision),
+        matchNotesInDivision: formattedMatchNotesInDivision,
+        competedInOpenClass: formData.competedInOpenClass,
+        resultsInOpenClass: formData.competedInOpenClass ? formData.resultsInOpenClass : 'none',
+        matchesInOpenClass: formData.competedInOpenClass ? parseInt(formData.matchesInOpenClass) : 0,
+        matchNotesInOpenClass: formattedMatchNotesInOpenClass,
+        generalNotes: formData.generalNotes,
+        tags: formData.tags,
+      };
     }
-  };
-  
-  const [generalNotes, setGeneralNotes] = useState('');
-  const [tags, setTags] = useState([]);
-  
-  const isEditing = !!competitionToEdit;
+  });
   const onChangeDate = (event, selectedDate) => {
-    setShowDatePicker(false);
-    if (selectedDate) {
+    if (event.type === 'dismissed') {
+      setShowDatePicker(false);
+    } else if (selectedDate) {
       setDate(selectedDate);
     }
   };
@@ -107,98 +130,30 @@ export default function CompetitionLogScreen() {
     setMatchNotesInOpenClass(newNotes);
   };
 
-  const handleSaveOrUpdate = async () => {
-    // Validation
-    if (!name.trim()) {
-      Alert.alert('Invalid Input', 'Please enter the competition name.');
-      return;
-    }
-    if (!organization.trim()) {
-      Alert.alert('Invalid Input', 'Please enter the organization.');
-      return;
-    }
-    if (!weightDivision.trim()) {
-      Alert.alert('Invalid Input', 'Please enter your weight division.');
-      return;
-    }
-    if (!resultsInDivision.trim()) {
-      Alert.alert('Invalid Input', 'Please enter your results in the division.');
-      return;
-    }
-    if (!matchesInDivision || isNaN(parseInt(matchesInDivision))) {
-      Alert.alert('Invalid Input', 'Please enter a valid number of matches in your division.');
-      return;
-    }
-    if (competedInOpenClass && (!matchesInOpenClass || isNaN(parseInt(matchesInOpenClass)))) {
-      Alert.alert('Invalid Input', 'Please enter a valid number of matches in open class.');
-      return;
-    }
-
-    // Prepare match notes data
-    const formattedMatchNotesInDivision = matchNotesInDivision.map((note, index) => ({
-      matchNumber: index + 1,
-      notes: note
-    }));
-
-    const formattedMatchNotesInOpenClass = competedInOpenClass 
-      ? matchNotesInOpenClass.map((note, index) => ({
-          matchNumber: index + 1,
-          notes: note
-        }))
-      : [];
-
-    const competitionData = {
+  // Create save handler using the hook
+  const handleSave = async () => {
+    const formData = {
       date,
-      name: name.trim(),
-      organization: organization.trim(),
+      name,
+      organization,
       type,
-      weightDivision: weightDivision.trim(),
-      resultsInDivision: resultsInDivision.trim(),
-      matchesInDivision: parseInt(matchesInDivision),
-      matchNotesInDivision: formattedMatchNotesInDivision,
+      weightDivision,
+      resultsInDivision,
+      matchesInDivision,
+      matchNotesInDivision,
       competedInOpenClass,
-      resultsInOpenClass: competedInOpenClass ? resultsInOpenClass.trim() : '',
-      matchesInOpenClass: competedInOpenClass ? parseInt(matchesInOpenClass) : 0,
-      matchNotesInOpenClass: formattedMatchNotesInOpenClass,
+      resultsInOpenClass,
+      matchesInOpenClass,
+      matchNotesInOpenClass,
       generalNotes,
       tags,
     };
-
-    try {
-      if (isEditing) {
-        await apiClient.put(`/competitions/${competitionToEdit._id}`, competitionData);
-      } else {
-        await apiClient.post('/competitions', competitionData);
-      }
-      router.back();
-    } catch (error) {
-      console.error('Failed to save competition', error);
-      Alert.alert('Save Failed', 'Could not save the competition. Please try again.');
-    }
+    
+    await handleSaveOrUpdate(formData);
   };
 
-  const handleDelete = async () => {
-    Alert.alert(
-      "Delete Competition",
-      "Are you sure you want to permanently delete this competition log?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Delete", style: "destructive", onPress: async () => {
-          try {
-            await apiClient.delete(`/competitions/${competitionToEdit._id}`);
-            router.back();
-          } catch (error) {
-            console.error('Failed to delete competition', error);
-            Alert.alert('Delete Failed', 'Could not delete the competition.');
-          }
-        }}
-      ]
-    );
-  };
-
-  const handleCancel = () => {
-    router.back();
-  };
+  // Setup the form handler for header buttons
+  setupFormHandler(handleSave);
 
 
   return (
@@ -217,6 +172,8 @@ export default function CompetitionLogScreen() {
           display="spinner"
           onChange={onChangeDate}
           textColor="#333333"
+          accentColor="#007AFF"
+          themeVariant="light"
         />
       )}
 
@@ -261,12 +218,9 @@ export default function CompetitionLogScreen() {
       />
 
       <Text style={styles.label}>Results in Your Division</Text>
-      <TextInput 
-        style={styles.input} 
+      <MedalSelector 
         value={resultsInDivision} 
-        onChangeText={setResultsInDivision} 
-        placeholder="e.g., 1st Place, 2nd Place, etc." 
-        placeholderTextColor={colors.mutedAccent} 
+        onSelect={setResultsInDivision} 
       />
 
       <Text style={styles.label}>Number of Matches in Your Division</Text>
@@ -305,7 +259,7 @@ export default function CompetitionLogScreen() {
         <Switch
           value={competedInOpenClass}
           onValueChange={setCompetedInOpenClass}
-          trackColor={{ false: colors.mutedAccent, true: colors.primaryText }}
+          trackColor={{ false: colors.mutedAccent, true: colors.accent }}
           thumbColor={competedInOpenClass ? colors.white : colors.white}
         />
       </View>
@@ -313,12 +267,9 @@ export default function CompetitionLogScreen() {
       {competedInOpenClass && (
         <>
           <Text style={styles.label}>Results in Open Class</Text>
-          <TextInput 
-            style={styles.input} 
+          <MedalSelector 
             value={resultsInOpenClass} 
-            onChangeText={setResultsInOpenClass} 
-            placeholder="e.g., 1st Place, 2nd Place, etc." 
-            placeholderTextColor={colors.mutedAccent} 
+            onSelect={setResultsInOpenClass} 
           />
 
           <Text style={styles.label}>Number of Matches in Open Class</Text>

@@ -1,19 +1,12 @@
-import React, { useState, useRef, useImperativeHandle, useEffect } from 'react';
-import { TextInput, StyleSheet, Text, Alert, View, TouchableOpacity, ScrollView, Modal, Platform } from 'react-native';
-import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
+import React, { useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import apiClient from '../api/client';
 import LogFormLayout from '../components/LogFormLayout';
+import useLogFormHandler from '../hooks/useLogFormHandler';
 import colors from '../constants/colors';
 
 export default function SessionLogScreen() {
-  const router = useRouter();
-  const navigation = useNavigation();
-  const params = useLocalSearchParams();
-  const screenRef = useRef();
-  const [sessionToEdit, setSessionToEdit] = useState(null);
-  const [loading, setLoading] = useState(!!params.id);
-
+  // Form state
   const [date, setDate] = useState(new Date());
   const [duration, setDuration] = useState(1.5);
   const [showDurationPicker, setShowDurationPicker] = useState(false);
@@ -21,95 +14,52 @@ export default function SessionLogScreen() {
   const [techniqueNotes, setTechniqueNotes] = useState('');
   const [rollingNotes, setRollingNotes] = useState('');
   const [tags, setTags] = useState([]);
+  const [showPaywall, setShowPaywall] = useState(false);
 
-  useEffect(() => {
-    if (params.id) {
-      fetchSessionData();
-    }
-  }, [params.id]);
-
-  const fetchSessionData = async () => {
-    try {
-      setLoading(true);
-      const response = await apiClient.get(`/sessions/${params.id}`);
-      const session = response.data;
-      
-      setSessionToEdit(session);
+  // Hook configuration
+  const { isEditing, handleDelete, handleSaveOrUpdate, setupFormHandler } = useLogFormHandler({
+    endpoint: 'sessions',
+    itemName: 'session',
+    validateData: (data) => {
+      if (!data.duration || data.duration <= 0) {
+        return 'Please select a valid duration.';
+      }
+      return null;
+    },
+    transformDataForEdit: (session) => {
       setDate(new Date(session.date));
       setDuration(session.duration);
       setType(session.type);
       setTechniqueNotes(session.techniqueNotes || '');
       setRollingNotes(session.rollingNotes || '');
       setTags(session.tags.map(t => t.name));
-    } catch (error) {
-      console.error('Error fetching session:', error);
-      Alert.alert('Error', 'Failed to load session data');
-      router.back();
-    } finally {
-      setLoading(false);
-    }
-  };
-  const [showPaywall, setShowPaywall] = useState(false);
-  
-  const isEditing = !!sessionToEdit;
+    },
+    transformDataForSave: (formData) => ({
+      date: formData.date,
+      duration: formData.duration,
+      type: formData.type,
+      techniqueNotes: formData.techniqueNotes,
+      rollingNotes: formData.rollingNotes,
+      tags: formData.tags,
+    })
+  });
 
-
-  const handleSaveOrUpdate = async () => {
-    if (!duration || duration <= 0) {
-      Alert.alert('Invalid Input', 'Please select a valid duration.');
-      return;
-    }
-
-    const sessionData = {
+  // Create save handler with form data
+  const handleSave = async () => {
+    const formData = {
       date,
-      duration: duration,
+      duration,
       type,
       techniqueNotes,
       rollingNotes,
       tags,
     };
-
-    try {
-      if (isEditing) {
-        await apiClient.put(`/sessions/${sessionToEdit._id}`, sessionData);
-      } else {
-        await apiClient.post('/sessions', sessionData);
-      }
-      router.back();
-    } catch (error) {
-      console.error('Failed to save session', error);
-      Alert.alert('Save Failed', 'Could not save the session. Please try again.');
-    }
+    
+    await handleSaveOrUpdate(formData);
   };
 
-  const handleDelete = async () => {
-    Alert.alert(
-      "Delete Session",
-      "Are you sure you want to permanently delete this session log?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Delete", style: "destructive", onPress: async () => {
-          try {
-            await apiClient.delete(`/sessions/${sessionToEdit._id}`);
-            router.back();
-          } catch (error) {
-            console.error('Failed to delete session', error);
-            Alert.alert('Delete Failed', 'Could not delete the session.');
-          }
-        }}
-      ]
-    );
-  };
-
-  // Expose handleSave to the header button via ref
-  useImperativeHandle(screenRef, () => ({
-    handleSave: handleSaveOrUpdate
-  }));
-
-  // Set the screen ref in navigation params so header can access it
-  React.useEffect(() => {
-    navigation.setParams({ screenRef });
-  }, [navigation]);
+  // Setup the form handler
+  setupFormHandler(handleSave);
 
   // Generate duration options (15 min increments from 15 min to 4 hours)
   const generateDurationOptions = () => {

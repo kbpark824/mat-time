@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useAuth } from '../../auth/context';
 import apiClient from '../../api/client';
 import Dashboard from '../../components/Dashboard';
+import ErrorBoundary from '../../components/ErrorBoundary';
 import colors from '../../constants/colors';
 
 export default function HomeScreen() {
@@ -73,7 +74,7 @@ export default function HomeScreen() {
     }, [])
   );
 
-  const getActivityTypeLabel = (activity) => {
+  const getActivityTypeLabel = useCallback((activity) => {
     switch (activity.activityType) {
       case 'session':
         return 'Training Session';
@@ -84,9 +85,9 @@ export default function HomeScreen() {
       default:
         return 'Activity';
     }
-  };
+  }, []);
 
-  const getActivityTypeColor = (activity) => {
+  const getActivityTypeColor = useCallback((activity) => {
     switch (activity.activityType) {
       case 'session':
         return '#E3F2FD'; // Light blue
@@ -97,9 +98,9 @@ export default function HomeScreen() {
       default:
         return colors.tertiaryBackground;
     }
-  };
+  }, []);
 
-  const getActivitySubtitle = (activity) => {
+  const getActivitySubtitle = useCallback((activity) => {
     switch (activity.activityType) {
       case 'session':
         return `${activity.type} - ${activity.duration} min`;
@@ -110,9 +111,9 @@ export default function HomeScreen() {
       default:
         return '';
     }
-  };
+  }, []);
 
-  const getNotesExcerpt = (activity) => {
+  const getNotesExcerpt = useCallback((activity) => {
     let notes = '';
     switch (activity.activityType) {
       case 'session':
@@ -132,9 +133,9 @@ export default function HomeScreen() {
     
     // Return first 80 characters with ellipsis if longer
     return notes.length > 80 ? notes.substring(0, 80) + '...' : notes;
-  };
+  }, []);
 
-  const handleActivityPress = (activity) => {
+  const handleActivityPress = useCallback((activity) => {
     const routeMap = {
       session: 'logSession',
       seminar: 'logSeminar', 
@@ -145,7 +146,7 @@ export default function HomeScreen() {
     if (route) {
       router.push(`/${route}?id=${activity._id}`);
     }
-  };
+  }, [router]);
 
   const renderRecentActivity = ({ item }) => (
     <TouchableOpacity onPress={() => handleActivityPress(item)} style={styles.activityCard}>
@@ -170,7 +171,9 @@ export default function HomeScreen() {
           <View>
             {/* Dashboard Section */}
             <View style={styles.dashboardSection}>
-              <Dashboard stats={stats} />
+              <ErrorBoundary fallbackMessage="Unable to load dashboard. Please try refreshing.">
+                <Dashboard stats={stats} />
+              </ErrorBoundary>
             </View>
 
             {/* Recent Activities Section */}

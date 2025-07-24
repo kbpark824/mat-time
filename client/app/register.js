@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { View, TextInput, StyleSheet, Text, Alert, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, TouchableOpacity, Linking } from 'react-native';
+import { View, TextInput, StyleSheet, Text, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, TouchableOpacity, Linking } from 'react-native';
 import { useAuth } from '../auth/context';
 import colors from '../constants/colors';
+import commonStyles from '../constants/commonStyles';
+import ErrorHandler from '../utils/errorHandler';
 import Purchases from 'react-native-purchases';
 
 export default function RegisterScreen() {
@@ -32,12 +34,12 @@ export default function RegisterScreen() {
   const handleRegister = async () => {
     const passwordError = validatePassword(password);
     if (passwordError) {
-      Alert.alert('Weak Password', passwordError);
+      ErrorHandler.validation(passwordError);
       return;
     }
     if (!acceptedTerms) {
-        Alert.alert('Terms Required', 'Please accept the Terms of Use and Privacy Policy to continue.');
-        return;
+      ErrorHandler.validation('Please accept the Terms of Use and Privacy Policy to continue.');
+      return;
     }
     try {
       const revenueCatId = __DEV__ 
@@ -45,8 +47,9 @@ export default function RegisterScreen() {
         : await Purchases.getAppUserID();
       await register(email.toLowerCase(), password, revenueCatId);
     } catch (error) {
-        const message = error.response?.data?.error || error.response?.data?.msg || 'An unexpected error occurred.';
-        Alert.alert('Registration Failed', message);
+      ErrorHandler.showError('Registration Failed', error, {
+        fallbackMessage: 'An unexpected error occurred during registration. Please try again.'
+      });
         // Error logged for debugging - remove in production
     }
   };
@@ -57,11 +60,11 @@ export default function RegisterScreen() {
       style={styles.keyboardAvoidingContainer}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.container}>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.label}>Email Address</Text>
+        <View style={commonStyles.paddedContainer}>
+          <Text style={commonStyles.title}>Create Account</Text>
+          <Text style={commonStyles.label}>Email Address</Text>
           <TextInput
-            style={styles.input}
+            style={commonStyles.input}
             placeholder="e.g., your.name@email.com"
             placeholderTextColor={colors.mutedAccent}
             value={email}
@@ -69,9 +72,9 @@ export default function RegisterScreen() {
             autoCapitalize="none"
             keyboardType="email-address"
           />
-          <Text style={styles.label}>Password</Text>
+          <Text style={commonStyles.label}>Password</Text>
           <TextInput
-            style={styles.input}
+            style={commonStyles.input}
             placeholder="8+ chars, uppercase, lowercase, number, special char"
             placeholderTextColor={colors.mutedAccent}
             value={password}
@@ -100,8 +103,8 @@ export default function RegisterScreen() {
             </TouchableOpacity>
           </View>
           
-          <TouchableOpacity style={styles.primaryButton} onPress={handleRegister}>
-            <Text style={styles.primaryButtonText}>Register</Text>
+          <TouchableOpacity style={commonStyles.primaryButton} onPress={handleRegister}>
+            <Text style={commonStyles.primaryButtonText}>Register</Text>
           </TouchableOpacity>
         </View>
       </TouchableWithoutFeedback>
@@ -113,50 +116,6 @@ const styles = StyleSheet.create({
   keyboardAvoidingContainer: {
     flex: 1,
     backgroundColor: colors.primaryBackground,
-  },
-  container: { 
-    flex: 1, 
-    justifyContent: 'center', 
-    padding: 20, 
-    backgroundColor: colors.primaryBackground 
-  },
-  title: { 
-    fontSize: 24, 
-    fontWeight: 'bold', 
-    textAlign: 'center', 
-    marginBottom: 20, 
-    color: colors.primaryText 
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 5,
-    color: colors.primaryText,
-  },
-  input: {
-    height: 40,
-    marginBottom: 12,
-    paddingHorizontal: 8,
-    borderRadius: 8,
-    backgroundColor: colors.white,
-    color: colors.primaryText,
-    shadowColor: colors.shadow.color,
-    shadowOffset: colors.shadow.offset,
-    shadowOpacity: colors.shadow.opacity,
-    shadowRadius: colors.shadow.radius,
-    elevation: colors.shadow.elevation,
-  },
-  primaryButton: {
-    backgroundColor: colors.accent,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  primaryButtonText: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: 'bold',
   },
   termsContainer: {
     marginVertical: 15,

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, TextInput, Linking, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../auth/context';
 import colors from '../../constants/colors';
 import Paywall from '../../components/Paywall';
+import BeltRankSelector from '../../components/BeltRankSelector';
 import apiClient from '../../api/client';
 
 export default function ProfileScreen() {
@@ -11,8 +12,43 @@ export default function ProfileScreen() {
   const [showPaywall, setShowPaywall] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [beltRank, setBeltRank] = useState(null);
+  const [loadingBeltRank, setLoadingBeltRank] = useState(true);
 
   const isPro = user?.isPro || false;
+
+  useEffect(() => {
+    fetchBeltRank();
+  }, []);
+
+  const fetchBeltRank = async () => {
+    try {
+      setLoadingBeltRank(true);
+      const response = await apiClient.get('/auth/belt-rank');
+      setBeltRank(response.data.data.beltRank);
+    } catch (error) {
+      console.error('Failed to fetch belt rank:', error);
+      // Set default belt rank if fetch fails
+      setBeltRank({
+        rank: 'white',
+        stripes: 0,
+        achievedDate: new Date().toISOString()
+      });
+    } finally {
+      setLoadingBeltRank(false);
+    }
+  };
+
+  const handleBeltRankChange = async (newBeltRank) => {
+    try {
+      const response = await apiClient.put('/auth/belt-rank', newBeltRank);
+      setBeltRank(response.data.data.beltRank);
+      Alert.alert('Success', 'Belt rank updated successfully!');
+    } catch (error) {
+      console.error('Failed to update belt rank:', error);
+      Alert.alert('Error', 'Failed to update belt rank. Please try again.');
+    }
+  };
 
   const handleUpgradePress = () => {
     setShowPaywall(true);
@@ -72,6 +108,21 @@ export default function ProfileScreen() {
             <Text style={styles.label}>Member since:</Text>
             <Text style={styles.value}>{user?.createdAt ? formatDate(user.createdAt) : 'Unknown'}</Text>
           </View>
+        </View>
+
+        {/* Belt Rank Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Belt Rank</Text>
+          {loadingBeltRank ? (
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>Loading belt rank...</Text>
+            </View>
+          ) : (
+            <BeltRankSelector
+              currentRank={beltRank}
+              onRankChange={handleBeltRankChange}
+            />
+          )}
         </View>
 
         {/* Subscription Section */}
@@ -448,5 +499,20 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     opacity: 0.5,
+  },
+  loadingContainer: {
+    backgroundColor: colors.white,
+    padding: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: colors.shadow.color,
+    shadowOffset: colors.shadow.offset,
+    shadowOpacity: colors.shadow.opacity,
+    shadowRadius: colors.shadow.radius,
+    elevation: colors.shadow.elevation,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: colors.mutedAccent,
   },
 });

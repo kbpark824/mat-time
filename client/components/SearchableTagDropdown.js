@@ -7,12 +7,12 @@ import {
   Modal, 
   TextInput, 
   FlatList,
-  Pressable,
-  Alert
+  Pressable
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import apiClient from '../api/client';
 import colors from '../constants/colors';
+import ErrorHandler from '../utils/errorHandler';
 
 export default function SearchableTagDropdown({ 
   allTags, 
@@ -53,35 +53,27 @@ export default function SearchableTagDropdown({
   };
 
   const deleteTag = async (tag) => {
-    Alert.alert(
+    ErrorHandler.showConfirmation(
       'Delete Tag',
       `Are you sure you want to delete "${tag.name}"? This will remove it from all your activities.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await apiClient.delete(`/tags/${tag._id}`);
-              
-              // Remove from selected tags if it was selected
-              if (selectedTags.includes(tag.name)) {
-                onTagsChange(selectedTags.filter(t => t !== tag.name));
-              }
-              
-              // Notify parent component to update the tags list
-              if (onTagDeleted) {
-                onTagDeleted(tag._id);
-              }
-              
-            } catch (error) {
-              console.error('Error deleting tag:', error);
-              Alert.alert('Error', 'Failed to delete tag. Please try again.');
-            }
+      async () => {
+        try {
+          await apiClient.delete(`/tags/${tag._id}`);
+          
+          // Remove from selected tags if it was selected
+          if (selectedTags.includes(tag.name)) {
+            onTagsChange(selectedTags.filter(t => t !== tag.name));
           }
+          
+          // Notify parent component to update the tags list
+          if (onTagDeleted) {
+            onTagDeleted(tag._id);
+          }
+          
+        } catch (error) {
+          ErrorHandler.delete('tag', error);
         }
-      ]
+      }
     );
   };
 

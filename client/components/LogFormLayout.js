@@ -5,6 +5,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import TagInput from './TagInput';
 import Paywall from './Paywall';
 import colors from '../constants/colors';
+import commonStyles from '../constants/commonStyles';
 import { useProStatus } from '../hooks/useProStatus';
 
 export default function LogFormLayout({
@@ -48,7 +49,7 @@ export default function LogFormLayout({
 
   return (
     <KeyboardAwareScrollView style={styles.container}>
-      <Text style={styles.label}>Date</Text>
+      <Text style={commonStyles.label}>Date</Text>
       <Pressable onPress={() => setShowDatePicker(true)}>
         <View style={styles.input}>
             <Text style={styles.datePickerText}>{date.toLocaleDateString()}</Text>
@@ -70,7 +71,7 @@ export default function LogFormLayout({
       {/* Additional fields (duration, professor, etc.) */}
       {additionalFields}
       
-      <Text style={styles.label}>Type</Text>
+      <Text style={commonStyles.label}>Type</Text>
       <View style={styles.buttonGroup}>
         {typeOptions.map(t => (
             <TouchableOpacity 
@@ -83,7 +84,7 @@ export default function LogFormLayout({
         ))}
       </View>
 
-      <Text style={styles.label}>Technique Notes</Text>
+      <Text style={commonStyles.label}>Technique Notes</Text>
       <TextInput 
         style={[styles.input, styles.textArea]} 
         multiline 
@@ -98,7 +99,7 @@ export default function LogFormLayout({
       {/* Rolling Notes - only show if rolling notes props are provided */}
       {rollingNotes !== undefined && setRollingNotes && (
         <>
-          <Text style={styles.label}>Rolling / Sparring Notes</Text>
+          <Text style={commonStyles.label}>Rolling / Sparring Notes</Text>
           <TextInput 
             style={[styles.input, styles.textArea]} 
             multiline 
@@ -129,12 +130,6 @@ const styles = StyleSheet.create({
       flex: 1, 
       padding: 20, 
       backgroundColor: colors.primaryBackground 
-    },
-    label: { 
-      fontSize: 16, 
-      marginBottom: 5, 
-      fontWeight: 'bold', 
-      color: colors.primaryText 
     },
     datePickerText: {
       fontSize: 16,

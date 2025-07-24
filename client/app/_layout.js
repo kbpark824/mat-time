@@ -8,6 +8,7 @@ import { Platform, Text, TouchableOpacity, View } from 'react-native';
 import { jwtDecode } from 'jwt-decode';
 import Constants from 'expo-constants';
 import colors from '../constants/colors';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -207,8 +208,12 @@ function Layout() {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <Layout />
-    </AuthProvider>
+    <ErrorBoundary fallbackMessage="The app encountered an error during startup. Please restart the app.">
+      <AuthProvider>
+        <ErrorBoundary fallbackMessage="Authentication system encountered an error.">
+          <Layout />
+        </ErrorBoundary>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }

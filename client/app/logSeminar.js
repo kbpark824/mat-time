@@ -1,110 +1,59 @@
-import React, { useState, useRef, useImperativeHandle, useEffect } from 'react';
-import { TextInput, StyleSheet, Text, Alert } from 'react-native';
-import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
-import apiClient from '../api/client';
+import React, { useState } from 'react';
+import { TextInput, StyleSheet, Text } from 'react-native';
 import LogFormLayout from '../components/LogFormLayout';
+import useLogFormHandler from '../hooks/useLogFormHandler';
 import colors from '../constants/colors';
 
 export default function SeminarLogScreen() {
-  const router = useRouter();
-  const navigation = useNavigation();
-  const params = useLocalSearchParams();
-  const screenRef = useRef();
-  const [seminarToEdit, setSeminarToEdit] = useState(null);
-  const [loading, setLoading] = useState(!!params.id);
-
+  // Form state
   const [date, setDate] = useState(new Date());
   const [professorName, setProfessorName] = useState('');
   const [type, setType] = useState('Gi');
   const [techniqueNotes, setTechniqueNotes] = useState('');
   const [tags, setTags] = useState([]);
+  const [showPaywall, setShowPaywall] = useState(false);
 
-  useEffect(() => {
-    if (params.id) {
-      fetchSeminarData();
-    }
-  }, [params.id]);
-
-  const fetchSeminarData = async () => {
-    try {
-      setLoading(true);
-      const response = await apiClient.get(`/seminars/${params.id}`);
-      const seminar = response.data;
-      
-      setSeminarToEdit(seminar);
+  // Hook configuration
+  const { isEditing, handleDelete, handleSaveOrUpdate, setupFormHandler } = useLogFormHandler({
+    endpoint: 'seminars',
+    itemName: 'seminar',
+    validateData: (data) => {
+      if (!data.professorName.trim()) {
+        return 'Please enter the professor/instructor name.';
+      }
+      return null;
+    },
+    transformDataForEdit: (seminar) => {
       setDate(new Date(seminar.date));
       setProfessorName(seminar.professorName || '');
       setType(seminar.type);
       setTechniqueNotes(seminar.techniqueNotes || '');
       setTags(seminar.tags.map(t => t.name));
-    } catch (error) {
-      console.error('Error fetching seminar:', error);
-      Alert.alert('Error', 'Failed to load seminar data');
-      router.back();
-    } finally {
-      setLoading(false);
-    }
-  };
-  const [showPaywall, setShowPaywall] = useState(false);
-  
-  const isEditing = !!seminarToEdit;
+    },
+    transformDataForSave: (formData) => ({
+      date: formData.date,
+      professorName: formData.professorName.trim(),
+      type: formData.type,
+      techniqueNotes: formData.techniqueNotes,
+      tags: formData.tags,
+    })
+  });
 
-
-  const handleSaveOrUpdate = async () => {
-    if (!professorName.trim()) {
-      Alert.alert('Invalid Input', 'Please enter the professor/instructor name.');
-      return;
-    }
-
-    const seminarData = {
+  // Create save handler with form data
+  const handleSave = async () => {
+    const formData = {
       date,
-      professorName: professorName.trim(),
+      professorName,
       type,
       techniqueNotes,
       tags,
     };
-
-    try {
-      if (isEditing) {
-        await apiClient.put(`/seminars/${seminarToEdit._id}`, seminarData);
-      } else {
-        await apiClient.post('/seminars', seminarData);
-      }
-      router.back();
-    } catch (error) {
-      console.error('Failed to save seminar', error);
-      Alert.alert('Save Failed', 'Could not save the seminar. Please try again.');
-    }
+    
+    await handleSaveOrUpdate(formData);
   };
 
-  const handleDelete = async () => {
-    Alert.alert(
-      "Delete Seminar",
-      "Are you sure you want to permanently delete this seminar log?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Delete", style: "destructive", onPress: async () => {
-          try {
-            await apiClient.delete(`/seminars/${seminarToEdit._id}`);
-            router.back();
-          } catch (error) {
-            console.error('Failed to delete seminar', error);
-            Alert.alert('Delete Failed', 'Could not delete the seminar.');
-          }
-        }}
-      ]
-    );
-  };
-
-  // Expose handleSave to the header button via ref
-  useImperativeHandle(screenRef, () => ({
-    handleSave: handleSaveOrUpdate
-  }));
-
-  // Set the screen ref in navigation params so header can access it
-  React.useEffect(() => {
-    navigation.setParams({ screenRef });
-  }, [navigation]);
+  // Setup the form handler
+  setupFormHandler(handleSave);
 
 
   // Additional fields specific to seminars
