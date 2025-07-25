@@ -1,8 +1,15 @@
 import Constants from 'expo-constants';
 
+// Get local IP dynamically for development
+const getLocalIP = () => {
+  // For Expo development, use the debuggerHost which contains your local IP
+  const debuggerHost = Constants.expoConfig?.hostUri?.split(':')[0];
+  return debuggerHost || 'localhost';
+};
+
 // API endpoint configuration
 const API_ENDPOINTS = {
-  local: 'http://localhost:5001/api',
+  local: `http://${getLocalIP()}:5001/api`,
   production: 'https://mat-time-production.up.railway.app/api',
   // staging: 'https://mat-time-staging.up.railway.app/api', // Future use
 };

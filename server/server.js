@@ -54,7 +54,14 @@ app.use(helmet({
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://mat-time-production.up.railway.app'] // Your Railway domain
-    : ['http://localhost:19006', 'http://localhost:8081'], // Expo dev servers
+    : [
+        'http://localhost:19006', 
+        'http://localhost:8081',
+        // Allow any local network IP for development
+        /^http:\/\/192\.168\.\d+\.\d+:(19006|8081)$/,
+        /^http:\/\/10\.\d+\.\d+\.\d+:(19006|8081)$/,
+        /^http:\/\/172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+:(19006|8081)$/
+      ],
   credentials: true
 };
 app.use(cors(corsOptions));

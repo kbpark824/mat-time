@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,43 +15,34 @@ export default function VerifyEmailScreen() {
   const [isResending, setIsResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
-  const pollingIntervalRef = useRef(null);
 
-  // Start polling for verification status
-  useEffect(() => {
-    const startPolling = () => {
-      pollingIntervalRef.current = setInterval(async () => {
-        if (!email || isCheckingStatus) return;
-        
-        try {
-          setIsCheckingStatus(true);
-          const result = await checkVerificationStatus(email);
-          
-          if (result.isVerified) {
-            // Stop polling and redirect to app
-            clearInterval(pollingIntervalRef.current);
-            router.replace('/(tabs)');
-          }
-        } catch (error) {
-          // Silently fail - don't show error for background checks
-          console.error('Background verification check failed:', error);
-        } finally {
-          setIsCheckingStatus(false);
-        }
-      }, 3000); // Check every 3 seconds
-    };
+  const handleBackToLogin = () => {
+    router.replace('login');
+  };
 
-    if (email) {
-      startPolling();
-    }
-
-    // Cleanup on unmount
-    return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
+  const handleCheckVerification = async () => {
+    if (!email || isCheckingStatus) return;
+    
+    setIsCheckingStatus(true);
+    
+    try {
+      const result = await checkVerificationStatus(email);
+      
+      if (result.isVerified) {
+        // Redirect to app
+        router.replace('/(tabs)');
+      } else {
+        // Show user that email is not yet verified
+        ErrorHandler.showError('Not Verified Yet', 'Your email has not been verified yet. Please check your email and click the verification link, then try again.');
       }
-    };
-  }, [email, checkVerificationStatus, router, isCheckingStatus]);
+    } catch (error) {
+      ErrorHandler.showError('Check Failed', error, {
+        fallbackMessage: 'Unable to check verification status. Please try again.'
+      });
+    } finally {
+      setIsCheckingStatus(false);
+    }
+  };
 
   const handleResendEmail = async () => {
     if (isResending) return;
@@ -77,9 +68,6 @@ export default function VerifyEmailScreen() {
     }
   };
 
-  const handleBackToLogin = () => {
-    router.replace('/login');
-  };
 
   return (
     <View style={commonStyles.paddedContainer}>
@@ -100,17 +88,31 @@ export default function VerifyEmailScreen() {
       <Text style={styles.emailText}>{email}</Text>
       
       <Text style={[commonStyles.bodyText, styles.instructionText]}>
-        Click the link in the email to verify your account and start using Mat Time.
+        Click the link in the email to verify your account, then tap "Check Verification Status" below to continue.
       </Text>
 
-      {isCheckingStatus && (
-        <View style={styles.checkingContainer}>
-          <ActivityIndicator size="small" color={colors.accent} />
-          <Text style={styles.checkingText}>Checking verification status...</Text>
-        </View>
-      )}
-
       <View style={styles.actionContainer}>
+        <TouchableOpacity 
+          style={[commonStyles.primaryButton, isCheckingStatus && { opacity: 0.6 }]} 
+          onPress={handleCheckVerification}
+          disabled={isCheckingStatus}
+        >
+          <View style={styles.buttonContent}>
+            {isCheckingStatus && (
+              <ActivityIndicator 
+                size="small" 
+                color={colors.white} 
+                style={styles.loadingSpinner} 
+              />
+            )}
+            <Text style={commonStyles.primaryButtonText}>
+              {isCheckingStatus ? 'Checking...' : 'Check Verification Status'}
+            </Text>
+          </View>
+        </TouchableOpacity>
+
+        <View style={styles.buttonSpacer} />
+
         {resendSuccess ? (
           <View style={styles.successContainer}>
             <Ionicons name="checkmark-circle" size={20} color={colors.accent} />
@@ -138,10 +140,10 @@ export default function VerifyEmailScreen() {
         )}
         
         <TouchableOpacity 
-          style={[commonStyles.primaryButton, styles.backButton]} 
+          style={styles.backButton} 
           onPress={handleBackToLogin}
         >
-          <Text style={commonStyles.primaryButtonText}>Back to Login</Text>
+          <Text style={styles.backButtonText}>Back to Login</Text>
         </TouchableOpacity>
       </View>
 
@@ -184,6 +186,9 @@ const styles = StyleSheet.create({
     marginTop: 30,
     marginBottom: 40,
   },
+  buttonSpacer: {
+    height: 15,
+  },
   buttonContent: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -209,7 +214,14 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   backButton: {
-    marginTop: 15,
+    marginTop: 20,
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: colors.accent,
+    textDecorationLine: 'underline',
   },
   infoContainer: {
     alignItems: 'center',
@@ -217,18 +229,5 @@ const styles = StyleSheet.create({
   expirationText: {
     marginTop: 10,
     fontSize: 12,
-  },
-  checkingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    marginTop: 15,
-  },
-  checkingText: {
-    fontSize: 14,
-    color: colors.accent,
-    marginLeft: 8,
-    fontStyle: 'italic',
   },
 });
