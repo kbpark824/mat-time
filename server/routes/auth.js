@@ -306,6 +306,54 @@ router.post('/resend-verification', asyncHandler(async (req, res) => {
   }
 }));
 
+// @route   POST api/auth/check-verification-status
+// @desc    Check if user's email is verified
+// @access  Public
+router.post('/check-verification-status', asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ 
+      success: false, 
+      error: 'Email is required' 
+    });
+  }
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    return res.status(404).json({ 
+      success: false, 
+      error: 'User not found' 
+    });
+  }
+
+  if (user.isEmailVerified) {
+    // Generate JWT token for verified user
+    const payload = { user: { id: user.id, email: user.email, createdAt: user.createdAt, isPro: user.isPro } };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '5h' });
+
+    return res.json({ 
+      success: true, 
+      isVerified: true,
+      token,
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          isEmailVerified: user.isEmailVerified,
+          createdAt: user.createdAt,
+          isPro: user.isPro
+        }
+      }
+    });
+  }
+
+  res.json({ 
+    success: true, 
+    isVerified: false 
+  });
+}));
+
 // @route   GET api/auth/verify-email/:token
 // @desc    Verify email address
 // @access  Public

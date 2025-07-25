@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../auth/context';
 import apiClient from '../api/client';
 import colors from '../constants/colors';
 import commonStyles from '../constants/commonStyles';
@@ -10,8 +11,47 @@ import ErrorHandler from '../utils/errorHandler';
 export default function VerifyEmailScreen() {
   const router = useRouter();
   const { email } = useLocalSearchParams();
+  const { checkVerificationStatus } = useAuth();
   const [isResending, setIsResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+  const pollingIntervalRef = useRef(null);
+
+  // Start polling for verification status
+  useEffect(() => {
+    const startPolling = () => {
+      pollingIntervalRef.current = setInterval(async () => {
+        if (!email || isCheckingStatus) return;
+        
+        try {
+          setIsCheckingStatus(true);
+          const result = await checkVerificationStatus(email);
+          
+          if (result.isVerified) {
+            // Stop polling and redirect to app
+            clearInterval(pollingIntervalRef.current);
+            router.replace('/(tabs)');
+          }
+        } catch (error) {
+          // Silently fail - don't show error for background checks
+          console.error('Background verification check failed:', error);
+        } finally {
+          setIsCheckingStatus(false);
+        }
+      }, 3000); // Check every 3 seconds
+    };
+
+    if (email) {
+      startPolling();
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, [email, checkVerificationStatus, router, isCheckingStatus]);
 
   const handleResendEmail = async () => {
     if (isResending) return;
@@ -62,6 +102,13 @@ export default function VerifyEmailScreen() {
       <Text style={[commonStyles.bodyText, styles.instructionText]}>
         Click the link in the email to verify your account and start using Mat Time.
       </Text>
+
+      {isCheckingStatus && (
+        <View style={styles.checkingContainer}>
+          <ActivityIndicator size="small" color={colors.accent} />
+          <Text style={styles.checkingText}>Checking verification status...</Text>
+        </View>
+      )}
 
       <View style={styles.actionContainer}>
         {resendSuccess ? (
@@ -170,5 +217,18 @@ const styles = StyleSheet.create({
   expirationText: {
     marginTop: 10,
     fontSize: 12,
+  },
+  checkingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    marginTop: 15,
+  },
+  checkingText: {
+    fontSize: 14,
+    color: colors.accent,
+    marginLeft: 8,
+    fontStyle: 'italic',
   },
 });

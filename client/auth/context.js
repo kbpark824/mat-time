@@ -64,13 +64,32 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const checkVerificationStatus = async (email) => {
+    try {
+      const response = await apiClient.post('/auth/check-verification-status', { email });
+      if (response.data.isVerified && response.data.token) {
+        const decodedToken = jwtDecode(response.data.token);
+        setUser(decodedToken.user);
+        await authStorage.storeToken(response.data.token);
+      }
+      return response.data;
+    } catch (error) {
+      if (__DEV__) {
+        console.error("Verification status check failed", error.response?.data);
+      } else {
+        console.error("Verification status check failed");
+      }
+      throw error;
+    }
+  };
+
   const logout = async () => {
     setUser(null);
     await authStorage.removeToken();
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, login, register, logout, verifyEmail }}>
+    <AuthContext.Provider value={{ user, setUser, login, register, logout, verifyEmail, checkVerificationStatus }}>
       {children}
     </AuthContext.Provider>
   );
