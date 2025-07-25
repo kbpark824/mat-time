@@ -241,6 +241,7 @@ const styles = StyleSheet.create({
     color: colors.mutedAccent,
     fontWeight: '600',
     marginBottom: 5,
+    textAlign: 'center',
   },
   metricValue: {
     fontSize: 24,

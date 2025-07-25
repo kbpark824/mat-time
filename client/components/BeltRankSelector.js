@@ -50,11 +50,25 @@ export default function BeltRankSelector({ currentRank, onRankChange }) {
     }
   };
 
-  const renderStripes = (count, beltColor) => {
+  const getRankBarColor = (beltRank) => {
+    return beltRank === 'black' ? '#DC143C' : '#000000'; // Red for black belt, black for all others
+  };
+
+  const getStripeColor = (beltColor) => {
+    return '#FFFFFF'; // Always white stripes
+  };
+
+  const renderStripes = (count, beltColor, vertical = false, beltRank = null, isPreview = false) => {
     const stripes = [];
     for (let i = 0; i < count; i++) {
       stripes.push(
-        <View key={i} style={[styles.stripe, { backgroundColor: beltColor === '#FFFFFF' ? '#FFD700' : '#FFFFFF' }]} />
+        <View 
+          key={i} 
+          style={[
+            vertical ? (isPreview ? styles.previewVerticalStripe : styles.verticalStripe) : styles.stripe, 
+            { backgroundColor: getStripeColor(beltColor) }
+          ]} 
+        />
       );
     }
     return stripes;
@@ -68,8 +82,13 @@ export default function BeltRankSelector({ currentRank, onRankChange }) {
             <Text style={[styles.beltText, { color: currentBelt.textColor }]}>
               {currentBelt.name}
             </Text>
-            <View style={styles.stripesContainer}>
-              {renderStripes(currentRank?.stripes || 0, currentBelt.color)}
+            <View style={styles.beltRightSection}>
+              <View style={[styles.rankBar, { backgroundColor: getRankBarColor(currentRank?.rank || 'white') }]}>
+                <View style={styles.verticalStripesContainer}>
+                  {renderStripes(currentRank?.stripes || 0, currentBelt.color, true, currentRank?.rank)}
+                </View>
+              </View>
+              <View style={[styles.mainBeltTip, { backgroundColor: currentBelt.color }]} />
             </View>
           </View>
           <Ionicons name="chevron-forward" size={20} color={colors.mutedAccent} />
@@ -109,9 +128,13 @@ export default function BeltRankSelector({ currentRank, onRankChange }) {
                     <Text style={[styles.beltOptionText, { color: belt.textColor }]}>
                       {belt.name}
                     </Text>
-                    {selectedRank === belt.value && (
-                      <Ionicons name="checkmark" size={16} color={belt.textColor} />
-                    )}
+                    <View style={styles.beltOptionRight}>
+                      <View style={[styles.beltOptionRankBar, { backgroundColor: getRankBarColor(belt.value) }]} />
+                      <View style={styles.beltTip} />
+                      {selectedRank === belt.value && (
+                        <Ionicons name="checkmark" size={16} color={belt.textColor} style={styles.checkmark} />
+                      )}
+                    </View>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -135,7 +158,7 @@ export default function BeltRankSelector({ currentRank, onRankChange }) {
                       {stripeCount}
                     </Text>
                     <View style={styles.stripesPreview}>
-                      {renderStripes(stripeCount, '#000000')}
+                      {renderStripes(stripeCount, '#FFFFFF', true, null, true)}
                     </View>
                   </TouchableOpacity>
                 ))}
@@ -201,16 +224,19 @@ const styles = StyleSheet.create({
   },
   belt: {
     flex: 1,
-    padding: 12,
-    borderRadius: 8,
+    height: 40,
+    borderRadius: 6,
     borderWidth: 1,
     borderColor: colors.mutedAccent,
+    flexDirection: 'row',
+    alignItems: 'center',
+    overflow: 'hidden',
   },
   beltText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 4,
+    fontSize: 12,
+    fontWeight: '500',
+    flex: 1,
+    paddingLeft: 10,
   },
   stripesContainer: {
     flexDirection: 'row',
@@ -221,6 +247,41 @@ const styles = StyleSheet.create({
     width: 20,
     height: 3,
     borderRadius: 1.5,
+  },
+  beltRightSection: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    height: '100%',
+  },
+  rankBar: {
+    width: 80,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+  },
+  mainBeltTip: {
+    width: 25,
+    height: '100%',
+    borderTopRightRadius: 8,
+    borderBottomRightRadius: 8,
+  },
+  verticalStripesContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 10,
+    height: '100%',
+    paddingHorizontal: 13,
+  },
+  verticalStripe: {
+    width: 6,
+    height: '100%',
+    borderRadius: 1,
+  },
+  previewVerticalStripe: {
+    width: 3,
+    height: '100%',
+    borderRadius: 0.5,
   },
   achievedDate: {
     fontSize: 14,
@@ -235,56 +296,81 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: colors.white,
-    margin: 20,
-    padding: 20,
+    margin: 10,
+    padding: 15,
     borderRadius: 12,
-    width: '90%',
-    maxHeight: '85%',
+    width: '95%',
+    maxHeight: '90%',
   },
   scrollContent: {
-    maxHeight: 350,
+    maxHeight: 450,
     marginBottom: 15,
   },
   scrollContentWithDatePicker: {
-    maxHeight: 280,
+    maxHeight: 400,
   },
   dateSection: {
     marginBottom: 10,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: colors.primaryText,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 12,
   },
   sectionLabel: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: colors.primaryText,
-    marginBottom: 10,
-    marginTop: 15,
+    marginBottom: 8,
+    marginTop: 10,
   },
   beltGrid: {
     flexDirection: 'column',
-    gap: 8,
+    gap: 4,
   },
   beltOption: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 12,
-    borderRadius: 8,
+    padding: 0,
+    borderRadius: 6,
     borderWidth: 1,
     borderColor: colors.mutedAccent,
+    height: 40,
+    overflow: 'hidden',
   },
   selectedBelt: {
     borderWidth: 2,
     borderColor: colors.accent,
   },
   beltOptionText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
+    flex: 1,
+    paddingLeft: 10,
+  },
+  beltOptionRight: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    height: '100%',
+  },
+  beltOptionRankBar: {
+    width: 80,
+    height: '100%',
+    borderRadius: 0,
+  },
+  beltTip: {
+    width: 25,
+    height: '100%',
+    borderTopRightRadius: 6,
+    borderBottomRightRadius: 6,
+  },
+  checkmark: {
+    position: 'absolute',
+    right: 4,
+    alignSelf: 'center',
   },
   stripesSelection: {
     flexDirection: 'row',
@@ -313,8 +399,13 @@ const styles = StyleSheet.create({
   stripesPreview: {
     flexDirection: 'row',
     gap: 2,
-    height: 8,
+    height: 16,
+    width: 24,
     alignItems: 'center',
+    justifyContent: 'flex-end',
+    backgroundColor: '#000000',
+    borderRadius: 2,
+    paddingRight: 3,
   },
   dateButton: {
     flexDirection: 'row',

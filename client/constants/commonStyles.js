@@ -5,13 +5,18 @@ import colors from './colors';
 const commonStyles = StyleSheet.create({
   // Input field styles
   input: {
-    height: 40,
-    marginBottom: 12,
-    paddingHorizontal: 8,
+    height: 50,
+    marginBottom: 16,
+    paddingHorizontal: 15,
     borderRadius: 8,
     backgroundColor: colors.white,
     color: colors.primaryText,
-    ...colors.shadow,
+    fontSize: 16,
+    shadowColor: colors.shadow.color,
+    shadowOffset: colors.shadow.offset,
+    shadowOpacity: colors.shadow.opacity,
+    shadowRadius: colors.shadow.radius,
+    elevation: colors.shadow.elevation,
   },
 
   inputError: {
@@ -37,6 +42,7 @@ const commonStyles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.primaryBackground,
     padding: 16,
+    justifyContent: 'center',
   },
 
   // Card-like containers
@@ -93,10 +99,11 @@ const commonStyles = StyleSheet.create({
 
   // Text styles
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: colors.primaryText,
-    marginBottom: 16,
+    marginBottom: 24,
+    textAlign: 'center',
   },
 
   subtitle: {

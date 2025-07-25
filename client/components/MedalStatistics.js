@@ -16,9 +16,9 @@ export default function MedalStatistics({ analytics, styles }) {
   const MedalCard = ({ title, count, emoji = '🏅', subtitle = null }) => (
     <View style={styles.metricCard}>
       <Text style={styles.metricTitle}>{title}</Text>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontSize: 20, marginRight: 8 }}>{emoji}</Text>
-        <Text style={styles.metricValue}>{count}</Text>
+      <View style={{ alignItems: 'center', justifyContent: 'center', flex: 1 }}>
+        <Text style={{ fontSize: 24 }}>{emoji}</Text>
+        <Text style={[styles.metricValue, { fontSize: 20 }]}>{count}</Text>
       </View>
       {subtitle && <Text style={styles.metricSubtitle}>{subtitle}</Text>}
     </View>
@@ -54,7 +54,6 @@ export default function MedalStatistics({ analytics, styles }) {
           title="TOTAL MEDALS" 
           count={medals.total} 
           emoji="🏅"
-          subtitle="All competitions"
         />
         <View style={styles.metricCard}>
           <Text style={styles.metricTitle}>MEDAL BREAKDOWN</Text>
