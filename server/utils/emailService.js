@@ -38,7 +38,7 @@ class EmailService {
 
   // Create verification email HTML template
   createVerificationEmailTemplate(verificationToken, userEmail) {
-    const verificationUrl = `https://${this.appDomain}/verify-email/${verificationToken}`;
+    const verificationUrl = `https://${this.appDomain}/api/auth/verify-email/${verificationToken}`;
     
     return `
       <!DOCTYPE html>
