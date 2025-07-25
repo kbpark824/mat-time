@@ -1,13 +1,10 @@
-const Brevo = require('@getbrevo/brevo');
+const { TransactionalEmailsApi, SendSmtpEmail } = require('@getbrevo/brevo');
 const crypto = require('crypto');
 
 class EmailService {
   constructor() {
-    // Set API key using the correct method
-    const brevo = new Brevo();
-    brevo.setApiKey(Brevo.AccountApiApiKeys.apiKey, process.env.BREVO_API_KEY);
-    
-    this.emailAPI = new Brevo.TransactionalEmailsApi();
+    this.emailAPI = new TransactionalEmailsApi();
+    this.emailAPI.authentications.apiKey.apiKey = process.env.BREVO_API_KEY;
     
     this.senderEmail = process.env.BREVO_SENDER_EMAIL;
     this.senderName = process.env.BREVO_SENDER_NAME;
@@ -127,7 +124,7 @@ class EmailService {
   // Send verification email
   async sendVerificationEmail(userEmail, userName, verificationToken) {
     try {
-      const message = new Brevo.SendSmtpEmail();
+      const message = new SendSmtpEmail();
       
       message.subject = 'Verify Your Email - Mat Time';
       message.htmlContent = this.createVerificationEmailTemplate(verificationToken, userEmail);
@@ -153,7 +150,7 @@ class EmailService {
   // Send welcome email after verification (optional)
   async sendWelcomeEmail(userEmail, userName) {
     try {
-      const message = new Brevo.SendSmtpEmail();
+      const message = new SendSmtpEmail();
       
       message.subject = 'Welcome to Mat Time - Let\'s Start Training!';
       message.htmlContent = `
