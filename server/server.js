@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
+const path = require('path');
 const connectDB = require('./config/db');
 const logger = require('./config/logger');
 const requestLogger = require('./middleware/requestLogger');
@@ -87,6 +88,9 @@ const authLimiter = rateLimit({
 // Apply rate limiting
 app.use('/api/', generalLimiter);
 app.use('/api/auth/', authLimiter);
+
+// Serve static files for email verification pages
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Define Routes
 app.use('/api/health', require('./routes/health'));

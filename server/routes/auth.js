@@ -338,24 +338,32 @@ router.get('/verify-email/:token', asyncHandler(async (req, res) => {
     // Don't fail verification if welcome email fails
   }
 
-  // Generate JWT token for automatic login
-  const payload = { user: { id: user.id, email: user.email, createdAt: user.createdAt, isPro: user.isPro } };
-  const jwtToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '5h' });
+  // For web browser verification, redirect to success page
+  // For API calls, return JSON response
+  const acceptHeader = req.headers.accept || '';
+  if (acceptHeader.includes('text/html')) {
+    // Browser request - redirect to success page
+    res.redirect('/verify-success.html');
+  } else {
+    // API request - return JSON with token for mobile app
+    const payload = { user: { id: user.id, email: user.email, createdAt: user.createdAt, isPro: user.isPro } };
+    const jwtToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '5h' });
 
-  res.json({ 
-    success: true, 
-    message: 'Email verified successfully!',
-    token: jwtToken,
-    data: {
-      user: {
-        id: user.id,
-        email: user.email,
-        isEmailVerified: user.isEmailVerified,
-        createdAt: user.createdAt,
-        isPro: user.isPro
+    res.json({ 
+      success: true, 
+      message: 'Email verified successfully!',
+      token: jwtToken,
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          isEmailVerified: user.isEmailVerified,
+          createdAt: user.createdAt,
+          isPro: user.isPro
+        }
       }
-    }
-  });
+    });
+  }
 }));
 
 module.exports = router;
