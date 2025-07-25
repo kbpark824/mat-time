@@ -57,18 +57,18 @@ export default function MedalStatistics({ analytics, styles }) {
         />
         <View style={styles.metricCard}>
           <Text style={styles.metricTitle}>MEDAL BREAKDOWN</Text>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 5 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', flex: 1 }}>
             <View style={{ alignItems: 'center' }}>
-              <Text style={{ fontSize: 16 }}>🥇</Text>
-              <Text style={[styles.metricValue, { fontSize: 18 }]}>{medals.totalGold}</Text>
+              <Text style={{ fontSize: 24 }}>🥇</Text>
+              <Text style={[styles.metricValue, { fontSize: 20 }]}>{medals.totalGold}</Text>
             </View>
             <View style={{ alignItems: 'center' }}>
-              <Text style={{ fontSize: 16 }}>🥈</Text>
-              <Text style={[styles.metricValue, { fontSize: 18 }]}>{medals.totalSilver}</Text>
+              <Text style={{ fontSize: 24 }}>🥈</Text>
+              <Text style={[styles.metricValue, { fontSize: 20 }]}>{medals.totalSilver}</Text>
             </View>
             <View style={{ alignItems: 'center' }}>
-              <Text style={{ fontSize: 16 }}>🥉</Text>
-              <Text style={[styles.metricValue, { fontSize: 18 }]}>{medals.totalBronze}</Text>
+              <Text style={{ fontSize: 24 }}>🥉</Text>
+              <Text style={[styles.metricValue, { fontSize: 20 }]}>{medals.totalBronze}</Text>
             </View>
           </View>
         </View>

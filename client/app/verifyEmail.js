@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,13 +15,45 @@ export default function VerifyEmailScreen() {
   const [isResending, setIsResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+  const [autoCheckEnabled, setAutoCheckEnabled] = useState(true);
+  const intervalRef = useRef(null);
+
+  // Auto-check verification status every 5 seconds
+  useEffect(() => {
+    if (autoCheckEnabled && email) {
+      // Check immediately
+      handleCheckVerification(true);
+      
+      // Set up interval for auto-checking
+      intervalRef.current = setInterval(() => {
+        handleCheckVerification(true);
+      }, 5000);
+      
+      // Clear interval after 5 minutes
+      setTimeout(() => {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          setAutoCheckEnabled(false);
+        }
+      }, 300000); // 5 minutes
+    }
+    
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [email, autoCheckEnabled]);
 
   const handleBackToLogin = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
     router.replace('login');
   };
 
-  const handleCheckVerification = async () => {
-    if (!email || isCheckingStatus) return;
+  const handleCheckVerification = async (isAutoCheck = false) => {
+    if (!email || (isCheckingStatus && !isAutoCheck)) return;
     
     setIsCheckingStatus(true);
     
@@ -29,10 +61,16 @@ export default function VerifyEmailScreen() {
       const result = await checkVerificationStatus(email);
       
       if (result.isVerified) {
+        // Clear auto-check interval
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+        }
+        setAutoCheckEnabled(false);
+        
         // Redirect to app
         router.replace('/(tabs)');
-      } else {
-        // Show user that email is not yet verified
+      } else if (!isAutoCheck) {
+        // Only show error for manual checks, not auto-checks
         ErrorHandler.showError('Not Verified Yet', 'Your email has not been verified yet. Please check your email and click the verification link, then try again.');
       }
     } catch (error) {
@@ -88,8 +126,15 @@ export default function VerifyEmailScreen() {
       <Text style={styles.emailText}>{email}</Text>
       
       <Text style={[commonStyles.bodyText, styles.instructionText]}>
-        Click the link in the email to verify your account, then tap "Check Verification Status" below to continue.
+        Click the link in the email to verify your account. We'll automatically check your verification status.
       </Text>
+
+      {autoCheckEnabled && (
+        <View style={styles.autoCheckContainer}>
+          <ActivityIndicator size="small" color={colors.accent} />
+          <Text style={styles.autoCheckText}>Auto-checking verification status...</Text>
+        </View>
+      )}
 
       <View style={styles.actionContainer}>
         <TouchableOpacity 
@@ -229,5 +274,21 @@ const styles = StyleSheet.create({
   expirationText: {
     marginTop: 10,
     fontSize: 12,
+  },
+  autoCheckContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 15,
+    marginBottom: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: colors.secondaryBackground,
+    borderRadius: 6,
+  },
+  autoCheckText: {
+    fontSize: 14,
+    color: colors.mutedAccent,
+    marginLeft: 8,
   },
 });

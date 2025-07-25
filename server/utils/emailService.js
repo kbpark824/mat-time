@@ -38,7 +38,8 @@ class EmailService {
 
   // Create verification email HTML template
   createVerificationEmailTemplate(verificationToken, userEmail) {
-    const verificationUrl = `https://${this.appDomain}/api/auth/verify-email/${verificationToken}`;
+    const deepLinkUrl = `mattime://verify-email/${verificationToken}`;
+    const webFallbackUrl = `https://${this.appDomain}/api/auth/verify-email/${verificationToken}`;
     
     return `
       <!DOCTYPE html>
@@ -118,11 +119,11 @@ class EmailService {
             <h2>Almost there!</h2>
             <p>Thanks for joining Mat Time. To complete your registration and start tracking your martial arts journey, please verify your email address.</p>
             
-            <a href="${verificationUrl}" class="button">Verify Email Address</a>
+            <a href="${deepLinkUrl}" class="button">Open Mat Time App</a>
             
-            <p style="margin-top: 30px;">
-              <small>If the button doesn't work, copy and paste this link into your browser:</small><br>
-              <span style="color: #3D95CE; word-break: break-all;">${verificationUrl}</span>
+            <p style="margin-top: 20px;">
+              <small>If you don't have the app installed or the button doesn't work:</small><br>
+              <a href="${webFallbackUrl}" style="color: #3D95CE; word-break: break-all;">Verify in browser instead</a>
             </p>
             
             <p style="margin-top: 30px;">
