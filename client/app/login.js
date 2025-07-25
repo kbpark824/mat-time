@@ -16,7 +16,15 @@ export default function LoginScreen() {
     try {
       await login(email.toLowerCase(), password);
     } catch (error) {
-      ErrorHandler.authentication(error);
+      // Check if error is due to unverified email
+      if (error.response?.data?.requiresEmailVerification) {
+        router.replace({
+          pathname: '/verifyEmail',
+          params: { email: email.toLowerCase() }
+        });
+      } else {
+        ErrorHandler.authentication(error);
+      }
     }
   };
 

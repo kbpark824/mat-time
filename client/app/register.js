@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, TextInput, StyleSheet, Text, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, TouchableOpacity, Linking } from 'react-native';
 import { useAuth } from '../auth/context';
+import { useRouter } from 'expo-router';
 import colors from '../constants/colors';
 import commonStyles from '../constants/commonStyles';
 import ErrorHandler from '../utils/errorHandler';
@@ -10,9 +11,28 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [passwordTouched, setPasswordTouched] = useState(false);
   const { register } = useAuth();
+  const router = useRouter();
+
+  const validateEmail = (email) => {
+    if (!email) {
+      return 'Email is required';
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return 'Please enter a valid email address';
+    }
+    return null;
+  };
 
   const validatePassword = (password) => {
+    if (!password) {
+      return 'Password is required';
+    }
     if (password.length < 8) {
       return 'Password must be at least 8 characters long';
     }
@@ -31,6 +51,34 @@ export default function RegisterScreen() {
     return null; // Password is valid
   };
 
+  const handleEmailChange = (text) => {
+    setEmail(text);
+    if (emailTouched) {
+      const error = validateEmail(text);
+      setEmailError(error || '');
+    }
+  };
+
+  const handlePasswordChange = (text) => {
+    setPassword(text);
+    if (passwordTouched) {
+      const error = validatePassword(text);
+      setPasswordError(error || '');
+    }
+  };
+
+  const handleEmailBlur = () => {
+    setEmailTouched(true);
+    const error = validateEmail(email);
+    setEmailError(error || '');
+  };
+
+  const handlePasswordBlur = () => {
+    setPasswordTouched(true);  
+    const error = validatePassword(password);
+    setPasswordError(error || '');
+  };
+
   const handleRegister = async () => {
     const passwordError = validatePassword(password);
     if (passwordError) {
@@ -45,7 +93,15 @@ export default function RegisterScreen() {
       const revenueCatId = __DEV__ 
         ? `preview-user-${Date.now()}-${Array.from({length: 32}, () => Math.floor(Math.random() * 16).toString(16)).join('')}`
         : await Purchases.getAppUserID();
+      
       await register(email.toLowerCase(), password, revenueCatId);
+      
+      // Registration successful - redirect to email verification screen
+      router.replace({
+        pathname: '/verifyEmail',
+        params: { email: email.toLowerCase() }
+      });
+      
     } catch (error) {
       ErrorHandler.showError('Registration Failed', error, {
         fallbackMessage: 'An unexpected error occurred during registration. Please try again.'
@@ -64,23 +120,28 @@ export default function RegisterScreen() {
           <Text style={commonStyles.title}>Create Account</Text>
           <Text style={commonStyles.label}>Email Address</Text>
           <TextInput
-            style={commonStyles.input}
+            style={[commonStyles.input, emailError && emailTouched && commonStyles.inputError]}
             placeholder="e.g., your.name@email.com"
             placeholderTextColor={colors.mutedAccent}
             value={email}
-            onChangeText={setEmail}
+            onChangeText={handleEmailChange}
+            onBlur={handleEmailBlur}
             autoCapitalize="none"
             keyboardType="email-address"
           />
+          {emailError && emailTouched ? <Text style={commonStyles.errorText}>{emailError}</Text> : null}
+          
           <Text style={commonStyles.label}>Password</Text>
           <TextInput
-            style={commonStyles.input}
+            style={[commonStyles.input, passwordError && passwordTouched && commonStyles.inputError]}
             placeholder="8+ chars, uppercase, lowercase, number, special char"
             placeholderTextColor={colors.mutedAccent}
             value={password}
-            onChangeText={setPassword}
+            onChangeText={handlePasswordChange}
+            onBlur={handlePasswordBlur}
             secureTextEntry
           />
+          {passwordError && passwordTouched ? <Text style={commonStyles.errorText}>{passwordError}</Text> : null}
           
           <View style={styles.termsContainer}>
             <TouchableOpacity 

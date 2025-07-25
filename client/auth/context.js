@@ -30,10 +30,11 @@ export const AuthProvider = ({ children }) => {
   const register = async (email, password, revenueCatId) => {
     try {
       const response = await apiClient.post('/auth/register', { email, password, revenueCatId });
-      const { token } = response.data;
-      const decodedToken = jwtDecode(token);
-      setUser(decodedToken.user);
-      await authStorage.storeToken(token);
+      // Registration now returns user data but no token (user must verify email first)
+      return {
+        user: response.data.data.user,
+        message: response.data.message
+      };
     } catch (error) {
         // Only log error details in development, not production
         if (__DEV__) {
@@ -45,13 +46,31 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const verifyEmail = async (token) => {
+    try {
+      const response = await apiClient.get(`/auth/verify-email/${token}`);
+      const { token: jwtToken } = response.data;
+      const decodedToken = jwtDecode(jwtToken);
+      setUser(decodedToken.user);
+      await authStorage.storeToken(jwtToken);
+      return response.data;
+    } catch (error) {
+      if (__DEV__) {
+        console.error("Email verification failed", error.response?.data);
+      } else {
+        console.error("Email verification failed");
+      }
+      throw error;
+    }
+  };
+
   const logout = async () => {
     setUser(null);
     await authStorage.removeToken();
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, login, register, logout }}>
+    <AuthContext.Provider value={{ user, setUser, login, register, logout, verifyEmail }}>
       {children}
     </AuthContext.Provider>
   );

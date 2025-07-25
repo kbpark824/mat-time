@@ -8,6 +8,7 @@ const Session = require('../models/Session');
 const Tag = require('../models/Tag');
 const auth = require('../middleware/authMiddleware');
 const asyncHandler = require('../middleware/asyncHandler');
+const emailService = require('../utils/emailService');
 
 // Validation schemas
 const registerSchema = Joi.object({
@@ -76,22 +77,36 @@ router.post('/register', asyncHandler(async (req, res, next) => {
     });
   }
 
-  user = new User({ email, password, revenueCatId });
+  // Generate verification token
+  const verificationToken = emailService.generateVerificationToken();
+  const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+  user = new User({ 
+    email, 
+    password, 
+    revenueCatId,
+    emailVerificationToken: verificationToken,
+    emailVerificationExpires: verificationExpires
+  });
   await user.save();
 
-  const payload = { user: { id: user.id, email: user.email, createdAt: user.createdAt, isPro: user.isPro } };
-  
-  const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '5h' });
-  
+  // Send verification email
+  try {
+    await emailService.sendVerificationEmail(email, email.split('@')[0], verificationToken);
+  } catch (error) {
+    console.error('Failed to send verification email:', error);
+    // Don't fail registration if email fails - user can resend
+  }
+
   res.status(201).json({ 
     success: true, 
-    token,
+    message: 'Registration successful! Please check your email to verify your account.',
     data: {
       user: {
         id: user.id,
         email: user.email,
-        createdAt: user.createdAt,
-        isPro: user.isPro
+        isEmailVerified: user.isEmailVerified,
+        createdAt: user.createdAt
       }
     }
   });
@@ -128,6 +143,16 @@ router.post('/login', asyncHandler(async (req, res, next) => {
     });
   }
 
+  // Check if email is verified
+  if (!user.isEmailVerified) {
+    return res.status(403).json({ 
+      success: false, 
+      error: 'Please verify your email address before logging in',
+      requiresEmailVerification: true,
+      userId: user.id
+    });
+  }
+
   const payload = { user: { id: user.id, email: user.email, createdAt: user.createdAt, isPro: user.isPro } };
   const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '5h' });
   
@@ -138,6 +163,7 @@ router.post('/login', asyncHandler(async (req, res, next) => {
       user: {
         id: user.id,
         email: user.email,
+        isEmailVerified: user.isEmailVerified,
         createdAt: user.createdAt,
         isPro: user.isPro
       }
@@ -225,6 +251,110 @@ router.delete('/account', auth, asyncHandler(async (req, res, next) => {
   res.json({ 
     success: true,
     message: 'Account and all associated data have been permanently deleted' 
+  });
+}));
+
+// @route   POST api/auth/resend-verification
+// @desc    Resend email verification
+// @access  Public
+router.post('/resend-verification', asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ 
+      success: false, 
+      error: 'Email is required' 
+    });
+  }
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    return res.status(404).json({ 
+      success: false, 
+      error: 'User not found' 
+    });
+  }
+
+  if (user.isEmailVerified) {
+    return res.status(400).json({ 
+      success: false, 
+      error: 'Email is already verified' 
+    });
+  }
+
+  // Generate new verification token
+  const verificationToken = emailService.generateVerificationToken();
+  const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+  user.emailVerificationToken = verificationToken;
+  user.emailVerificationExpires = verificationExpires;
+  await user.save();
+
+  // Send verification email
+  try {
+    await emailService.sendVerificationEmail(email, email.split('@')[0], verificationToken);
+    res.json({ 
+      success: true, 
+      message: 'Verification email sent successfully' 
+    });
+  } catch (error) {
+    console.error('Failed to send verification email:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to send verification email. Please try again.' 
+    });
+  }
+}));
+
+// @route   GET api/auth/verify-email/:token
+// @desc    Verify email address
+// @access  Public
+router.get('/verify-email/:token', asyncHandler(async (req, res) => {
+  const { token } = req.params;
+
+  const user = await User.findOne({
+    emailVerificationToken: token,
+    emailVerificationExpires: { $gt: Date.now() }
+  });
+
+  if (!user) {
+    return res.status(400).json({ 
+      success: false, 
+      error: 'Invalid or expired verification token' 
+    });
+  }
+
+  // Mark email as verified and clear verification fields
+  user.isEmailVerified = true;
+  user.emailVerificationToken = null;
+  user.emailVerificationExpires = null;
+  await user.save();
+
+  // Send welcome email
+  try {
+    await emailService.sendWelcomeEmail(user.email, user.email.split('@')[0]);
+  } catch (error) {
+    console.error('Failed to send welcome email:', error);
+    // Don't fail verification if welcome email fails
+  }
+
+  // Generate JWT token for automatic login
+  const payload = { user: { id: user.id, email: user.email, createdAt: user.createdAt, isPro: user.isPro } };
+  const jwtToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '5h' });
+
+  res.json({ 
+    success: true, 
+    message: 'Email verified successfully!',
+    token: jwtToken,
+    data: {
+      user: {
+        id: user.id,
+        email: user.email,
+        isEmailVerified: user.isEmailVerified,
+        createdAt: user.createdAt,
+        isPro: user.isPro
+      }
+    }
   });
 }));
 

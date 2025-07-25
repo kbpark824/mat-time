@@ -122,6 +122,48 @@ function Layout() {
           ),
         }}
       />
+      <Stack.Screen 
+        name="verifyEmail" 
+        options={{
+          headerShown: true,
+          title: 'Verify Email',
+          headerStyle: {
+            backgroundColor: colors.accent,
+          },
+          headerTintColor: colors.white,
+          headerTitleAlign: 'left',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+            fontSize: 28,
+          },
+          headerTitle: () => (
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ color: colors.white, fontSize: 28, fontWeight: 'bold' }}>Verify Email</Text>
+            </View>
+          ),
+        }}
+      />
+      <Stack.Screen 
+        name="verifySuccess" 
+        options={{
+          headerShown: true,
+          title: 'Email Verified',
+          headerStyle: {
+            backgroundColor: colors.accent,
+          },
+          headerTintColor: colors.white,
+          headerTitleAlign: 'left',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+            fontSize: 28,
+          },
+          headerTitle: () => (
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ color: colors.white, fontSize: 28, fontWeight: 'bold' }}>Email Verified</Text>
+            </View>
+          ),
+        }}
+      />
       <Stack.Screen
         name="(tabs)"
         options={{ headerShown: false }}

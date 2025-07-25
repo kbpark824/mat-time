@@ -124,6 +124,14 @@ const commonStyles = StyleSheet.create({
     color: colors.mutedAccent,
   },
 
+  errorText: {
+    fontSize: 12,
+    color: colors.destructive,
+    marginTop: -12,
+    marginBottom: 12,
+    marginLeft: 4,
+  },
+
   // Form group styles
   formGroup: {
     marginBottom: 16,
