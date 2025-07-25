@@ -4,7 +4,7 @@ const crypto = require('crypto');
 class EmailService {
   constructor() {
     // Create SMTP transporter using Brevo SMTP
-    this.transporter = nodemailer.createTransporter({
+    this.transporter = nodemailer.createTransport({
       host: 'smtp-relay.brevo.com',
       port: 587,
       secure: false, // true for 465, false for other ports
