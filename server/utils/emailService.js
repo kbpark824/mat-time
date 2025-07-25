@@ -1,14 +1,34 @@
-const { TransactionalEmailsApi, SendSmtpEmail } = require('@getbrevo/brevo');
+const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 
 class EmailService {
   constructor() {
-    this.emailAPI = new TransactionalEmailsApi();
-    this.emailAPI.authentications.apiKey.apiKey = process.env.BREVO_API_KEY;
+    // Create SMTP transporter using Brevo SMTP
+    this.transporter = nodemailer.createTransporter({
+      host: 'smtp-relay.brevo.com',
+      port: 587,
+      secure: false, // true for 465, false for other ports
+      auth: {
+        user: process.env.BREVO_SMTP_LOGIN, // Your SMTP login email
+        pass: process.env.BREVO_SMTP_KEY,   // Your SMTP key (not API key)
+      },
+    });
     
     this.senderEmail = process.env.BREVO_SENDER_EMAIL;
     this.senderName = process.env.BREVO_SENDER_NAME;
     this.appDomain = process.env.APP_DOMAIN;
+    
+    // Verify SMTP connection
+    this.verifyConnection();
+  }
+  
+  async verifyConnection() {
+    try {
+      await this.transporter.verify();
+      console.log('SMTP server is ready to send emails');
+    } catch (error) {
+      console.error('SMTP verification failed:', error);
+    }
   }
 
   // Generate secure verification token
@@ -124,22 +144,16 @@ class EmailService {
   // Send verification email
   async sendVerificationEmail(userEmail, userName, verificationToken) {
     try {
-      const message = new SendSmtpEmail();
-      
-      message.subject = 'Verify Your Email - Mat Time';
-      message.htmlContent = this.createVerificationEmailTemplate(verificationToken, userEmail);
-      message.sender = { 
-        name: this.senderName, 
-        email: this.senderEmail 
+      const mailOptions = {
+        from: `"${this.senderName}" <${this.senderEmail}>`,
+        to: `"${userName}" <${userEmail}>`,
+        subject: 'Verify Your Email - Mat Time',
+        html: this.createVerificationEmailTemplate(verificationToken, userEmail),
       };
-      message.to = [{ 
-        email: userEmail, 
-        name: userName 
-      }];
 
-      const response = await this.emailAPI.sendTransacEmail(message);
-      console.log('Verification email sent successfully:', response.body);
-      return { success: true, messageId: response.body.messageId };
+      const response = await this.transporter.sendMail(mailOptions);
+      console.log('Verification email sent successfully:', response.messageId);
+      return { success: true, messageId: response.messageId };
       
     } catch (error) {
       console.error('Error sending verification email:', error);
@@ -150,37 +164,31 @@ class EmailService {
   // Send welcome email after verification (optional)
   async sendWelcomeEmail(userEmail, userName) {
     try {
-      const message = new SendSmtpEmail();
-      
-      message.subject = 'Welcome to Mat Time - Let\'s Start Training!';
-      message.htmlContent = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background-color: #3D95CE; color: white; padding: 30px; text-align: center;">
-            <h1>Welcome to Mat Time, ${userName}!</h1>
+      const mailOptions = {
+        from: `"${this.senderName}" <${this.senderEmail}>`,
+        to: `"${userName}" <${userEmail}>`,
+        subject: 'Welcome to Mat Time - Let\'s Start Training!',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #3D95CE; color: white; padding: 30px; text-align: center;">
+              <h1>Welcome to Mat Time, ${userName}!</h1>
+            </div>
+            <div style="padding: 30px;">
+              <p>Your email has been verified and your account is now active!</p>
+              <p>You can now:</p>
+              <ul>
+                <li>Log your training sessions</li>
+                <li>Track your progress</li>
+                <li>Organize your techniques with tags</li>
+                <li>View your training statistics</li>
+              </ul>
+              <p>Ready to start your martial arts journey with Mat Time?</p>
+            </div>
           </div>
-          <div style="padding: 30px;">
-            <p>Your email has been verified and your account is now active!</p>
-            <p>You can now:</p>
-            <ul>
-              <li>Log your training sessions</li>
-              <li>Track your progress</li>
-              <li>Organize your techniques with tags</li>
-              <li>View your training statistics</li>
-            </ul>
-            <p>Ready to start your martial arts journey with Mat Time?</p>
-          </div>
-        </div>
-      `;
-      message.sender = { 
-        name: this.senderName, 
-        email: this.senderEmail 
+        `,
       };
-      message.to = [{ 
-        email: userEmail, 
-        name: userName 
-      }];
 
-      await this.emailAPI.sendTransacEmail(message);
+      await this.transporter.sendMail(mailOptions);
       console.log('Welcome email sent successfully');
       
     } catch (error) {
