@@ -4,6 +4,7 @@ import AdvancedAnalytics from '../../components/AdvancedAnalytics';
 import Paywall from '../../components/Paywall';
 import { useProStatus } from '../../hooks/useProStatus';
 import colors from '../../constants/colors';
+import ErrorBoundary from '../../components/ErrorBoundary';
 
 export default function StatsScreen() {
   const { isPro: isProUser } = useProStatus();
@@ -12,15 +13,18 @@ export default function StatsScreen() {
   // If user is pro, show the advanced analytics
   if (isProUser) {
     return (
-      <View style={styles.container}>
-        <AdvancedAnalytics />
-      </View>
+      <ErrorBoundary fallbackMessage="Unable to load analytics. Please try refreshing.">
+        <View style={styles.container}>
+          <AdvancedAnalytics />
+        </View>
+      </ErrorBoundary>
     );
   }
 
   // If user is not pro, show the upgrade prompt
   return (
-    <View style={styles.container}>
+    <ErrorBoundary fallbackMessage="Unable to load stats screen. Please try refreshing.">
+      <View style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.title}>🏆 Advanced Analytics</Text>
         <Text style={styles.subtitle}>Unlock detailed insights into your training</Text>
@@ -73,7 +77,8 @@ export default function StatsScreen() {
       >
         <Paywall onClose={() => setShowPaywall(false)} />
       </Modal>
-    </View>
+      </View>
+    </ErrorBoundary>
   );
 }
 

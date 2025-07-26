@@ -1,11 +1,18 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useAuth } from '../../auth/context';
 import apiClient from '../../api/client';
 import Dashboard from '../../components/Dashboard';
 import ErrorBoundary from '../../components/ErrorBoundary';
 import colors from '../../constants/colors';
+import { 
+  getActivityTypeLabel, 
+  getActivityTypeColor, 
+  getActivitySubtitle, 
+  getNotesExcerpt,
+  getActivityRoute 
+} from '../../utils/activityHelpers';
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -13,6 +20,8 @@ export default function HomeScreen() {
   const [recentActivities, setRecentActivities] = useState([]);
   const [stats, setStats] = useState(null);
   const [lastFetch, setLastFetch] = useState(null);
+  const [loadingActivities, setLoadingActivities] = useState(false);
+  const [loadingStats, setLoadingStats] = useState(false);
 
   const fetchRecentActivities = async (force = false) => {
     // Only fetch if we haven't fetched in the last 30 seconds (unless forced)
@@ -22,6 +31,7 @@ export default function HomeScreen() {
     }
     
     try {
+      setLoadingActivities(true);
       // Fetch recent activities from all three types
       const requests = [
         apiClient.get('/sessions?limit=3').catch(() => ({ data: [] })),
@@ -44,6 +54,8 @@ export default function HomeScreen() {
       setRecentActivities(combined);
     } catch (error) {
       console.error('Error fetching recent activities:', error);
+    } finally {
+      setLoadingActivities(false);
     }
   };
 
@@ -55,6 +67,7 @@ export default function HomeScreen() {
     }
     
     try {
+      setLoadingStats(true);
       const response = await apiClient.get('/stats/summary');
       setStats(response.data);
       setLastFetch(now);
@@ -64,6 +77,8 @@ export default function HomeScreen() {
       if (error.response?.status === 429) {
         setLastFetch(now + 60000); // Wait extra minute on rate limit
       }
+    } finally {
+      setLoadingStats(false);
     }
   };
 
@@ -74,75 +89,10 @@ export default function HomeScreen() {
     }, [])
   );
 
-  const getActivityTypeLabel = useCallback((activity) => {
-    switch (activity.activityType) {
-      case 'session':
-        return 'Training Session';
-      case 'seminar':
-        return 'Seminar';
-      case 'competition':
-        return 'Competition';
-      default:
-        return 'Activity';
-    }
-  }, []);
-
-  const getActivityTypeColor = useCallback((activity) => {
-    switch (activity.activityType) {
-      case 'session':
-        return '#E3F2FD'; // Light blue
-      case 'seminar':
-        return '#E8F5E8'; // Light green
-      case 'competition':
-        return '#FFF3E0'; // Light orange
-      default:
-        return colors.tertiaryBackground;
-    }
-  }, []);
-
-  const getActivitySubtitle = useCallback((activity) => {
-    switch (activity.activityType) {
-      case 'session':
-        return `${activity.type} - ${activity.duration} min`;
-      case 'seminar':
-        return `${activity.type} - ${activity.professorName}`;
-      case 'competition':
-        return `${activity.type} - ${activity.organization}`;
-      default:
-        return '';
-    }
-  }, []);
-
-  const getNotesExcerpt = useCallback((activity) => {
-    let notes = '';
-    switch (activity.activityType) {
-      case 'session':
-        notes = activity.techniqueNotes || '';
-        break;
-      case 'seminar':
-        notes = activity.techniqueNotes || '';
-        break;
-      case 'competition':
-        notes = activity.generalNotes || '';
-        break;
-    }
-    
-    if (!notes || notes.trim() === '') {
-      return 'No notes added';
-    }
-    
-    // Return first 80 characters with ellipsis if longer
-    return notes.length > 80 ? notes.substring(0, 80) + '...' : notes;
-  }, []);
+  // Using shared activity helper functions from utils
 
   const handleActivityPress = useCallback((activity) => {
-    const routeMap = {
-      session: 'logSession',
-      seminar: 'logSeminar', 
-      competition: 'logCompetition'
-    };
-    
-    const route = routeMap[activity.activityType];
+    const route = getActivityRoute(activity);
     if (route) {
       router.push(`/${route}?id=${activity._id}`);
     }
@@ -172,7 +122,14 @@ export default function HomeScreen() {
             {/* Dashboard Section */}
             <View style={styles.dashboardSection}>
               <ErrorBoundary fallbackMessage="Unable to load dashboard. Please try refreshing.">
-                <Dashboard stats={stats} />
+                {loadingStats ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={colors.accent} />
+                    <Text style={styles.loadingText}>Loading dashboard...</Text>
+                  </View>
+                ) : (
+                  <Dashboard stats={stats} />
+                )}
               </ErrorBoundary>
             </View>
 
@@ -190,10 +147,17 @@ export default function HomeScreen() {
           </View>
         }
         ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No recent activities</Text>
-            <Text style={styles.emptySubtext}>Start logging your training sessions!</Text>
-          </View>
+          loadingActivities ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={colors.accent} />
+              <Text style={styles.loadingText}>Loading recent activities...</Text>
+            </View>
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No recent activities</Text>
+              <Text style={styles.emptySubtext}>Start logging your training sessions!</Text>
+            </View>
+          )
         }
         style={styles.list}
         showsVerticalScrollIndicator={false}
@@ -292,5 +256,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.mutedAccent,
     textAlign: 'center',
+  },
+  loadingContainer: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: colors.mutedAccent,
+    textAlign: 'center',
+    marginTop: 12,
   },
 });

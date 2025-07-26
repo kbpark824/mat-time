@@ -6,9 +6,34 @@ const Joi = require('joi');
 const User = require('../models/User');
 const Session = require('../models/Session');
 const Tag = require('../models/Tag');
+const RefreshToken = require('../models/RefreshToken');
 const auth = require('../middleware/authMiddleware');
 const asyncHandler = require('../middleware/asyncHandler');
 const emailService = require('../utils/emailService');
+
+// Helper function to generate both access and refresh tokens
+const generateTokens = async (user, req) => {
+  // Generate short-lived access token (15 minutes)
+  const payload = { user: { id: user.id, email: user.email, createdAt: user.createdAt, isPro: user.isPro } };
+  const accessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '15m' });
+  
+  // Clean up old refresh tokens for this user
+  await RefreshToken.cleanupExpiredTokens(user.id);
+  
+  // Generate refresh token (30 days)
+  const deviceInfo = {
+    userAgent: req.headers['user-agent'],
+    ipAddress: req.ip,
+    platform: req.headers['x-platform'] || 'unknown'
+  };
+  
+  const refreshTokenDoc = await RefreshToken.createToken(user.id, deviceInfo);
+  
+  return {
+    accessToken,
+    refreshToken: refreshTokenDoc.token
+  };
+};
 
 // Validation schemas
 const registerSchema = Joi.object({
@@ -153,12 +178,13 @@ router.post('/login', asyncHandler(async (req, res, next) => {
     });
   }
 
-  const payload = { user: { id: user.id, email: user.email, createdAt: user.createdAt, isPro: user.isPro } };
-  const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '5h' });
+  // Generate both access and refresh tokens
+  const { accessToken, refreshToken } = await generateTokens(user, req);
   
   res.json({ 
     success: true, 
-    token,
+    accessToken,
+    refreshToken,
     data: {
       user: {
         id: user.id,
@@ -393,14 +419,14 @@ router.get('/verify-email/:token', asyncHandler(async (req, res) => {
     // Browser request - redirect to success page
     res.redirect('/verify-success.html');
   } else {
-    // API request - return JSON with token for mobile app
-    const payload = { user: { id: user.id, email: user.email, createdAt: user.createdAt, isPro: user.isPro } };
-    const jwtToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '5h' });
+    // API request - return JSON with tokens for mobile app
+    const { accessToken, refreshToken } = await generateTokens(user, req);
 
     res.json({ 
       success: true, 
       message: 'Email verified successfully!',
-      token: jwtToken,
+      accessToken,
+      refreshToken,
       data: {
         user: {
           id: user.id,
@@ -412,6 +438,82 @@ router.get('/verify-email/:token', asyncHandler(async (req, res) => {
       }
     });
   }
+}));
+
+// @route   POST api/auth/refresh
+// @desc    Refresh access token using refresh token
+// @access  Public
+router.post('/refresh', asyncHandler(async (req, res) => {
+  const { refreshToken } = req.body;
+  
+  if (!refreshToken) {
+    return res.status(401).json({ 
+      success: false, 
+      error: 'Refresh token is required' 
+    });
+  }
+
+  // Find the refresh token in database
+  const tokenDoc = await RefreshToken.findOne({ 
+    token: refreshToken,
+    isRevoked: false 
+  }).populate('userId');
+
+  if (!tokenDoc || !tokenDoc.isValid()) {
+    return res.status(401).json({ 
+      success: false, 
+      error: 'Invalid or expired refresh token' 
+    });
+  }
+
+  // Extend token expiration for sliding behavior (30 more days)
+  await tokenDoc.extendExpiration(30);
+
+  const user = tokenDoc.userId;
+  
+  // Generate new access token (keep same refresh token)
+  const payload = { user: { id: user.id, email: user.email, createdAt: user.createdAt, isPro: user.isPro } };
+  const accessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '15m' });
+
+  res.json({
+    success: true,
+    accessToken,
+    data: {
+      user: {
+        id: user.id,
+        email: user.email,
+        isEmailVerified: user.isEmailVerified,
+        createdAt: user.createdAt,
+        isPro: user.isPro
+      }
+    }
+  });
+}));
+
+// @route   POST api/auth/logout
+// @desc    Logout user and revoke refresh token
+// @access  Private
+router.post('/logout', auth, asyncHandler(async (req, res) => {
+  const { refreshToken } = req.body;
+  
+  if (refreshToken) {
+    // Revoke the specific refresh token
+    await RefreshToken.findOneAndUpdate(
+      { token: refreshToken, userId: req.user.id },
+      { isRevoked: true }
+    );
+  }
+  
+  // Optionally: revoke all refresh tokens for this user
+  // await RefreshToken.updateMany(
+  //   { userId: req.user.id },
+  //   { isRevoked: true }
+  // );
+
+  res.json({ 
+    success: true, 
+    message: 'Logged out successfully' 
+  });
 }));
 
 module.exports = router;

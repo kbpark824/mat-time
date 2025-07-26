@@ -110,12 +110,16 @@ export default function AddActionBottomSheet({ visible, onClose, onSelectOption,
       visible={modalVisible}
       animationType="none"
       onRequestClose={closeWithAnimation}
+      accessibilityViewIsModal={true}
     >
       {/* Backdrop */}
       <TouchableOpacity 
         style={styles.backdrop} 
         activeOpacity={1} 
         onPress={handleBackdropPress}
+        accessibilityRole="button"
+        accessibilityLabel="Close action menu"
+        accessibilityHint="Tap to dismiss the action menu"
       >
         {/* Bottom Sheet */}
         <Animated.View 
@@ -130,10 +134,21 @@ export default function AddActionBottomSheet({ visible, onClose, onSelectOption,
           {...panResponder.panHandlers}
         >
           {/* Handle Bar */}
-          <View style={styles.handleBar} />
+          <View 
+            style={styles.handleBar} 
+            accessibilityRole="none"
+            accessibilityLabel="Drag handle"
+            accessibilityHint="Swipe down to close menu"
+          />
           
           {/* Title */}
-          <Text style={styles.title}>What would you like to add?</Text>
+          <Text 
+            style={styles.title}
+            accessibilityRole="header"
+            accessibilityLevel={2}
+          >
+            What would you like to add?
+          </Text>
           
           {/* Options */}
           <View style={styles.optionsContainer}>
@@ -143,6 +158,9 @@ export default function AddActionBottomSheet({ visible, onClose, onSelectOption,
               style={styles.optionButton}
               onPress={() => handleOptionPress('session')}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Log new training session"
+              accessibilityHint="Opens form to record your training session details, duration, and techniques"
             >
               <View style={styles.optionIconContainer}>
                 <Ionicons name="fitness" size={24} color={colors.accent} />
@@ -159,6 +177,10 @@ export default function AddActionBottomSheet({ visible, onClose, onSelectOption,
               style={[styles.optionButton, !isPro && styles.proOptionButton]}
               onPress={() => handleOptionPress('seminar')}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={isPro ? "Log new seminar" : "Log new seminar - Pro feature"}
+              accessibilityHint={isPro ? "Opens form to record seminar or workshop details" : "Upgrade to Pro to log seminars and workshops"}
+              accessibilityState={{ disabled: !isPro }}
             >
               <View style={[styles.optionIconContainer, !isPro && styles.proIconContainer]}>
                 <Ionicons name="school" size={24} color={!isPro ? colors.mutedAccent : colors.accent} />
@@ -178,6 +200,10 @@ export default function AddActionBottomSheet({ visible, onClose, onSelectOption,
               style={[styles.optionButton, !isPro && styles.proOptionButton]}
               onPress={() => handleOptionPress('competition')}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={isPro ? "Log new competition" : "Log new competition - Pro feature"}
+              accessibilityHint={isPro ? "Opens form to record competition or tournament results" : "Upgrade to Pro to log competitions and tournaments"}
+              accessibilityState={{ disabled: !isPro }}
             >
               <View style={[styles.optionIconContainer, !isPro && styles.proIconContainer]}>
                 <Ionicons name="trophy" size={24} color={!isPro ? colors.mutedAccent : colors.accent} />

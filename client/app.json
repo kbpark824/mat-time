@@ -50,7 +50,7 @@
       },
       "revenueCatAppleKey": "appl_FrctCCLTynKgxasefzLYLewAUpz",
       "revenueCatGoogleKey": "goog_PxjVqJelFyQQBVPtpRKVzdNDdwE",
-      "apiEnvironment": "local"
+      "apiEnvironment": "production"
     }
   }
 }

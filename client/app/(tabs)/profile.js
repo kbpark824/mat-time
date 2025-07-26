@@ -6,6 +6,7 @@ import colors from '../../constants/colors';
 import Paywall from '../../components/Paywall';
 import BeltRankSelector from '../../components/BeltRankSelector';
 import apiClient from '../../api/client';
+import ErrorBoundary from '../../components/ErrorBoundary';
 
 export default function ProfileScreen() {
   const { logout, user } = useAuth();
@@ -95,7 +96,8 @@ export default function ProfileScreen() {
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ErrorBoundary fallbackMessage="Unable to load profile screen. Please try refreshing.">
+      <ScrollView style={styles.container}>
       <View style={styles.content}>
         {/* User Info Section */}
         <View style={styles.section}>
@@ -241,7 +243,8 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Modal>
-    </ScrollView>
+      </ScrollView>
+    </ErrorBoundary>
   );
 }
 

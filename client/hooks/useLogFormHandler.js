@@ -20,6 +20,8 @@ export default function useLogFormHandler(config) {
   // Common state
   const [itemToEdit, setItemToEdit] = useState(null);
   const [loading, setLoading] = useState(!!params.id);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const isEditing = !!itemToEdit;
 
@@ -59,6 +61,7 @@ export default function useLogFormHandler(config) {
     const dataToSave = transformDataForSave ? transformDataForSave(formData) : formData;
 
     try {
+      setSaving(true);
       if (isEditing) {
         await apiClient.put(`/${endpoint}/${itemToEdit._id}`, dataToSave);
       } else {
@@ -67,6 +70,8 @@ export default function useLogFormHandler(config) {
       router.back();
     } catch (error) {
       ErrorHandler.save(itemName, error);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -74,10 +79,13 @@ export default function useLogFormHandler(config) {
   const handleDelete = async () => {
     ErrorHandler.confirmDelete(`${itemName} log`, null, async () => {
       try {
+        setDeleting(true);
         await apiClient.delete(`/${endpoint}/${itemToEdit._id}`);
         router.back();
       } catch (error) {
         ErrorHandler.delete(itemName, error);
+      } finally {
+        setDeleting(false);
       }
     });
   };
@@ -106,6 +114,8 @@ export default function useLogFormHandler(config) {
     // State
     itemToEdit,
     loading,
+    saving,
+    deleting,
     isEditing,
     screenRef,
     

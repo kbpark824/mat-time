@@ -103,6 +103,9 @@ export default function SearchableTagDropdown({
         <TouchableOpacity 
           style={styles.deleteButton}
           onPress={() => deleteTag(item)}
+          accessibilityRole="button"
+          accessibilityLabel={`Delete ${item.name} tag permanently`}
+          accessibilityHint="Permanently removes this tag from your tag library"
         >
           <Ionicons name="trash" size={18} color={colors.destructive} />
         </TouchableOpacity>
@@ -116,6 +119,9 @@ export default function SearchableTagDropdown({
       <TouchableOpacity 
         onPress={() => removeTag(tagName)}
         style={styles.removeTagButton}
+        accessibilityRole="button"
+        accessibilityLabel={`Remove ${tagName} tag`}
+        accessibilityHint="Removes this tag from your selection"
       >
         <Text style={styles.removeTagText}>×</Text>
       </TouchableOpacity>
@@ -280,12 +286,12 @@ const styles = StyleSheet.create({
   },
   removeTagButton: {
     marginLeft: 6,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    minWidth: 44,
+    minHeight: 44,
+    borderRadius: 22,
     backgroundColor: 'rgba(243, 241, 236, 0.3)',
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
   },
   removeTagText: {
     color: colors.primaryBackground,
@@ -421,9 +427,13 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   deleteButton: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 4,
+    minWidth: 44,
+    minHeight: 44,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   emptyContainer: {
     paddingVertical: 40,

@@ -16,8 +16,6 @@ const StatCard = React.memo(({ title, value }) => (
 ));
 
 export default function Dashboard({ stats }) {
-  console.log('Dashboard received stats:', stats);
-  
   // Memoized chart data to prevent unnecessary recalculations
   const chartData = useMemo(() => {
     return (stats && stats.typeDistribution && stats.typeDistribution.length > 0)

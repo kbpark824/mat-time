@@ -5,12 +5,21 @@ import { useAuth } from '../../auth/context';
 import apiClient from '../../api/client';
 import SearchableTagDropdown from '../../components/SearchableTagDropdown';
 import colors from '../../constants/colors';
+import { 
+  getActivityTypeLabel, 
+  getActivityTypeColor, 
+  getActivitySubtitle, 
+  getNotesExcerpt,
+  getActivityRoute 
+} from '../../utils/activityHelpers';
+import ErrorBoundary from '../../components/ErrorBoundary';
 
 export default function SearchScreen() {
   const { user } = useAuth();
   const router = useRouter();
   const [allActivities, setAllActivities] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
 
   const [searchQuery, setSearchQuery] = useState('');
   const [allTags, setAllTags] = useState([]);
@@ -29,8 +38,8 @@ export default function SearchScreen() {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      if (searchQuery) {
-        params.append('keyword', searchQuery);
+      if (debouncedSearchQuery) {
+        params.append('keyword', debouncedSearchQuery);
       }
       if (selectedTags.length > 0) {
         params.append('tags', selectedTags.join(','));
@@ -71,86 +80,30 @@ export default function SearchScreen() {
     }
   };
 
+  // Debounce search query to prevent excessive API calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   useFocusEffect(
     React.useCallback(() => {
       fetchAllActivities();
       fetchTags();
-    }, [searchQuery, selectedTags])
+    }, [debouncedSearchQuery, selectedTags])
   );
 
   useEffect(() => {
     fetchAllActivities();
-  }, [searchQuery, selectedTags]);
+  }, [debouncedSearchQuery, selectedTags]);
 
-  const getActivityTypeLabel = useCallback((activity) => {
-    switch (activity.activityType) {
-      case 'session':
-        return 'Training Session';
-      case 'seminar':
-        return 'Seminar';
-      case 'competition':
-        return 'Competition';
-      default:
-        return 'Activity';
-    }
-  }, []);
-
-  const getActivityTypeColor = useCallback((activity) => {
-    switch (activity.activityType) {
-      case 'session':
-        return '#E3F2FD'; // Light blue
-      case 'seminar':
-        return '#E8F5E8'; // Light green
-      case 'competition':
-        return '#FFF3E0'; // Light orange
-      default:
-        return colors.tertiaryBackground;
-    }
-  }, []);
-
-  const getActivitySubtitle = useCallback((activity) => {
-    switch (activity.activityType) {
-      case 'session':
-        return `${activity.type} - ${activity.duration} min`;
-      case 'seminar':
-        return `${activity.type} - ${activity.professorName}`;
-      case 'competition':
-        return `${activity.type} - ${activity.organization}`;
-      default:
-        return '';
-    }
-  }, []);
-
-  const getNotesExcerpt = useCallback((activity) => {
-    let notes = '';
-    switch (activity.activityType) {
-      case 'session':
-        notes = activity.techniqueNotes || '';
-        break;
-      case 'seminar':
-        notes = activity.techniqueNotes || '';
-        break;
-      case 'competition':
-        notes = activity.generalNotes || '';
-        break;
-    }
-    
-    if (!notes || notes.trim() === '') {
-      return 'No notes added';
-    }
-    
-    // Return first 80 characters with ellipsis if longer
-    return notes.length > 80 ? notes.substring(0, 80) + '...' : notes;
-  }, []);
+  // Using shared activity helper functions from utils
 
   const handleActivityPress = useCallback((activity) => {
-    const routeMap = {
-      session: 'logSession',
-      seminar: 'logSeminar', 
-      competition: 'logCompetition'
-    };
-    
-    const route = routeMap[activity.activityType];
+    const route = getActivityRoute(activity);
     if (route) {
       router.push(`/${route}?id=${activity._id}`);
     }
@@ -182,7 +135,8 @@ export default function SearchScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <ErrorBoundary fallbackMessage="Unable to load search functionality. Please try refreshing.">
+      <View style={styles.container}>
       <FlatList
         data={allActivities}
         renderItem={renderItem}
@@ -199,7 +153,16 @@ export default function SearchScreen() {
                 placeholderTextColor={colors.mutedAccent}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
+                returnKeyType="search"
+                accessibilityRole="searchbox"
+                accessibilityLabel="Search activities"
+                accessibilityHint="Type to search through your training activities by notes or techniques"
               />
+              {searchQuery !== debouncedSearchQuery && (
+                <View style={styles.searchLoadingIndicator}>
+                  <ActivityIndicator size="small" color={colors.accent} />
+                </View>
+              )}
             </View>
             
             <SearchableTagDropdown
@@ -214,17 +177,33 @@ export default function SearchScreen() {
           </View>
         }
         ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No activities found.</Text>
-            {(searchQuery || selectedTags.length > 0) && (
-              <Text style={styles.emptySubtext}>Try adjusting your search or filters.</Text>
-            )}
-          </View>
+          loading ? null : (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>
+                {(debouncedSearchQuery || selectedTags.length > 0) 
+                  ? 'No activities match your search criteria'
+                  : 'No activities found'
+                }
+              </Text>
+              <Text style={styles.emptySubtext}>
+                {(debouncedSearchQuery || selectedTags.length > 0)
+                  ? 'Try adjusting your search or filters'
+                  : 'Start logging your training sessions!'
+                }
+              </Text>
+            </View>
+          )
         }
         style={styles.list}
       />
-      {loading && <ActivityIndicator size="large" color={colors.primaryText} style={StyleSheet.absoluteFill} />}
-    </View>
+      {loading && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.accent} />
+          <Text style={styles.loadingText}>Loading activities...</Text>
+        </View>
+      )}
+      </View>
+    </ErrorBoundary>
   );
 }
 
@@ -349,5 +328,28 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.mutedAccent,
     textAlign: 'center',
+  },
+  searchLoadingIndicator: {
+    position: 'absolute',
+    right: 15,
+    top: '50%',
+    marginTop: -10,
+  },
+  loadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(250, 250, 250, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: colors.mutedAccent,
+    textAlign: 'center',
+    marginTop: 12,
   },
 });

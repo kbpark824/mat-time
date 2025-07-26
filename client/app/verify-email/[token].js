@@ -11,7 +11,7 @@ import ErrorHandler from '../../utils/errorHandler';
 export default function VerifyEmailDeepLink() {
   const router = useRouter();
   const { token } = useLocalSearchParams();
-  const { login } = useAuth();
+  const { loginWithTokens } = useAuth();
   const [status, setStatus] = useState('verifying'); // 'verifying', 'success', 'error'
   const [message, setMessage] = useState('Verifying your email...');
 
@@ -38,8 +38,8 @@ export default function VerifyEmailDeepLink() {
         setMessage('Email verified successfully!');
         
         // If user data is returned, log them in automatically
-        if (response.data.user && response.data.token) {
-          await login(response.data.user, response.data.token);
+        if (response.data.user && response.data.accessToken) {
+          await loginWithTokens(response.data.user, response.data.accessToken, response.data.refreshToken);
           
           // Redirect to main app after a brief success message
           setTimeout(() => {

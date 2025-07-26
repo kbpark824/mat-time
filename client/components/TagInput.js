@@ -51,7 +51,14 @@ export default function TagInput({ tags, onTagsChange }) {
       <Text style={styles.label}>Tags</Text>
       <View style={styles.tagContainer}>
         {tags.map((tag, index) => (
-          <Pressable key={index} onLongPress={() => handleRemoveTag(tag)}>
+          <Pressable 
+            key={index} 
+            onLongPress={() => handleRemoveTag(tag)}
+            style={styles.tagPressable}
+            accessibilityRole="button"
+            accessibilityLabel={`${tag} tag`}
+            accessibilityHint="Long press to remove this tag"
+          >
             <View style={styles.tag}>
               <Text style={styles.tagText}>{tag}</Text>
             </View>
@@ -94,12 +101,20 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     marginBottom: 10,
   },
+  tagPressable: {
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: 2,
+  },
   tag: {
     backgroundColor: colors.mutedAccent,
     borderRadius: 15,
-    paddingVertical: 5,
+    paddingVertical: 8,
     paddingHorizontal: 12,
-    margin: 4,
+    minHeight: 32,
+    justifyContent: 'center',
   },
   tagText: {
     color: colors.white,
@@ -118,7 +133,7 @@ const styles = StyleSheet.create({
     elevation: colors.shadow.elevation,
   },
   inputError: {
-    borderColor: '#ff4444',
+    borderColor: colors.destructive,
   },
   feedbackContainer: {
     flexDirection: 'row',
@@ -134,7 +149,7 @@ const styles = StyleSheet.create({
     color: colors.mutedAccent,
   },
   errorText: {
-    color: '#ff4444',
+    color: colors.destructive,
     fontSize: 12,
     marginTop: 5,
   },

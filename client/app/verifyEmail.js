@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,40 +15,16 @@ export default function VerifyEmailScreen() {
   const [isResending, setIsResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
-  const [autoCheckEnabled, setAutoCheckEnabled] = useState(true);
-  const intervalRef = useRef(null);
 
-  // Auto-check verification status every 5 seconds
+  // Check verification status when screen loads
   useEffect(() => {
-    if (autoCheckEnabled && email) {
-      // Check immediately
+    if (email) {
+      // Check once when screen loads
       handleCheckVerification(true);
-      
-      // Set up interval for auto-checking
-      intervalRef.current = setInterval(() => {
-        handleCheckVerification(true);
-      }, 5000);
-      
-      // Clear interval after 5 minutes
-      setTimeout(() => {
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-          setAutoCheckEnabled(false);
-        }
-      }, 300000); // 5 minutes
     }
-    
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [email, autoCheckEnabled]);
+  }, [email]);
 
   const handleBackToLogin = () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
     router.replace('login');
   };
 
@@ -61,16 +37,10 @@ export default function VerifyEmailScreen() {
       const result = await checkVerificationStatus(email);
       
       if (result.isVerified) {
-        // Clear auto-check interval
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-        }
-        setAutoCheckEnabled(false);
-        
         // Redirect to app
         router.replace('/(tabs)');
       } else if (!isAutoCheck) {
-        // Only show error for manual checks, not auto-checks
+        // Only show error for manual checks, not initial load check
         ErrorHandler.showError('Not Verified Yet', 'Your email has not been verified yet. Please check your email and click the verification link, then try again.');
       }
     } catch (error) {
@@ -126,15 +96,12 @@ export default function VerifyEmailScreen() {
       <Text style={styles.emailText}>{email}</Text>
       
       <Text style={[commonStyles.bodyText, styles.instructionText]}>
-        Click the link in the email to verify your account. We'll automatically check your verification status.
+        <Text style={{ fontWeight: '600' }}>On this device:</Text> Click the link in the email to verify your account. The link will open this app directly and verify your email automatically.
       </Text>
-
-      {autoCheckEnabled && (
-        <View style={styles.autoCheckContainer}>
-          <ActivityIndicator size="small" color={colors.accent} />
-          <Text style={styles.autoCheckText}>Auto-checking verification status...</Text>
-        </View>
-      )}
+      
+      <Text style={[commonStyles.bodyText, styles.instructionText, { marginTop: 15 }]}>
+        <Text style={{ fontWeight: '600' }}>On a computer or other device:</Text> Click the email link, then return here and tap "Check Verification Status" below, or go back and login again.
+      </Text>
 
       <View style={styles.actionContainer}>
         <TouchableOpacity 
@@ -215,17 +182,13 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   emailText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
     color: colors.accent,
     textAlign: 'center',
     marginBottom: 20,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    backgroundColor: colors.secondaryBackground,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.accent,
+    fontStyle: 'italic',
+    letterSpacing: 0.5,
   },
   actionContainer: {
     marginTop: 30,
@@ -274,21 +237,5 @@ const styles = StyleSheet.create({
   expirationText: {
     marginTop: 10,
     fontSize: 12,
-  },
-  autoCheckContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 15,
-    marginBottom: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: colors.secondaryBackground,
-    borderRadius: 6,
-  },
-  autoCheckText: {
-    fontSize: 14,
-    color: colors.mutedAccent,
-    marginLeft: 8,
   },
 });
