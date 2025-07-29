@@ -27,7 +27,7 @@ export const getActivityTypeColor = (activity) => {
     case 'competition':
       return '#FFF3E0'; // Light orange
     default:
-      return colors.tertiaryBackground;
+      return colors.lightGray;
   }
 };
 

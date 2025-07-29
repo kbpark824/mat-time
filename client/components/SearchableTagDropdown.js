@@ -6,8 +6,7 @@ import {
   TouchableOpacity, 
   Modal, 
   TextInput, 
-  FlatList,
-  Pressable
+  FlatList
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import apiClient from '../api/client';
@@ -336,8 +335,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.mutedAccent,
+    backgroundColor: colors.secondaryBackground,
   },
   cancelButton: {
     paddingVertical: 8,

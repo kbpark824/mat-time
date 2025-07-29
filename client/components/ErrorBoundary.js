@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   errorDetails: {
     fontSize: 12,
     color: colors.destructive,
-    backgroundColor: colors.tertiaryBackground,
+    backgroundColor: colors.lightGray,
     padding: 8,
     borderRadius: 6,
     marginBottom: 16,

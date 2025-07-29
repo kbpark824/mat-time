@@ -27,7 +27,10 @@ export default function AddActionBottomSheet({ visible, onClose, onSelectOption,
         duration: 250,
         useNativeDriver: false,
       }).start(() => {
-        setModalVisible(false);
+        // Use requestAnimationFrame to defer state updates to avoid React warnings
+        requestAnimationFrame(() => {
+          setModalVisible(false);
+        });
       });
     }
   }, [visible]);
@@ -47,10 +50,13 @@ export default function AddActionBottomSheet({ visible, onClose, onSelectOption,
       duration: 250,
       useNativeDriver: false,
     }).start(() => {
-      setModalVisible(false);
-      // Reset for next time
-      translateY.setValue(screenHeight);
-      onClose();
+      // Use requestAnimationFrame to defer state updates to avoid React warnings
+      requestAnimationFrame(() => {
+        setModalVisible(false);
+        // Reset for next time
+        translateY.setValue(screenHeight);
+        onClose();
+      });
     });
   };
 
@@ -174,46 +180,44 @@ export default function AddActionBottomSheet({ visible, onClose, onSelectOption,
 
             {/* Log New Seminar */}
             <TouchableOpacity 
-              style={[styles.optionButton, !isPro && styles.proOptionButton]}
+              style={styles.optionButton}
               onPress={() => handleOptionPress('seminar')}
               activeOpacity={0.7}
               accessibilityRole="button"
-              accessibilityLabel={isPro ? "Log new seminar" : "Log new seminar - Pro feature"}
-              accessibilityHint={isPro ? "Opens form to record seminar or workshop details" : "Upgrade to Pro to log seminars and workshops"}
-              accessibilityState={{ disabled: !isPro }}
+              accessibilityLabel={isPro ? "Log new seminar" : "Log new seminar - Pro feature preview"}
+              accessibilityHint={isPro ? "Opens form to record seminar or workshop details" : "Preview seminar logging features"}
             >
-              <View style={[styles.optionIconContainer, !isPro && styles.proIconContainer]}>
-                <Ionicons name="school" size={24} color={!isPro ? colors.mutedAccent : colors.accent} />
+              <View style={styles.optionIconContainer}>
+                <Ionicons name="school" size={24} color={colors.accent} />
               </View>
               <View style={styles.optionTextContainer}>
                 <View style={styles.optionTitleRow}>
-                  <Text style={[styles.optionTitle, !isPro && styles.proOptionTitle]}>Log New Seminar</Text>
+                  <Text style={styles.optionTitle}>Log New Seminar</Text>
                   {!isPro && <Text style={styles.proLabel}>PRO</Text>}
                 </View>
-                <Text style={[styles.optionSubtitle, !isPro && styles.proOptionSubtitle]}>Record seminar or workshop</Text>
+                <Text style={styles.optionSubtitle}>Record seminar or workshop</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color={colors.mutedAccent} />
             </TouchableOpacity>
 
             {/* Log New Competition */}
             <TouchableOpacity 
-              style={[styles.optionButton, !isPro && styles.proOptionButton]}
+              style={styles.optionButton}
               onPress={() => handleOptionPress('competition')}
               activeOpacity={0.7}
               accessibilityRole="button"
-              accessibilityLabel={isPro ? "Log new competition" : "Log new competition - Pro feature"}
-              accessibilityHint={isPro ? "Opens form to record competition or tournament results" : "Upgrade to Pro to log competitions and tournaments"}
-              accessibilityState={{ disabled: !isPro }}
+              accessibilityLabel={isPro ? "Log new competition" : "Log new competition - Pro feature preview"}
+              accessibilityHint={isPro ? "Opens form to record competition or tournament results" : "Preview competition logging features"}
             >
-              <View style={[styles.optionIconContainer, !isPro && styles.proIconContainer]}>
-                <Ionicons name="trophy" size={24} color={!isPro ? colors.mutedAccent : colors.accent} />
+              <View style={styles.optionIconContainer}>
+                <Ionicons name="trophy" size={24} color={colors.accent} />
               </View>
               <View style={styles.optionTextContainer}>
                 <View style={styles.optionTitleRow}>
-                  <Text style={[styles.optionTitle, !isPro && styles.proOptionTitle]}>Log New Competition</Text>
+                  <Text style={styles.optionTitle}>Log New Competition</Text>
                   {!isPro && <Text style={styles.proLabel}>PRO</Text>}
                 </View>
-                <Text style={[styles.optionSubtitle, !isPro && styles.proOptionSubtitle]}>Record competition or tournament</Text>
+                <Text style={styles.optionSubtitle}>Record competition or tournament</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color={colors.mutedAccent} />
             </TouchableOpacity>
@@ -299,20 +303,6 @@ const styles = StyleSheet.create({
   optionSubtitle: {
     fontSize: 14,
     color: colors.mutedAccent,
-  },
-  proOptionButton: {
-    backgroundColor: colors.lightBackground,
-    opacity: 0.6,
-  },
-  proIconContainer: {
-    backgroundColor: colors.lightBackground,
-  },
-  proOptionTitle: {
-    color: colors.mutedAccent,
-  },
-  proOptionSubtitle: {
-    color: colors.mutedAccent,
-    opacity: 0.7,
   },
   proLabel: {
     fontSize: 10,

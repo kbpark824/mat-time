@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
+import colors from '../constants/colors';
 
 const MetricCard = ({ title, value, subtitle, trend }) => (
   <View style={styles.metricCard}>
@@ -47,13 +48,13 @@ const PerformanceOverview = ({ analytics, styles }) => {
 // Add the metric card styles that will be merged with the main styles
 const styles = {
   metricCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     padding: 15,
     borderRadius: 8,
     flex: 1,
     marginHorizontal: 5,
     ...{
-      shadowColor: '#000',
+      shadowColor: colors.shadow.color,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.1,
       shadowRadius: 4,
@@ -62,18 +63,18 @@ const styles = {
   },
   metricTitle: {
     fontSize: 14,
-    color: '#666',
+    color: colors.mutedAccent,
     marginBottom: 5,
   },
   metricValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.primaryText,
     marginBottom: 5,
   },
   metricSubtitle: {
     fontSize: 12,
-    color: '#888',
+    color: colors.mutedAccent,
   },
 };
 

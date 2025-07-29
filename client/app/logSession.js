@@ -1,38 +1,126 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import LogFormLayout from '../components/LogFormLayout';
 import useLogFormHandler from '../hooks/useLogFormHandler';
+import { FormProvider, useFormContext } from '../contexts/FormContext';
 import colors from '../constants/colors';
 
-export default function SessionLogScreen() {
-  // Form state
-  const [date, setDate] = useState(new Date());
+function SessionLogScreenContent() {
+  // Session-specific state (not in context)
   const [duration, setDuration] = useState(1.5);
+  const [durationError, setDurationError] = useState('');
+  const [durationTouched, setDurationTouched] = useState(false);
   const [showDurationPicker, setShowDurationPicker] = useState(false);
-  const [type, setType] = useState('Gi');
-  const [techniqueNotes, setTechniqueNotes] = useState('');
   const [rollingNotes, setRollingNotes] = useState('');
-  const [tags, setTags] = useState([]);
-  const [showPaywall, setShowPaywall] = useState(false);
+  const [rollingNotesError, setRollingNotesError] = useState('');
+  const [rollingNotesTouched, setRollingNotesTouched] = useState(false);
+  
+  // Get shared form state from context
+  const { date, type, techniqueNotes, tags, updateFormState, hasUnsavedChanges, markFormAsSaved } = useFormContext();
+  
+  // Track initial local state for unsaved changes detection
+  const initialLocalState = useRef({
+    duration: 1.5,
+    rollingNotes: '',
+  });
+
+  // Validation functions
+  const validateDuration = (value) => {
+    if (!value || value <= 0) {
+      return 'Duration is required and must be greater than 0';
+    }
+    return '';
+  };
+
+  const validateRollingNotes = (value) => {
+    if (!value || !value.trim()) {
+      return 'Rolling notes are required';
+    }
+    return '';
+  };
+
+  // Combined unsaved changes detection
+  const checkForUnsavedChanges = () => {
+    // Check context changes
+    const contextHasChanges = hasUnsavedChanges;
+    
+    // Check local state changes
+    const localHasChanges = (
+      duration !== initialLocalState.current.duration ||
+      rollingNotes !== initialLocalState.current.rollingNotes
+    );
+    
+    return contextHasChanges || localHasChanges;
+  };
+
+  // Mark form as saved (reset all dirty state)
+  const markAllFormAsSaved = () => {
+    // Reset context dirty state
+    markFormAsSaved();
+    
+    // Reset local state tracking
+    initialLocalState.current = {
+      duration,
+      rollingNotes,
+    };
+  };
+
+  // Validation handlers with change detection
+  const handleDurationChange = (value) => {
+    setDuration(value);
+    if (durationTouched) {
+      const error = validateDuration(value);
+      setDurationError(error);
+    }
+  };
+
+  const handleRollingNotesChange = (value) => {
+    setRollingNotes(value);
+    if (rollingNotesTouched) {
+      const error = validateRollingNotes(value);
+      setRollingNotesError(error);
+    }
+  };
+
+  const handleRollingNotesBlur = () => {
+    setRollingNotesTouched(true);
+    const error = validateRollingNotes(rollingNotes);
+    setRollingNotesError(error);
+  };
 
   // Hook configuration
   const { isEditing, handleDelete, handleSaveOrUpdate, setupFormHandler } = useLogFormHandler({
     endpoint: 'sessions',
     itemName: 'session',
     validateData: (data) => {
-      if (!data.duration || data.duration <= 0) {
-        return 'Please select a valid duration.';
-      }
+      const durationError = validateDuration(data.duration);
+      if (durationError) return durationError;
+      
+      const rollingNotesError = validateRollingNotes(data.rollingNotes);
+      if (rollingNotesError) return rollingNotesError;
+      
       return null;
     },
     transformDataForEdit: (session) => {
-      setDate(new Date(session.date));
+      updateFormState({
+        date: new Date(session.date),
+        type: session.type,
+        techniqueNotes: session.techniqueNotes || '',
+        tags: session.tags.map(t => t.name),
+      });
       setDuration(session.duration);
-      setType(session.type);
-      setTechniqueNotes(session.techniqueNotes || '');
+      setDurationError('');
+      setDurationTouched(false);
       setRollingNotes(session.rollingNotes || '');
-      setTags(session.tags.map(t => t.name));
+      setRollingNotesError('');
+      setRollingNotesTouched(false);
+      
+      // Update initial state tracking for editing
+      initialLocalState.current = {
+        duration: session.duration,
+        rollingNotes: session.rollingNotes || '',
+      };
     },
     transformDataForSave: (formData) => ({
       date: formData.date,
@@ -41,7 +129,9 @@ export default function SessionLogScreen() {
       techniqueNotes: formData.techniqueNotes,
       rollingNotes: formData.rollingNotes,
       tags: formData.tags,
-    })
+    }),
+    hasUnsavedChanges: checkForUnsavedChanges,
+    markFormAsSaved: markAllFormAsSaved,
   });
 
   // Create save handler with form data
@@ -109,7 +199,8 @@ export default function SessionLogScreen() {
       setShowDurationPicker(false);
     } else if (selectedDate) {
       const newDuration = dateToDuration(selectedDate);
-      setDuration(newDuration);
+      handleDurationChange(newDuration);
+      setDurationTouched(true);
     }
   };
 
@@ -117,9 +208,18 @@ export default function SessionLogScreen() {
   const additionalFields = (
     <>
       <Text style={styles.label}>Duration</Text>
-      <TouchableOpacity onPress={() => setShowDurationPicker(true)} style={styles.input}>
+      <TouchableOpacity 
+        onPress={() => setShowDurationPicker(true)} 
+        style={[
+          styles.input,
+          durationError && durationTouched && { borderWidth: 1, borderColor: colors.destructive }
+        ]}
+      >
         <Text style={styles.durationPickerText}>{selectedDurationLabel}</Text>
       </TouchableOpacity>
+      {durationError && durationTouched ? (
+        <Text style={styles.errorText}>{durationError}</Text>
+      ) : null}
 
       {showDurationPicker && (
         <DateTimePicker
@@ -138,24 +238,25 @@ export default function SessionLogScreen() {
 
   return (
     <LogFormLayout
-      date={date}
-      setDate={setDate}
       typeOptions={['Gi', 'No-Gi', 'Open Mat']}
-      type={type}
-      setType={setType}
-      techniqueNotes={techniqueNotes}
-      setTechniqueNotes={setTechniqueNotes}
-      tags={tags}
-      setTags={setTags}
       rollingNotes={rollingNotes}
-      setRollingNotes={setRollingNotes}
+      setRollingNotes={handleRollingNotesChange}
+      rollingNotesError={rollingNotesError}
+      rollingNotesTouched={rollingNotesTouched}
+      onRollingNotesBlur={handleRollingNotesBlur}
       additionalFields={additionalFields}
       onDelete={handleDelete}
       isEditing={isEditing}
       deleteButtonText="Delete Session"
-      showPaywall={showPaywall}
-      setShowPaywall={setShowPaywall}
     />
+  );
+}
+
+export default function SessionLogScreen() {
+  return (
+    <FormProvider>
+      <SessionLogScreenContent />
+    </FormProvider>
   );
 }
 
@@ -228,5 +329,12 @@ const styles = StyleSheet.create({
       height: 100, 
       textAlignVertical: 'top',
       paddingTop: 8,
+    },
+    errorText: {
+      fontSize: 12,
+      color: colors.destructive,
+      marginTop: -12,
+      marginBottom: 12,
+      marginLeft: 4,
     },
 });

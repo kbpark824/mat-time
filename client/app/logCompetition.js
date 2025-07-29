@@ -1,62 +1,301 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, TextInput, StyleSheet, Text, TouchableOpacity, Switch } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import TagInput from '../components/TagInput';
 import MedalSelector from '../components/MedalSelector';
 import useLogFormHandler from '../hooks/useLogFormHandler';
+import { FormProvider, useFormContext } from '../contexts/FormContext';
 import colors from '../constants/colors';
 
-export default function CompetitionLogScreen() {
-  // Form state
-  const [date, setDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
+function CompetitionLogScreenContent() {
+  // Competition-specific state (not in context)
   const [name, setName] = useState('');
+  const [nameError, setNameError] = useState('');
+  const [nameTouched, setNameTouched] = useState(false);
   const [organization, setOrganization] = useState('');
-  const [type, setType] = useState('Gi');
+  const [organizationError, setOrganizationError] = useState('');
+  const [organizationTouched, setOrganizationTouched] = useState(false);
   const [weightDivision, setWeightDivision] = useState('');
+  const [weightDivisionError, setWeightDivisionError] = useState('');
+  const [weightDivisionTouched, setWeightDivisionTouched] = useState(false);
   const [resultsInDivision, setResultsInDivision] = useState('none');
   const [matchesInDivision, setMatchesInDivision] = useState('1');
+  const [matchesInDivisionError, setMatchesInDivisionError] = useState('');
+  const [matchesInDivisionTouched, setMatchesInDivisionTouched] = useState(false);
   const [matchNotesInDivision, setMatchNotesInDivision] = useState(['']);
   const [competedInOpenClass, setCompetedInOpenClass] = useState(false);
   const [resultsInOpenClass, setResultsInOpenClass] = useState('none');
   const [matchesInOpenClass, setMatchesInOpenClass] = useState('0');
+  const [matchesInOpenClassError, setMatchesInOpenClassError] = useState('');
+  const [matchesInOpenClassTouched, setMatchesInOpenClassTouched] = useState(false);
   const [matchNotesInOpenClass, setMatchNotesInOpenClass] = useState([]);
   const [generalNotes, setGeneralNotes] = useState('');
-  const [tags, setTags] = useState([]);
+  const [generalNotesError, setGeneralNotesError] = useState('');
+  const [generalNotesTouched, setGeneralNotesTouched] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  
+  // Get shared form state from context
+  const { date, type, tags, updateFormState, onChangeDate, hasUnsavedChanges, markFormAsSaved } = useFormContext();
+  
+  // Track initial local state for unsaved changes detection
+  const initialLocalState = useRef({
+    name: '',
+    organization: '',
+    weightDivision: '',
+    resultsInDivision: 'none',
+    matchesInDivision: '1',
+    matchNotesInDivision: [''],
+    competedInOpenClass: false,
+    resultsInOpenClass: 'none',
+    matchesInOpenClass: '0',
+    matchNotesInOpenClass: [],
+    generalNotes: '',
+  });
+
+  // Combined unsaved changes detection
+  const checkForUnsavedChanges = () => {
+    // Check context changes
+    const contextHasChanges = hasUnsavedChanges;
+    
+    // Check local state changes
+    const localHasChanges = (
+      name !== initialLocalState.current.name ||
+      organization !== initialLocalState.current.organization ||
+      weightDivision !== initialLocalState.current.weightDivision ||
+      resultsInDivision !== initialLocalState.current.resultsInDivision ||
+      matchesInDivision !== initialLocalState.current.matchesInDivision ||
+      JSON.stringify(matchNotesInDivision) !== JSON.stringify(initialLocalState.current.matchNotesInDivision) ||
+      competedInOpenClass !== initialLocalState.current.competedInOpenClass ||
+      resultsInOpenClass !== initialLocalState.current.resultsInOpenClass ||
+      matchesInOpenClass !== initialLocalState.current.matchesInOpenClass ||
+      JSON.stringify(matchNotesInOpenClass) !== JSON.stringify(initialLocalState.current.matchNotesInOpenClass) ||
+      generalNotes !== initialLocalState.current.generalNotes
+    );
+    
+    return contextHasChanges || localHasChanges;
+  };
+
+  // Mark form as saved (reset all dirty state)
+  const markAllFormAsSaved = () => {
+    // Reset context dirty state
+    markFormAsSaved();
+    
+    // Reset local state tracking
+    initialLocalState.current = {
+      name,
+      organization,
+      weightDivision,
+      resultsInDivision,
+      matchesInDivision,
+      matchNotesInDivision: [...matchNotesInDivision],
+      competedInOpenClass,
+      resultsInOpenClass,
+      matchesInOpenClass,
+      matchNotesInOpenClass: [...matchNotesInOpenClass],
+      generalNotes,
+    };
+  };
+
+  // Validation functions
+  const validateName = (value) => {
+    if (!value || !value.trim()) {
+      return 'Competition name is required';
+    }
+    return '';
+  };
+
+  const validateOrganization = (value) => {
+    if (!value || !value.trim()) {
+      return 'Organization is required';
+    }
+    return '';
+  };
+
+  const validateWeightDivision = (value) => {
+    if (!value || !value.trim()) {
+      return 'Weight division is required';
+    }
+    return '';
+  };
+
+  const validateMatchesInDivision = (value) => {
+    if (!value || isNaN(parseInt(value)) || parseInt(value) <= 0) {
+      return 'Please enter a valid number of matches';
+    }
+    return '';
+  };
+
+  const validateMatchesInOpenClass = (value) => {
+    if (competedInOpenClass && (!value || isNaN(parseInt(value)) || parseInt(value) <= 0)) {
+      return 'Please enter a valid number of matches for open class';
+    }
+    return '';
+  };
+
+  const validateGeneralNotes = (value) => {
+    if (!value || !value.trim()) {
+      return 'General notes are required';
+    }
+    return '';
+  };
+
+  // Validation handlers
+  const handleNameChange = (value) => {
+    setName(value);
+    if (nameTouched) {
+      const error = validateName(value);
+      setNameError(error);
+    }
+  };
+
+  const handleNameBlur = () => {
+    setNameTouched(true);
+    const error = validateName(name);
+    setNameError(error);
+  };
+
+  const handleOrganizationChange = (value) => {
+    setOrganization(value);
+    if (organizationTouched) {
+      const error = validateOrganization(value);
+      setOrganizationError(error);
+    }
+  };
+
+  const handleOrganizationBlur = () => {
+    setOrganizationTouched(true);
+    const error = validateOrganization(organization);
+    setOrganizationError(error);
+  };
+
+  const handleWeightDivisionChange = (value) => {
+    setWeightDivision(value);
+    if (weightDivisionTouched) {
+      const error = validateWeightDivision(value);
+      setWeightDivisionError(error);
+    }
+  };
+
+  const handleWeightDivisionBlur = () => {
+    setWeightDivisionTouched(true);
+    const error = validateWeightDivision(weightDivision);
+    setWeightDivisionError(error);
+  };
+
+  const handleMatchesInDivisionChange = (value) => {
+    setMatchesInDivision(value);
+    if (matchesInDivisionTouched) {
+      const error = validateMatchesInDivision(value);
+      setMatchesInDivisionError(error);
+    }
+  };
+
+  const handleMatchesInDivisionBlur = () => {
+    setMatchesInDivisionTouched(true);
+    const error = validateMatchesInDivision(matchesInDivision);
+    setMatchesInDivisionError(error);
+  };
+
+  const handleMatchesInOpenClassChange = (value) => {
+    setMatchesInOpenClass(value);
+    if (matchesInOpenClassTouched) {
+      const error = validateMatchesInOpenClass(value);
+      setMatchesInOpenClassError(error);
+    }
+  };
+
+  const handleMatchesInOpenClassBlur = () => {
+    setMatchesInOpenClassTouched(true);
+    const error = validateMatchesInOpenClass(matchesInOpenClass);
+    setMatchesInOpenClassError(error);
+  };
+
+  const handleGeneralNotesChange = (value) => {
+    setGeneralNotes(value);
+    if (generalNotesTouched) {
+      const error = validateGeneralNotes(value);
+      setGeneralNotesError(error);
+    }
+  };
+
+  const handleGeneralNotesBlur = () => {
+    setGeneralNotesTouched(true);
+    const error = validateGeneralNotes(generalNotes);
+    setGeneralNotesError(error);
+  };
 
   // Hook configuration
   const { isEditing, handleDelete, handleSaveOrUpdate, setupFormHandler } = useLogFormHandler({
     endpoint: 'competitions',
     itemName: 'competition',
     validateData: (data) => {
-      if (!data.name.trim()) return 'Please enter the competition name.';
-      if (!data.organization.trim()) return 'Please enter the organization.';
-      if (!data.weightDivision.trim()) return 'Please enter your weight division.';
+      const nameError = validateName(data.name);
+      if (nameError) return nameError;
+      
+      const organizationError = validateOrganization(data.organization);
+      if (organizationError) return organizationError;
+      
+      const weightDivisionError = validateWeightDivision(data.weightDivision);
+      if (weightDivisionError) return weightDivisionError;
+      
       if (data.resultsInDivision === 'none') return 'Please select your results in the division.';
-      if (!data.matchesInDivision || isNaN(parseInt(data.matchesInDivision))) {
-        return 'Please enter a valid number of matches in your division.';
-      }
-      if (data.competedInOpenClass && (!data.matchesInOpenClass || isNaN(parseInt(data.matchesInOpenClass)))) {
-        return 'Please enter a valid number of matches in open class.';
-      }
+      
+      const matchesInDivisionError = validateMatchesInDivision(data.matchesInDivision);
+      if (matchesInDivisionError) return matchesInDivisionError;
+      
+      const matchesInOpenClassError = validateMatchesInOpenClass(data.matchesInOpenClass);
+      if (matchesInOpenClassError) return matchesInOpenClassError;
+      
+      const generalNotesError = validateGeneralNotes(data.generalNotes);
+      if (generalNotesError) return generalNotesError;
+      
       return null;
     },
     transformDataForEdit: (competition) => {
-      setDate(new Date(competition.date));
+      updateFormState({
+        date: new Date(competition.date),
+        type: competition.type,
+        tags: competition.tags.map(t => t.name),
+      });
       setName(competition.name || '');
+      setNameError('');
+      setNameTouched(false);
       setOrganization(competition.organization || '');
-      setType(competition.type);
+      setOrganizationError('');
+      setOrganizationTouched(false);
       setWeightDivision(competition.weightDivision || '');
+      setWeightDivisionError('');
+      setWeightDivisionTouched(false);
       setResultsInDivision(competition.resultsInDivision || 'none');
       setMatchesInDivision(competition.matchesInDivision.toString());
+      setMatchesInDivisionError('');
+      setMatchesInDivisionTouched(false);
       setMatchNotesInDivision(competition.matchNotesInDivision.map(note => note.notes));
       setCompetedInOpenClass(competition.competedInOpenClass || false);
       setResultsInOpenClass(competition.resultsInOpenClass || 'none');
       setMatchesInOpenClass(competition.matchesInOpenClass.toString());
+      setMatchesInOpenClassError('');
+      setMatchesInOpenClassTouched(false);
       setMatchNotesInOpenClass(competition.matchNotesInOpenClass.map(note => note.notes));
       setGeneralNotes(competition.generalNotes || '');
-      setTags(competition.tags.map(t => t.name));
+      setGeneralNotesError('');
+      setGeneralNotesTouched(false);
+      
+      // Update initial state tracking for editing
+      initialLocalState.current = {
+        name: competition.name || '',
+        organization: competition.organization || '',
+        weightDivision: competition.weightDivision || '',
+        resultsInDivision: competition.resultsInDivision || 'none',
+        matchesInDivision: competition.matchesInDivision.toString(),
+        matchNotesInDivision: competition.matchNotesInDivision.map(note => note.notes),
+        competedInOpenClass: competition.competedInOpenClass || false,
+        resultsInOpenClass: competition.resultsInOpenClass || 'none',
+        matchesInOpenClass: competition.matchesInOpenClass.toString(),
+        matchNotesInOpenClass: competition.matchNotesInOpenClass.map(note => note.notes),
+        generalNotes: competition.generalNotes || '',
+      };
     },
     transformDataForSave: (formData) => {
       // Prepare match notes data
@@ -88,20 +327,22 @@ export default function CompetitionLogScreen() {
         generalNotes: formData.generalNotes,
         tags: formData.tags,
       };
-    }
+    },
+    hasUnsavedChanges: checkForUnsavedChanges,
+    markFormAsSaved: markAllFormAsSaved,
   });
-  const onChangeDate = (event, selectedDate) => {
+
+  const onChangeDateWrapper = (event, selectedDate) => {
     if (event.type === 'dismissed') {
       setShowDatePicker(false);
-    } else if (selectedDate) {
-      setDate(selectedDate);
+    } else {
+      onChangeDate(event, selectedDate);
     }
   };
 
-
   // Update match notes arrays when number of matches changes
   const updateMatchesInDivision = (value) => {
-    setMatchesInDivision(value);
+    handleMatchesInDivisionChange(value);
     const numMatches = parseInt(value) || 0;
     const newNotes = Array(numMatches).fill('').map((_, index) => 
       matchNotesInDivision[index] || ''
@@ -110,7 +351,7 @@ export default function CompetitionLogScreen() {
   };
 
   const updateMatchesInOpenClass = (value) => {
-    setMatchesInOpenClass(value);
+    handleMatchesInOpenClassChange(value);
     const numMatches = parseInt(value) || 0;
     const newNotes = Array(numMatches).fill('').map((_, index) => 
       matchNotesInOpenClass[index] || ''
@@ -155,7 +396,6 @@ export default function CompetitionLogScreen() {
   // Setup the form handler for header buttons
   setupFormHandler(handleSave);
 
-
   return (
     <KeyboardAwareScrollView style={styles.container}>
       <Text style={styles.label}>Date</Text>
@@ -170,7 +410,7 @@ export default function CompetitionLogScreen() {
           value={date}
           mode="date"
           display="spinner"
-          onChange={onChangeDate}
+          onChange={onChangeDateWrapper}
           textColor="#333333"
           accentColor="#007AFF"
           themeVariant="light"
@@ -179,21 +419,35 @@ export default function CompetitionLogScreen() {
 
       <Text style={styles.label}>Competition Name</Text>
       <TextInput 
-        style={styles.input} 
+        style={[
+          styles.input,
+          nameError && nameTouched && { borderWidth: 1, borderColor: colors.destructive }
+        ]} 
         value={name} 
-        onChangeText={setName} 
+        onChangeText={handleNameChange}
+        onBlur={handleNameBlur}
         placeholder="Name of the competition" 
         placeholderTextColor={colors.mutedAccent} 
       />
+      {nameError && nameTouched ? (
+        <Text style={styles.errorText}>{nameError}</Text>
+      ) : null}
 
       <Text style={styles.label}>Organization</Text>
       <TextInput 
-        style={styles.input} 
+        style={[
+          styles.input,
+          organizationError && organizationTouched && { borderWidth: 1, borderColor: colors.destructive }
+        ]} 
         value={organization} 
-        onChangeText={setOrganization} 
+        onChangeText={handleOrganizationChange}
+        onBlur={handleOrganizationBlur}
         placeholder="e.g., IBJJF, NAGA, etc." 
         placeholderTextColor={colors.mutedAccent} 
       />
+      {organizationError && organizationTouched ? (
+        <Text style={styles.errorText}>{organizationError}</Text>
+      ) : null}
       
       <Text style={styles.label}>Type</Text>
       <View style={styles.buttonGroup}>
@@ -201,7 +455,7 @@ export default function CompetitionLogScreen() {
             <TouchableOpacity 
               key={t} 
               style={[styles.typeButton, type === t && styles.typeButtonSelected]} 
-              onPress={() => setType(t)}
+              onPress={() => updateFormState({ type: t })}
             >
               <Text style={[styles.typeButtonText, type === t && styles.typeButtonTextSelected]}>{t}</Text>
             </TouchableOpacity>
@@ -210,12 +464,19 @@ export default function CompetitionLogScreen() {
 
       <Text style={styles.label}>Weight Division</Text>
       <TextInput 
-        style={styles.input} 
+        style={[
+          styles.input,
+          weightDivisionError && weightDivisionTouched && { borderWidth: 1, borderColor: colors.destructive }
+        ]} 
         value={weightDivision} 
-        onChangeText={setWeightDivision} 
+        onChangeText={handleWeightDivisionChange}
+        onBlur={handleWeightDivisionBlur}
         placeholder="e.g., Lightweight, 155lbs, etc." 
         placeholderTextColor={colors.mutedAccent} 
       />
+      {weightDivisionError && weightDivisionTouched ? (
+        <Text style={styles.errorText}>{weightDivisionError}</Text>
+      ) : null}
 
       <Text style={styles.label}>Results in Your Division</Text>
       <MedalSelector 
@@ -225,13 +486,20 @@ export default function CompetitionLogScreen() {
 
       <Text style={styles.label}>Number of Matches in Your Division</Text>
       <TextInput 
-        style={styles.input} 
+        style={[
+          styles.input,
+          matchesInDivisionError && matchesInDivisionTouched && { borderWidth: 1, borderColor: colors.destructive }
+        ]} 
         value={matchesInDivision} 
-        onChangeText={updateMatchesInDivision} 
+        onChangeText={updateMatchesInDivision}
+        onBlur={handleMatchesInDivisionBlur}
         keyboardType="numeric" 
         placeholder="e.g., 3" 
         placeholderTextColor={colors.mutedAccent} 
       />
+      {matchesInDivisionError && matchesInDivisionTouched ? (
+        <Text style={styles.errorText}>{matchesInDivisionError}</Text>
+      ) : null}
 
       {/* Division Match Notes */}
       {parseInt(matchesInDivision) > 0 && (
@@ -274,13 +542,20 @@ export default function CompetitionLogScreen() {
 
           <Text style={styles.label}>Number of Matches in Open Class</Text>
           <TextInput 
-            style={styles.input} 
+            style={[
+              styles.input,
+              matchesInOpenClassError && matchesInOpenClassTouched && { borderWidth: 1, borderColor: colors.destructive }
+            ]} 
             value={matchesInOpenClass} 
-            onChangeText={updateMatchesInOpenClass} 
+            onChangeText={updateMatchesInOpenClass}
+            onBlur={handleMatchesInOpenClassBlur}
             keyboardType="numeric" 
             placeholder="e.g., 2" 
             placeholderTextColor={colors.mutedAccent} 
           />
+          {matchesInOpenClassError && matchesInOpenClassTouched ? (
+            <Text style={styles.errorText}>{matchesInOpenClassError}</Text>
+          ) : null}
 
           {/* Open Class Match Notes */}
           {parseInt(matchesInOpenClass) > 0 && (
@@ -306,15 +581,23 @@ export default function CompetitionLogScreen() {
 
       <Text style={styles.label}>General Notes</Text>
       <TextInput 
-        style={[styles.input, styles.textArea]} 
+        style={[
+          styles.input, 
+          styles.textArea,
+          generalNotesError && generalNotesTouched && { borderWidth: 1, borderColor: colors.destructive }
+        ]} 
         multiline 
         value={generalNotes} 
-        onChangeText={setGeneralNotes} 
+        onChangeText={handleGeneralNotesChange}
+        onBlur={handleGeneralNotesBlur}
         placeholder="Overall thoughts about the competition..." 
         placeholderTextColor={colors.mutedAccent} 
       />
+      {generalNotesError && generalNotesTouched ? (
+        <Text style={styles.errorText}>{generalNotesError}</Text>
+      ) : null}
 
-      <TagInput tags={tags} onTagsChange={setTags} />
+      <TagInput tags={tags} onTagsChange={(newTags) => updateFormState({ tags: newTags })} />
 
       <View style={styles.spacer} />
       <View style={styles.spacer} />
@@ -326,6 +609,14 @@ export default function CompetitionLogScreen() {
       )}
        <View style={styles.spacer} />
     </KeyboardAwareScrollView>
+  );
+}
+
+export default function CompetitionLogScreen() {
+  return (
+    <FormProvider>
+      <CompetitionLogScreenContent />
+    </FormProvider>
   );
 }
 
@@ -418,38 +709,11 @@ const styles = StyleSheet.create({
       fontSize: 16,
       fontWeight: 'bold',
     },
-    tagsTitleRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 5,
-    },
-    proLabel: {
-      fontSize: 10,
-      fontWeight: 'bold',
-      color: colors.white,
-      backgroundColor: colors.mutedAccent,
-      paddingHorizontal: 6,
-      paddingVertical: 2,
-      borderRadius: 8,
-      marginLeft: 8,
-      textAlign: 'center',
-      overflow: 'hidden',
-    },
-    compactProFeatureContainer: {
-      padding: 12,
-      backgroundColor: colors.lightBackground,
-      borderRadius: 8,
-      alignItems: 'center',
-      marginBottom: 15,
-      shadowColor: colors.shadow.color,
-      shadowOffset: colors.shadow.offset,
-      shadowOpacity: colors.shadow.opacity,
-      shadowRadius: colors.shadow.radius,
-      elevation: colors.shadow.elevation,
-    },
-    compactProFeatureText: {
-      fontSize: 14,
-      color: colors.mutedAccent,
-      textAlign: 'center',
+    errorText: {
+      fontSize: 12,
+      color: colors.destructive,
+      marginTop: -12,
+      marginBottom: 12,
+      marginLeft: 4,
     },
 });

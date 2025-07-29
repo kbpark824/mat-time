@@ -157,6 +157,7 @@ router.get('/summary', auth, asyncHandler(async (req, res) => {
       // Sessions aggregation (includes hours since they have duration)
       Session.aggregate([
         { $match: { user: userId } },
+        { $project: { user: 1, date: 1, duration: 1, type: 1 } }, // Only select needed fields
         {
           $group: {
             _id: null,
@@ -183,6 +184,7 @@ router.get('/summary', auth, asyncHandler(async (req, res) => {
       // Seminars aggregation (count only, no duration)
       Seminar.aggregate([
         { $match: { user: userId } },
+        { $project: { user: 1, type: 1 } }, // Only select needed fields
         {
           $group: {
             _id: null,
@@ -195,6 +197,7 @@ router.get('/summary', auth, asyncHandler(async (req, res) => {
       // Competitions aggregation (count and medal stats)
       Competition.aggregate([
         { $match: { user: userId } },
+        { $project: { user: 1, type: 1, resultsInDivision: 1, competedInOpenClass: 1, resultsInOpenClass: 1 } }, // Only select needed fields
         {
           $group: {
             _id: null,
@@ -342,6 +345,7 @@ router.get('/advanced', auth, asyncHandler(async (req, res) => {
     // Get training frequency data (sessions by week)
     const weeklyTrainingData = await Session.aggregate([
         { $match: { user: userId, date: { $gte: startDate } } },
+        { $project: { user: 1, date: 1, duration: 1 } }, // Only select needed fields
         {
             $group: {
                 _id: {
@@ -360,6 +364,7 @@ router.get('/advanced', auth, asyncHandler(async (req, res) => {
     // Get training consistency (training days per month)
     const monthlyConsistency = await Session.aggregate([
         { $match: { user: userId, date: { $gte: startDate } } },
+        { $project: { user: 1, date: 1 } }, // Only select needed fields
         {
             $group: {
                 _id: {
@@ -437,6 +442,7 @@ router.get('/advanced', auth, asyncHandler(async (req, res) => {
     // Get monthly progression
     const monthlyProgression = await Session.aggregate([
         { $match: { user: userId, date: { $gte: startDate } } },
+        { $project: { user: 1, date: 1, duration: 1 } }, // Only select needed fields
         {
             $group: {
                 _id: {
@@ -457,6 +463,7 @@ router.get('/advanced', auth, asyncHandler(async (req, res) => {
     // Get medal statistics for competitions
     const medalStats = await Competition.aggregate([
         { $match: { user: userId, date: { $gte: startDate } } },
+        { $project: { user: 1, date: 1, resultsInDivision: 1, competedInOpenClass: 1, resultsInOpenClass: 1 } }, // Only select needed fields
         {
             $group: {
                 _id: null,

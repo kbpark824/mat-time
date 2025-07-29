@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView } from 'rea
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import colors from '../constants/colors';
+import HelpIcon from './HelpIcon';
+import { HelpText } from './Tooltip';
 
 const beltRanks = [
   { value: 'white', name: 'White Belt', color: '#FFFFFF', textColor: '#000000' },
@@ -113,7 +115,13 @@ export default function BeltRankSelector({ currentRank, onRankChange }) {
               showsVerticalScrollIndicator={false}
             >
               {/* Belt Selection */}
-              <Text style={styles.sectionLabel}>Belt Rank</Text>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionLabel}>Belt Rank</Text>
+                <HelpIcon 
+                  title="Belt Progression"
+                  content="BJJ belt progression follows this order: White → Blue → Purple → Brown → Black. Each belt represents years of dedicated training and skill development."
+                />
+              </View>
               <View style={styles.beltGrid}>
                 {beltRanks.map((belt) => (
                   <TouchableOpacity
@@ -140,7 +148,14 @@ export default function BeltRankSelector({ currentRank, onRankChange }) {
               </View>
 
               {/* Stripes Selection */}
-              <Text style={styles.sectionLabel}>Stripes</Text>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionLabel}>Stripes</Text>
+                <HelpIcon 
+                  title="Stripe System"
+                  content="Stripes (white tape) are added to belts to mark progress within each belt rank. Most belts can have 0-4 stripes before promotion to the next belt level."
+                />
+              </View>
+              <HelpText>Each stripe represents progress toward your next belt promotion</HelpText>
               <View style={styles.stripesSelection}>
                 {stripeOptions.map((stripeCount) => (
                   <TouchableOpacity
@@ -319,12 +334,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 12,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 8,
+  },
   sectionLabel: {
     fontSize: 14,
     fontWeight: 'bold',
     color: colors.primaryText,
-    marginBottom: 8,
-    marginTop: 10,
+    flex: 1,
   },
   beltGrid: {
     flexDirection: 'column',
@@ -382,7 +402,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
     borderRadius: 8,
-    backgroundColor: colors.lightBackground,
+    backgroundColor: colors.lightGray,
   },
   selectedStripeOption: {
     backgroundColor: colors.accent,
@@ -411,7 +431,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.lightBackground,
+    backgroundColor: colors.lightGray,
     padding: 12,
     borderRadius: 8,
   },
@@ -429,7 +449,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     alignItems: 'center',
-    backgroundColor: colors.lightBackground,
+    backgroundColor: colors.lightGray,
     borderRadius: 8,
   },
   cancelButtonText: {

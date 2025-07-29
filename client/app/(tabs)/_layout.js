@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Tabs, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Alert, View, Modal, Text } from 'react-native';
+import { View, Modal, Text } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../auth/context';
 import colors from '../../constants/colors';
 import AddActionBottomSheet from '../../components/AddActionBottomSheet';
+import ProFeaturePreviewModal from '../../components/ProFeaturePreviewModal';
 import Paywall from '../../components/Paywall';
 
 export default function TabLayout() {
@@ -13,6 +14,8 @@ export default function TabLayout() {
   const { user } = useAuth();
   const [showBottomSheet, setShowBottomSheet] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [showProPreview, setShowProPreview] = useState(false);
+  const [previewFeatureType, setPreviewFeatureType] = useState(null);
   
   const isPro = user?.isPro || false;
 
@@ -27,6 +30,8 @@ export default function TabLayout() {
   };
 
   const handleOptionSelect = (option) => {
+    setShowBottomSheet(false); // Close bottom sheet first
+    
     switch (option) {
       case 'session':
         // Navigate to existing session logging modal
@@ -37,8 +42,9 @@ export default function TabLayout() {
           // Navigate to seminar logging page for pro users
           router.push('/logSeminar');
         } else {
-          // Show subscription prompt for non-pro users
-          setShowPaywall(true);
+          // Show pro feature preview for non-pro users
+          setPreviewFeatureType('seminar');
+          setShowProPreview(true);
         }
         break;
       case 'competition':
@@ -46,8 +52,9 @@ export default function TabLayout() {
           // Navigate to competition logging page for pro users
           router.push('/logCompetition');
         } else {
-          // Show subscription prompt for non-pro users
-          setShowPaywall(true);
+          // Show pro feature preview for non-pro users
+          setPreviewFeatureType('competition');
+          setShowProPreview(true);
         }
         break;
       default:
@@ -57,6 +64,16 @@ export default function TabLayout() {
 
   const handlePaywallClose = () => {
     setShowPaywall(false);
+  };
+
+  const handleProPreviewClose = () => {
+    setShowProPreview(false);
+    setPreviewFeatureType(null);
+  };
+
+  const handleProPreviewUpgrade = () => {
+    setShowProPreview(false);
+    setShowPaywall(true);
   };
 
   const handlePurchaseCompleted = () => {
@@ -129,7 +146,7 @@ export default function TabLayout() {
               justifyContent: 'center',
               alignItems: 'center',
               marginTop: -12,
-              shadowColor: '#000',
+              shadowColor: colors.shadow.color,
               shadowOffset: {
                 width: 0,
                 height: 2,
@@ -194,6 +211,21 @@ export default function TabLayout() {
       onSelectOption={handleOptionSelect}
       isPro={isPro}
     />
+
+    {/* Pro Feature Preview Modal */}
+    <ProFeaturePreviewModal
+      visible={showProPreview}
+      featureType={previewFeatureType}
+      onClose={handleProPreviewClose}
+      onUpgrade={handleProPreviewUpgrade}
+    >
+      {/* We'll add actual preview content later */}
+      <View style={{ padding: 20, alignItems: 'center' }}>
+        <Text style={{ fontSize: 16, color: colors.primaryText }}>
+          {previewFeatureType === 'seminar' ? 'Seminar logging form preview' : 'Competition logging form preview'}
+        </Text>
+      </View>
+    </ProFeaturePreviewModal>
 
     {/* Paywall Modal */}
     <Modal

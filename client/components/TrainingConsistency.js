@@ -34,10 +34,10 @@ const TrainingConsistency = ({ analytics, styles: parentStyles }) => {
 
 const styles = {
   consistencyContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     padding: 15,
     borderRadius: 8,
-    shadowColor: '#000',
+    shadowColor: colors.shadow.color,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -51,13 +51,13 @@ const styles = {
   consistencyLabel: {
     width: 50,
     fontSize: 12,
-    color: '#666',
+    color: colors.mutedAccent,
     marginRight: 10,
   },
   consistencyBar: {
     flex: 1,
     height: 8,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.lightGray,
     borderRadius: 4,
     marginRight: 10,
   },
@@ -69,7 +69,7 @@ const styles = {
   consistencyValue: {
     width: 50,
     fontSize: 12,
-    color: '#333',
+    color: colors.primaryText,
     textAlign: 'right',
   },
 };

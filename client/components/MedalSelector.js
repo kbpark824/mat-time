@@ -2,6 +2,7 @@ import React from 'react';
 import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../constants/colors';
+import { HelpText } from './Tooltip';
 
 const medalOptions = [
   { value: 'gold', emoji: '🥇', isEmoji: true },
@@ -12,7 +13,9 @@ const medalOptions = [
 
 export default function MedalSelector({ value, onSelect }) {
   return (
-    <View style={styles.container}>
+    <>
+      <HelpText>Select your competition result: 🥇 Gold, 🥈 Silver, 🥉 Bronze, or ✕ No placement</HelpText>
+      <View style={styles.container}>
       {medalOptions.map((medal) => (
         <TouchableOpacity
           key={medal.value}
@@ -34,6 +37,7 @@ export default function MedalSelector({ value, onSelect }) {
         </TouchableOpacity>
       ))}
     </View>
+    </>
   );
 }
 

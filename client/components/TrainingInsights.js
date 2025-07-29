@@ -36,12 +36,12 @@ const TrainingInsights = ({ analytics, styles: parentStyles }) => {
 
 const styles = {
   insightCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     padding: 15,
     borderRadius: 8,
     marginBottom: 10,
     borderLeftWidth: 4,
-    shadowColor: '#000',
+    shadowColor: colors.shadow.color,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -49,7 +49,7 @@ const styles = {
   },
   insightText: {
     fontSize: 14,
-    color: '#333',
+    color: colors.primaryText,
     lineHeight: 20,
   },
 };

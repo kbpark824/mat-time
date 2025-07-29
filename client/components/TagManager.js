@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 15,
     marginVertical: 2,
-    backgroundColor: colors.tertiaryBackground,
+    backgroundColor: colors.lightGray,
     borderRadius: 8,
   },
   tagName: {

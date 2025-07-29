@@ -1,50 +1,40 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, TextInput, StyleSheet, Text, Pressable, TouchableOpacity } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import TagInput from './TagInput';
-import Paywall from './Paywall';
 import colors from '../constants/colors';
 import commonStyles from '../constants/commonStyles';
-import { useProStatus } from '../hooks/useProStatus';
+import { useFormContext } from '../contexts/FormContext';
 
 export default function LogFormLayout({
-  // Form data
-  date,
-  setDate,
   typeOptions,
-  type,
-  setType,
-  techniqueNotes,
-  setTechniqueNotes,
-  tags,
-  setTags,
-  
-  // Rolling notes (optional - only for sessions)
   rollingNotes,
   setRollingNotes,
-  
-  // Additional fields (passed as render props)
+  rollingNotesError,
+  rollingNotesTouched,
+  onRollingNotesBlur,
   additionalFields,
-  
-  // Actions
   onDelete,
   isEditing,
   deleteButtonText = "Delete",
-  
-  // Pro features
-  showPaywall,
-  setShowPaywall,
+  children,
 }) {
-  const [showDatePicker, setShowDatePicker] = useState(false);
-
-  const onChangeDate = (event, selectedDate) => {
-    if (event.type === 'dismissed') {
-      setShowDatePicker(false);
-    } else if (selectedDate) {
-      setDate(selectedDate);
-    }
-  };
+  const {
+    date,
+    showDatePicker,
+    setShowDatePicker,
+    type,
+    setType,
+    techniqueNotes,
+    techniqueNotesError,
+    techniqueNotesTouched,
+    handleTechniqueNotesChange,
+    handleTechniqueNotesBlur,
+    tags,
+    setTags,
+    onChangeDate,
+  } = useFormContext();
 
 
   return (
@@ -71,6 +61,9 @@ export default function LogFormLayout({
       {/* Additional fields (duration, professor, etc.) */}
       {additionalFields}
       
+      {/* Children for additional custom content */}
+      {children}
+      
       <Text style={commonStyles.label}>Type</Text>
       <View style={styles.buttonGroup}>
         {typeOptions.map(t => (
@@ -86,13 +79,21 @@ export default function LogFormLayout({
 
       <Text style={commonStyles.label}>Technique Notes</Text>
       <TextInput 
-        style={[styles.input, styles.textArea]} 
+        style={[
+          styles.input, 
+          styles.textArea, 
+          techniqueNotesError && techniqueNotesTouched && commonStyles.inputError
+        ]} 
         multiline 
         value={techniqueNotes} 
-        onChangeText={setTechniqueNotes} 
+        onChangeText={handleTechniqueNotesChange}
+        onBlur={handleTechniqueNotesBlur}
         placeholder="What did you learn today?" 
         placeholderTextColor={colors.mutedAccent} 
       />
+      {techniqueNotesError && techniqueNotesTouched ? (
+        <Text style={commonStyles.errorText}>{techniqueNotesError}</Text>
+      ) : null}
 
       <TagInput tags={tags} onTagsChange={setTags} />
 
@@ -101,13 +102,21 @@ export default function LogFormLayout({
         <>
           <Text style={commonStyles.label}>Rolling / Sparring Notes</Text>
           <TextInput 
-            style={[styles.input, styles.textArea]} 
+            style={[
+              styles.input, 
+              styles.textArea,
+              rollingNotesError && rollingNotesTouched && commonStyles.inputError
+            ]} 
             multiline 
             value={rollingNotes} 
             onChangeText={setRollingNotes} 
+            onBlur={onRollingNotesBlur}
             placeholder="How did rolling go?" 
             placeholderTextColor={colors.mutedAccent} 
           />
+          {rollingNotesError && rollingNotesTouched ? (
+            <Text style={commonStyles.errorText}>{rollingNotesError}</Text>
+          ) : null}
         </>
       )}
 
@@ -214,7 +223,7 @@ const styles = StyleSheet.create({
     },
     compactProFeatureContainer: {
       padding: 12,
-      backgroundColor: colors.lightBackground,
+      backgroundColor: colors.lightGray,
       borderRadius: 8,
       alignItems: 'center',
       marginBottom: 15,

@@ -1,12 +1,53 @@
+# Dependencies
 node_modules/
 client/node_modules/
 server/node_modules/
+
+# Build and generated files
 Android Files/
 iOS Files/
+client/.expo/
+client/dist/
+client/web-build/
+server/logs/
+
+# Environment files
+.env
+.env.*
+*.env
+server/.env
+client/.env*.local
+
+# System files
+.DS_Store
+**/.DS_Store
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# Security files
+*.key
+*.pem
+*.p12
+*.p8
+*.jks
+*.mobileprovision
+
+# Project documentation (keep these ignored per CLAUDE.md instructions)
 CLAUDE.md
 context.md
 todo.md
-.DS_Store
-.env
-*.log
 features.md
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Coverage and test files
+coverage/
+.nyc_output/
+tmp/
+temp/

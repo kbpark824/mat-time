@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { View, TextInput, Text, StyleSheet, Pressable } from 'react-native';
 import colors from '../constants/colors';
+import HelpIcon from './HelpIcon';
+import { HelpText } from './Tooltip';
 
 export default function TagInput({ tags, onTagsChange }) {
   const [text, setText] = useState('');
@@ -48,7 +50,14 @@ export default function TagInput({ tags, onTagsChange }) {
 
   return (
     <View>
-      <Text style={styles.label}>Tags</Text>
+      <View style={styles.labelContainer}>
+        <Text style={styles.label}>Tags</Text>
+        <HelpIcon 
+          title="Tag System"
+          content="Tags help you organize and search your training sessions. Use specific technique names like 'armbar', 'guard pass', or general concepts like 'competition prep'. You can add up to 20 tags per session."
+        />
+      </View>
+      <HelpText>Press Enter after typing to add a tag. Long-press to remove.</HelpText>
       <View style={styles.tagContainer}>
         {tags.map((tag, index) => (
           <Pressable 
@@ -84,17 +93,21 @@ export default function TagInput({ tags, onTagsChange }) {
         </Text>
       </View>
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      <Text style={styles.hint}>Long-press a tag to remove it.</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  labelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
   label: { 
     fontSize: 16, 
-    marginBottom: 5, 
     fontWeight: 'bold',
     color: colors.primaryText,
+    flex: 1,
   },
   tagContainer: {
     flexDirection: 'row',

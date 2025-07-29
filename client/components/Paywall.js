@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.lightBackground,
+    backgroundColor: colors.lightGray,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   selectedPackage: {
-    backgroundColor: '#FAFAFA',
+    backgroundColor: colors.primaryBackground,
     shadowOpacity: colors.shadow.opacity * 1.5,
   },
   packageHeader: {
@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     backgroundColor: colors.primaryBackground,
     borderTopWidth: 1,
-    borderTopColor: colors.lightBackground,
+    borderTopColor: colors.lightGray,
   },
   purchaseButton: {
     backgroundColor: colors.primaryText,

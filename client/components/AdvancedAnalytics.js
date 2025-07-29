@@ -9,6 +9,8 @@ import PerformanceOverview from './PerformanceOverview';
 import TrainingInsights from './TrainingInsights';
 import TrainingConsistency from './TrainingConsistency';
 import MedalStatistics from './MedalStatistics';
+import HelpIcon from './HelpIcon';
+import { HelpText } from './Tooltip';
 
 
 const TimeframeSelector = ({ selected, onSelect }) => {
@@ -21,7 +23,16 @@ const TimeframeSelector = ({ selected, onSelect }) => {
   ];
 
   return (
-    <View style={styles.timeframeContainer}>
+    <>
+      <View style={styles.timeframeLabelContainer}>
+        <Text style={styles.timeframeLabel}>Time Period</Text>
+        <HelpIcon 
+          title="Analytics Time Periods"
+          content="Select different time periods to analyze your training data: 1M (Last month), 3M (Last 3 months), 6M (Last 6 months), 1Y (Last year), or All (All your data)."
+        />
+      </View>
+      <HelpText>Choose a time period to filter your analytics data</HelpText>
+      <View style={styles.timeframeContainer}>
       {timeframes.map((timeframe) => (
         <TouchableOpacity
           key={timeframe.value}
@@ -40,6 +51,7 @@ const TimeframeSelector = ({ selected, onSelect }) => {
         </TouchableOpacity>
       ))}
     </View>
+    </>
   );
 };
 
@@ -185,6 +197,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.destructive,
   },
+  timeframeLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  timeframeLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.primaryText,
+    flex: 1,
+  },
   timeframeContainer: {
     flexDirection: 'row',
     backgroundColor: colors.white,
@@ -314,7 +337,7 @@ const styles = StyleSheet.create({
   },
   consistencyBar: {
     height: 8,
-    backgroundColor: colors.tertiaryBackground,
+    backgroundColor: colors.lightGray,
     borderRadius: 4,
     marginBottom: 5,
   },

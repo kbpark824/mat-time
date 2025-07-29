@@ -70,7 +70,7 @@ const commonStyles = StyleSheet.create({
   },
 
   secondaryButton: {
-    backgroundColor: colors.tertiaryBackground,
+    backgroundColor: colors.lightGray,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,

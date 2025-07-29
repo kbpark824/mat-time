@@ -1,5 +1,7 @@
 import { useState, useRef, useImperativeHandle, useEffect } from 'react';
 import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
+import { Alert } from 'react-native';
+import { usePreventRemove } from '@react-navigation/native';
 import apiClient from '../api/client';
 import ErrorHandler from '../utils/errorHandler';
 
@@ -10,6 +12,8 @@ export default function useLogFormHandler(config) {
     validateData, // function to validate data before save
     transformDataForEdit, // function to transform API response for form state
     transformDataForSave, // function to transform form state for API
+    hasUnsavedChanges, // function to check if form has unsaved changes
+    markFormAsSaved, // function to mark form as saved (reset dirty state)
   } = config;
 
   const router = useRouter();
@@ -67,6 +71,12 @@ export default function useLogFormHandler(config) {
       } else {
         await apiClient.post(`/${endpoint}`, dataToSave);
       }
+      
+      // Mark form as saved to prevent unsaved changes warning
+      if (markFormAsSaved) {
+        markFormAsSaved();
+      }
+      
       router.back();
     } catch (error) {
       ErrorHandler.save(itemName, error);
@@ -109,6 +119,35 @@ export default function useLogFormHandler(config) {
       fetchData();
     }
   }, [params.id]);
+
+  // Prevent navigation if there are unsaved changes
+  usePreventRemove(
+    hasUnsavedChanges && typeof hasUnsavedChanges === 'function' && hasUnsavedChanges(),
+    ({ data }) => {
+      Alert.alert(
+        'Discard changes?',
+        'You have unsaved changes. Are you sure you want to discard them and leave the screen?',
+        [
+          { 
+            text: "Don't leave", 
+            style: 'cancel', 
+            onPress: () => {} 
+          },
+          {
+            text: 'Discard',
+            style: 'destructive',
+            onPress: () => {
+              // Mark as saved to prevent further warnings and allow navigation
+              if (markFormAsSaved) {
+                markFormAsSaved();
+              }
+              navigation.dispatch(data.action);
+            },
+          },
+        ]
+      );
+    }
+  );
 
   return {
     // State

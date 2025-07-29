@@ -354,14 +354,16 @@ router.post('/check-verification-status', asyncHandler(async (req, res) => {
   }
 
   if (user.isEmailVerified) {
-    // Generate JWT token for verified user
-    const payload = { user: { id: user.id, email: user.email, createdAt: user.createdAt, isPro: user.isPro } };
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '5h' });
+    // Generate tokens using modern refresh token system
+    const { accessToken, refreshToken } = await generateTokens(user, req);
 
     return res.json({ 
       success: true, 
       isVerified: true,
-      token,
+      accessToken,
+      refreshToken,
+      // Keep legacy 'token' field for backward compatibility
+      token: accessToken,
       data: {
         user: {
           id: user.id,

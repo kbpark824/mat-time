@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
         backgroundColor: colors.white, 
         marginBottom: 10, 
         borderRadius: 8,
-        shadowColor: "#000",
+        shadowColor: colors.shadow.color,
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.22,
         shadowRadius: 2.22,
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
         flexWrap: 'wrap',
     },
     tag: {
-        backgroundColor: colors.lightBackground,
+        backgroundColor: colors.lightGray,
         borderRadius: 15,
         paddingVertical: 4,
         paddingHorizontal: 10,
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
     },
     searchInput: {
       height: 40,
-      borderColor: colors.lightBackground,
+      borderColor: colors.lightGray,
       borderWidth: 1,
       borderRadius: 8,
       paddingHorizontal: 10,
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
       color: colors.primaryText,
     },
     disabledTag: {
-      backgroundColor: colors.lightBackground,
+      backgroundColor: colors.lightGray,
       opacity: 0.5,
     },
 });

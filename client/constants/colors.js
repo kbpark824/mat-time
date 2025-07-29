@@ -1,10 +1,9 @@
 export default {
   primaryBackground: '#FAFAFA',
   secondaryBackground: '#FFFFFF',
-  tertiaryBackground: '#EAEAEA',
   primaryText: '#4A4A4A',
   mutedAccent: '#9B9B9B',
-  lightBackground: '#EAEAEA',
+  lightGray: '#EAEAEA',
   white: '#FFFFFF',
   accent: '#3D95CE',
   destructive: '#E74C3C',
