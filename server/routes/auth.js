@@ -7,6 +7,7 @@ const User = require('../models/User');
 const Session = require('../models/Session');
 const Tag = require('../models/Tag');
 const RefreshToken = require('../models/RefreshToken');
+const PasswordResetToken = require('../models/PasswordResetToken');
 const auth = require('../middleware/authMiddleware');
 const asyncHandler = require('../middleware/asyncHandler');
 const emailService = require('../utils/emailService');
@@ -515,6 +516,161 @@ router.post('/logout', auth, asyncHandler(async (req, res) => {
   res.json({ 
     success: true, 
     message: 'Logged out successfully' 
+  });
+}));
+
+// @route   POST api/auth/forgot-password
+// @desc    Send password reset email
+// @access  Public
+router.post('/forgot-password', asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  // Validate email
+  if (!email) {
+    return res.status(400).json({ 
+      success: false, 
+      error: 'Email is required' 
+    });
+  }
+
+  // Check if user exists
+  const user = await User.findOne({ email });
+  if (!user) {
+    // Don't reveal if user exists for security
+    return res.json({ 
+      success: true, 
+      message: 'If an account with that email exists, we\'ve sent a password reset link.' 
+    });
+  }
+
+  try {
+    // Create password reset token
+    const resetToken = await PasswordResetToken.createToken(
+      user._id, 
+      user.email, 
+      req.ip
+    );
+
+    // Send password reset email
+    await emailService.sendPasswordResetEmail(
+      user.email, 
+      user.email.split('@')[0], 
+      resetToken.token
+    );
+
+    res.json({ 
+      success: true, 
+      message: 'If an account with that email exists, we\'ve sent a password reset link.' 
+    });
+  } catch (error) {
+    console.error('Failed to send password reset email:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to send password reset email. Please try again.' 
+    });
+  }
+}));
+
+// @route   POST api/auth/reset-password
+// @desc    Reset password using token
+// @access  Public
+router.post('/reset-password', asyncHandler(async (req, res) => {
+  const { token, password } = req.body;
+
+  // Validate input
+  if (!token || !password) {
+    return res.status(400).json({ 
+      success: false, 
+      error: 'Token and password are required' 
+    });
+  }
+
+  // Validate password strength
+  const passwordSchema = Joi.string().min(8).pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&#+\\-_=<>.,;:()\\[\\]{}|~^])[A-Za-z\\d@$!%*?&#+\\-_=<>.,;:()\\[\\]{}|~^]+$')).required();
+  const { error } = passwordSchema.validate(password);
+  
+  if (error) {
+    return res.status(400).json({ 
+      success: false, 
+      error: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character' 
+    });
+  }
+
+  // Find and validate reset token
+  const resetTokenDoc = await PasswordResetToken.findValidToken(token);
+  if (!resetTokenDoc) {
+    return res.status(400).json({ 
+      success: false, 
+      error: 'Invalid or expired reset token' 
+    });
+  }
+
+  try {
+    // Hash new password
+    const salt = await bcrypt.genSalt(12);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Update user password
+    const user = resetTokenDoc.userId;
+    user.password = hashedPassword;
+    await user.save();
+
+    // Mark token as used
+    resetTokenDoc.isUsed = true;
+    await resetTokenDoc.save();
+
+    // Revoke all existing refresh tokens for security
+    await RefreshToken.updateMany(
+      { userId: user._id },
+      { isRevoked: true }
+    );
+
+    // Generate new tokens for immediate login
+    const { accessToken, refreshToken } = await generateTokens(user, req);
+
+    res.json({ 
+      success: true, 
+      message: 'Password reset successfully!',
+      accessToken,
+      refreshToken,
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          isEmailVerified: user.isEmailVerified,
+          createdAt: user.createdAt,
+          isPro: user.isPro
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Failed to reset password:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to reset password. Please try again.' 
+    });
+  }
+}));
+
+// @route   GET api/auth/validate-reset-token/:token
+// @desc    Validate password reset token
+// @access  Public
+router.get('/validate-reset-token/:token', asyncHandler(async (req, res) => {
+  const { token } = req.params;
+
+  const resetTokenDoc = await PasswordResetToken.findValidToken(token);
+  
+  if (!resetTokenDoc) {
+    return res.status(400).json({ 
+      success: false, 
+      error: 'Invalid or expired reset token' 
+    });
+  }
+
+  res.json({ 
+    success: true, 
+    message: 'Valid reset token',
+    email: resetTokenDoc.email
   });
 }));
 

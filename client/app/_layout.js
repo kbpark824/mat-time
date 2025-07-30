@@ -4,7 +4,7 @@ import authStorage from '../auth/storage';
 import { useEffect, useState } from 'react';
 import { SplashScreen } from 'expo-router';
 import Purchases from 'react-native-purchases';
-import { Platform, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, Text, TouchableOpacity, View, Linking } from 'react-native';
 import { jwtDecode } from 'jwt-decode';
 import Constants from 'expo-constants';
 import colors from '../constants/colors';
@@ -73,6 +73,37 @@ function Layout() {
       router.replace('/(tabs)');
     }
   }, [user, navigationState?.key, isReady]);
+
+  // Handle deep links
+  useEffect(() => {
+    const handleDeepLink = (url) => {
+      console.log('Deep link received:', url);
+      
+      if (url.includes('reset-password/')) {
+        const token = url.split('reset-password/')[1];
+        if (token) {
+          router.push(`/resetPassword?token=${token}`);
+        }
+      }
+      // Add other deep link handling here if needed
+    };
+
+    // Handle initial URL (app was opened from link)
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleDeepLink(url);
+      }
+    });
+
+    // Handle URLs when app is already open
+    const subscription = Linking.addEventListener('url', (event) => {
+      handleDeepLink(event.url);
+    });
+
+    return () => {
+      subscription?.remove();
+    };
+  }, [router]);
 
   if (!isReady) {
     return null; // Return null while the splash screen is visible
@@ -174,6 +205,7 @@ function Layout() {
           headerShown: true,
           title: 'Log a Session',
           presentation: 'modal',
+          headerTitleAlign: 'center',
           headerLeft: () => (
             <TouchableOpacity onPress={() => navigation.goBack()}>
               <Text style={{ color: colors.destructive, fontSize: 16 }}>Cancel</Text>
@@ -200,6 +232,7 @@ function Layout() {
           headerShown: true,
           title: 'Log a Seminar',
           presentation: 'modal',
+          headerTitleAlign: 'center',
           headerLeft: () => (
             <TouchableOpacity onPress={() => navigation.goBack()}>
               <Text style={{ color: colors.destructive, fontSize: 16 }}>Cancel</Text>
@@ -225,6 +258,7 @@ function Layout() {
           headerShown: true,
           title: 'Log a Competition',
           presentation: 'modal',
+          headerTitleAlign: 'center',
           headerLeft: () => (
             <TouchableOpacity onPress={() => navigation.goBack()}>
               <Text style={{ color: colors.destructive, fontSize: 16 }}>Cancel</Text>

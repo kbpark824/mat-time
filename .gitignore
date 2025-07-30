@@ -34,6 +34,10 @@ yarn-error.*
 *.jks
 *.mobileprovision
 
+# Store assets and app store files
+store-assets/
+store-marketing/
+
 # Project documentation (keep these ignored per CLAUDE.md instructions)
 CLAUDE.md
 context.md

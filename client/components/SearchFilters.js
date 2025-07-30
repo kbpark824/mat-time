@@ -24,7 +24,7 @@ export default function SearchFilters({
           value={searchQuery}
           onChangeText={onSearchQueryChange}
           returnKeyType="search"
-          accessibilityRole="searchbox"
+          accessibilityRole="search"
           accessibilityLabel="Search activities"
           accessibilityHint="Type to search through your training activities by notes or techniques"
         />

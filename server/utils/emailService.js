@@ -162,6 +162,132 @@ class EmailService {
     }
   }
 
+  // Create password reset email HTML template
+  createPasswordResetEmailTemplate(resetToken, userEmail) {
+    const deepLinkUrl = `mattime://reset-password/${resetToken}`;
+    const webFallbackUrl = `https://${this.appDomain}/reset-password?token=${resetToken}`;
+    
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Reset Your Password - Mat Time</title>
+        <style>
+          body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #4A4A4A;
+            background-color: #FAFAFA;
+            margin: 0;
+            padding: 0;
+          }
+          .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #FFFFFF;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          }
+          .header {
+            background-color: #3D95CE;
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+          }
+          .content {
+            padding: 40px 30px;
+            text-align: center;
+          }
+          .button {
+            display: inline-block;
+            background-color: #3D95CE;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 20px 0;
+          }
+          .footer {
+            background-color: #EAEAEA;
+            padding: 20px 30px;
+            text-align: center;
+            font-size: 14px;
+            color: #9B9B9B;
+          }
+          .warning {
+            background-color: #FFF3CD;
+            border: 1px solid #FFEAA7;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #856404;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Reset Your Password</h1>
+            <p>Secure password reset for Mat Time</p>
+          </div>
+          
+          <div class="content">
+            <h2>Password Reset Request</h2>
+            <p>We received a request to reset the password for your Mat Time account.</p>
+            
+            <a href="${deepLinkUrl}" class="button">Open Mat Time App</a>
+            
+            <p style="margin-top: 20px;">
+              <small>If you don't have the app installed or the button doesn't work:</small><br>
+              <a href="${webFallbackUrl}" style="color: #3D95CE; word-break: break-all;">Reset password in browser</a>
+            </p>
+            
+            <div class="warning">
+              <strong>⏰ This reset link will expire in 1 hour</strong><br>
+              For your security, this link can only be used once.
+            </div>
+            
+            <p style="margin-top: 30px;">
+              <strong>Didn't request this?</strong><br>
+              If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
+            </p>
+          </div>
+          
+          <div class="footer">
+            <p>This email was sent to ${userEmail}</p>
+            <p>If you have any questions, please contact our support team.</p>
+            <p>&copy; 2025 Mat Time. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  // Send password reset email
+  async sendPasswordResetEmail(userEmail, userName, resetToken) {
+    try {
+      const mailOptions = {
+        from: `"${this.senderName}" <${this.senderEmail}>`,
+        to: `"${userName}" <${userEmail}>`,
+        subject: 'Reset Your Password - Mat Time',
+        html: this.createPasswordResetEmailTemplate(resetToken, userEmail),
+      };
+
+      const response = await this.transporter.sendMail(mailOptions);
+      console.log('Password reset email sent successfully:', response.messageId);
+      return { success: true, messageId: response.messageId };
+      
+    } catch (error) {
+      console.error('Error sending password reset email:', error);
+      throw new Error('Failed to send password reset email');
+    }
+  }
+
   // Send welcome email after verification (optional)
   async sendWelcomeEmail(userEmail, userName) {
     try {
