@@ -4,7 +4,7 @@ module.exports = {
   RATE_LIMITING: {
     WINDOW_MS: 15 * 60 * 1000, // 15 minutes in milliseconds
     GENERAL_MAX_REQUESTS: 500, // General API requests per window
-    AUTH_MAX_ATTEMPTS: 5, // Authentication attempts per window
+    AUTH_MAX_ATTEMPTS: 15, // Authentication attempts per window (increased from 5 to 15)
     WEBHOOK_MAX_REQUESTS: 10, // Webhook requests per window
   },
 

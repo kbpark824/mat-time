@@ -3,10 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import colors from '../constants/colors';
 
 export default function StreakDisplay({ streaks }) {
-  console.log('StreakDisplay received streaks:', streaks);
-  
   if (!streaks) {
-    console.log('No streaks data, returning null');
     return null;
   }
 
