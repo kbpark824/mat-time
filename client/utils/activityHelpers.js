@@ -31,10 +31,25 @@ export const getActivityTypeColor = (activity) => {
   }
 };
 
+// Helper function to format duration from decimal hours to readable format
+const formatDuration = (durationHours) => {
+  const totalMinutes = Math.round(durationHours * 60);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  
+  if (hours === 0) {
+    return `${minutes} min`;
+  } else if (minutes === 0) {
+    return `${hours} ${hours === 1 ? 'hour' : 'hours'}`;
+  } else {
+    return `${hours} ${hours === 1 ? 'hour' : 'hours'} ${minutes} min`;
+  }
+};
+
 export const getActivitySubtitle = (activity) => {
   switch (activity.activityType) {
     case 'session':
-      return `${activity.type} - ${activity.duration} min`;
+      return `${activity.type} - ${formatDuration(activity.duration)}`;
     case 'seminar':
       return `${activity.type} - ${activity.professorName}`;
     case 'competition':

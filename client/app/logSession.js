@@ -151,29 +151,23 @@ function SessionLogScreenContent() {
   // Setup the form handler
   setupFormHandler(handleSave);
 
-  // Generate duration options (15 min increments from 15 min to 4 hours)
-  const generateDurationOptions = () => {
-    const options = [];
-    for (let i = 0.25; i <= 4; i += 0.25) {
-      const hours = Math.floor(i);
-      const minutes = (i % 1) * 60;
-      let label;
-      
-      if (hours === 0) {
-        label = `${minutes} min`;
-      } else if (minutes === 0) {
-        label = `${hours} ${hours === 1 ? 'hour' : 'hours'}`;
-      } else {
-        label = `${hours}h ${minutes}m`;
-      }
-      
-      options.push({ value: i, label });
+  
+  // Helper function to format any duration value
+  const formatDuration = (durationHours) => {
+    const totalMinutes = Math.round(durationHours * 60);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    
+    if (hours === 0) {
+      return `${minutes} min`;
+    } else if (minutes === 0) {
+      return `${hours} ${hours === 1 ? 'hour' : 'hours'}`;
+    } else {
+      return `${hours} ${hours === 1 ? 'hour' : 'hours'} ${minutes} min`;
     }
-    return options;
   };
-
-  const durationOptions = generateDurationOptions();
-  const selectedDurationLabel = durationOptions.find(opt => opt.value === duration)?.label || `${duration} hours`;
+  
+  const selectedDurationLabel = formatDuration(duration);
 
   // Convert duration (in hours) to Date object for DateTimePicker
   const durationToDate = (durationHours) => {
