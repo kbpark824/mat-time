@@ -34,21 +34,42 @@ function Layout() {
 
       const restoreToken = async () => {
         try {
-          const token = await authStorage.getToken();
-          if (token) {
-            const decodedToken = jwtDecode(token);
+          // First check for new token format (access + refresh tokens)
+          const { accessToken, refreshToken } = await authStorage.getTokens();
+          
+          if (accessToken && refreshToken) {
+            const decodedToken = jwtDecode(accessToken);
             
-            // Check if token is expired
+            // Check if access token is expired
             const currentTime = Date.now() / 1000;
+            
             if (decodedToken.exp && decodedToken.exp < currentTime) {
-              // Token is expired, remove it
-              await authStorage.removeToken();
-            } else {
+              // Access token is expired, but we have refresh token - let the API client handle refresh
+              // Just set the user and let the first API call trigger the refresh
               setUser(decodedToken.user);
+            } else {
+              // Access token is still valid
+              setUser(decodedToken.user);
+            }
+          } else {
+            // Fallback to legacy token check for backward compatibility
+            const legacyToken = await authStorage.getToken();
+            if (legacyToken) {
+              const decodedToken = jwtDecode(legacyToken);
+              
+              // Check if token is expired
+              const currentTime = Date.now() / 1000;
+              if (decodedToken.exp && decodedToken.exp < currentTime) {
+                // Token is expired, remove it
+                await authStorage.removeToken();
+              } else {
+                setUser(decodedToken.user);
+              }
             }
           }
         } catch (error) {
-          // Invalid token, remove it
+          // Invalid token, remove both old and new tokens
+          await authStorage.removeTokens();
           await authStorage.removeToken();
         } finally {
           setIsReady(true);
