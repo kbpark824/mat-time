@@ -179,7 +179,7 @@ export default function ProfileScreen() {
         {/* Support Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Support</Text>
-          <Text style={styles.supportText}>Need help? Please contact us at </Text>
+          <Text style={styles.supportText}>Need help or have feedback? Please email us at </Text>
           <TouchableOpacity 
             style={styles.linkButton}
             onPress={() => Linking.openURL('mailto:support@mat-time.io')}

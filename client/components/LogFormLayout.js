@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TextInput, StyleSheet, Text, Pressable, TouchableOpacity } from 'react-native';
+import { View, TextInput, StyleSheet, Text, Pressable, TouchableOpacity, Platform } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import TagInput from './TagInput';
@@ -38,9 +38,12 @@ export default function LogFormLayout({
 
 
   return (
-    <KeyboardAwareScrollView style={styles.container}>
+    <KeyboardAwareScrollView 
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: Platform.OS === 'android' ? 80 : 20 }}
+    >
       <Text style={commonStyles.label}>Date</Text>
-      <Pressable onPress={() => setShowDatePicker(true)}>
+      <Pressable onPress={() => setShowDatePicker(!showDatePicker)}>
         <View style={styles.input}>
             <Text style={styles.datePickerText}>{date.toLocaleDateString()}</Text>
         </View>
@@ -55,6 +58,7 @@ export default function LogFormLayout({
           textColor="#333333"
           accentColor="#007AFF"
           themeVariant="light"
+          style={styles.datePicker}
         />
       )}
       
@@ -127,7 +131,6 @@ export default function LogFormLayout({
           <TouchableOpacity style={styles.deleteButton} onPress={onDelete}>
             <Text style={styles.deleteButtonText}>{deleteButtonText}</Text>
           </TouchableOpacity>
-          <View style={styles.spacer} />
         </>
       )}
     </KeyboardAwareScrollView>
@@ -237,5 +240,9 @@ const styles = StyleSheet.create({
       fontSize: 14,
       color: colors.mutedAccent,
       textAlign: 'center',
+    },
+    datePicker: {
+      alignSelf: 'center',
+      marginVertical: 10,
     },
 });

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, TextInput, StyleSheet, Text, TouchableOpacity, Switch } from 'react-native';
+import { View, TextInput, StyleSheet, Text, TouchableOpacity, Switch, Platform } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import TagInput from '../components/TagInput';
@@ -337,6 +337,11 @@ function CompetitionLogScreenContent() {
       setShowDatePicker(false);
     } else {
       onChangeDate(event, selectedDate);
+      // On Android, close the picker immediately after selection
+      // On iOS, keep it open so users can continue adjusting
+      if (Platform.OS === 'android') {
+        setShowDatePicker(false);
+      }
     }
   };
 
@@ -397,9 +402,12 @@ function CompetitionLogScreenContent() {
   setupFormHandler(handleSave);
 
   return (
-    <KeyboardAwareScrollView style={styles.container}>
+    <KeyboardAwareScrollView 
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: Platform.OS === 'android' ? 80 : 20 }}
+    >
       <Text style={styles.label}>Date</Text>
-      <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+      <TouchableOpacity onPress={() => setShowDatePicker(!showDatePicker)}>
         <View style={styles.input}>
             <Text style={styles.datePickerText}>{date.toLocaleDateString()}</Text>
         </View>
@@ -414,6 +422,7 @@ function CompetitionLogScreenContent() {
           textColor="#333333"
           accentColor="#007AFF"
           themeVariant="light"
+          style={styles.datePicker}
         />
       )}
 
@@ -715,5 +724,9 @@ const styles = StyleSheet.create({
       marginTop: -12,
       marginBottom: 12,
       marginLeft: 4,
+    },
+    datePicker: {
+      alignSelf: 'center',
+      marginVertical: 10,
     },
 });

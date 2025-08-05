@@ -7,6 +7,7 @@ import Purchases from 'react-native-purchases';
 import { Platform, Text, TouchableOpacity, View, Linking } from 'react-native';
 import { jwtDecode } from 'jwt-decode';
 import Constants from 'expo-constants';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import colors from '../constants/colors';
 import ErrorBoundary from '../components/ErrorBoundary';
 
@@ -305,12 +306,14 @@ function Layout() {
 
 export default function RootLayout() {
   return (
-    <ErrorBoundary fallbackMessage="The app encountered an error during startup. Please restart the app.">
-      <AuthProvider>
-        <ErrorBoundary fallbackMessage="Authentication system encountered an error.">
-          <Layout />
-        </ErrorBoundary>
-      </AuthProvider>
-    </ErrorBoundary>
+    <SafeAreaProvider>
+      <ErrorBoundary fallbackMessage="The app encountered an error during startup. Please restart the app.">
+        <AuthProvider>
+          <ErrorBoundary fallbackMessage="Authentication system encountered an error.">
+            <Layout />
+          </ErrorBoundary>
+        </AuthProvider>
+      </ErrorBoundary>
+    </SafeAreaProvider>
   );
 }

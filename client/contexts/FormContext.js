@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useRef } from 'react';
+import { Platform } from 'react-native';
 
 const FormContext = createContext(null);
 
@@ -44,6 +45,11 @@ const FormProvider = ({ children }) => {
       setShowDatePicker(false);
     } else if (selectedDate) {
       setDate(selectedDate);
+      // On Android, close the picker immediately after selection
+      // On iOS, keep it open so users can continue adjusting
+      if (Platform.OS === 'android') {
+        setShowDatePicker(false);
+      }
     }
   };
 
