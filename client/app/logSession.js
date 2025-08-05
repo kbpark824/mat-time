@@ -1,5 +1,5 @@
 import React, { useState, useRef, useMemo, useCallback } from 'react';
-import { StyleSheet, Text, TouchableOpacity, Platform, Modal, View, FlatList } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, Platform, Modal, View, FlatList, TextInput } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import LogFormLayout from '../components/LogFormLayout';
 import useLogFormHandler from '../hooks/useLogFormHandler';
@@ -13,6 +13,7 @@ function SessionLogScreenContent() {
   const [durationTouched, setDurationTouched] = useState(false);
   const [showDurationPicker, setShowDurationPicker] = useState(false);
   const [tempDuration, setTempDuration] = useState(1.5);
+  const [instructor, setInstructor] = useState('');
   const [rollingNotes, setRollingNotes] = useState('');
   const [rollingNotesError, setRollingNotesError] = useState('');
   const [rollingNotesTouched, setRollingNotesTouched] = useState(false);
@@ -23,6 +24,7 @@ function SessionLogScreenContent() {
   // Track initial local state for unsaved changes detection
   const initialLocalState = useRef({
     duration: 1.5,
+    instructor: '',
     rollingNotes: '',
   });
 
@@ -49,6 +51,7 @@ function SessionLogScreenContent() {
     // Check local state changes
     const localHasChanges = (
       duration !== initialLocalState.current.duration ||
+      instructor !== initialLocalState.current.instructor ||
       rollingNotes !== initialLocalState.current.rollingNotes
     );
     
@@ -63,6 +66,7 @@ function SessionLogScreenContent() {
     // Reset local state tracking
     initialLocalState.current = {
       duration,
+      instructor,
       rollingNotes,
     };
   };
@@ -113,6 +117,7 @@ function SessionLogScreenContent() {
       setDuration(session.duration);
       setDurationError('');
       setDurationTouched(false);
+      setInstructor(session.instructor || '');
       setRollingNotes(session.rollingNotes || '');
       setRollingNotesError('');
       setRollingNotesTouched(false);
@@ -120,12 +125,14 @@ function SessionLogScreenContent() {
       // Update initial state tracking for editing
       initialLocalState.current = {
         duration: session.duration,
+        instructor: session.instructor || '',
         rollingNotes: session.rollingNotes || '',
       };
     },
     transformDataForSave: (formData) => ({
       date: formData.date,
       duration: formData.duration,
+      instructor: formData.instructor || '',
       type: formData.type,
       techniqueNotes: formData.techniqueNotes,
       rollingNotes: formData.rollingNotes,
@@ -140,6 +147,7 @@ function SessionLogScreenContent() {
     const formData = {
       date,
       duration,
+      instructor,
       type,
       techniqueNotes,
       rollingNotes,
@@ -278,7 +286,7 @@ function SessionLogScreenContent() {
     </Modal>
   );
 
-  // Additional fields specific to sessions (duration picker)
+  // Additional fields specific to sessions (duration picker and instructor)
   const additionalFields = (
     <>
       <Text style={styles.label}>Duration</Text>
@@ -294,6 +302,15 @@ function SessionLogScreenContent() {
       {durationError && durationTouched ? (
         <Text style={styles.errorText}>{durationError}</Text>
       ) : null}
+
+      <Text style={styles.label}>Professor/Instructor</Text>
+      <TextInput 
+        style={styles.input} 
+        value={instructor} 
+        onChangeText={setInstructor}
+        placeholder="Who taught this class?" 
+        placeholderTextColor={colors.mutedAccent} 
+      />
 
       {Platform.OS === 'android' ? (
         <AndroidDurationPicker />

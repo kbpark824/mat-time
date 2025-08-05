@@ -22,6 +22,9 @@ const sessionSchema = Joi.object({
     'number.positive': 'Duration must be positive',
     'any.required': 'Duration is required'
   }),
+  instructor: Joi.string().max(100).allow('').optional().messages({
+    'string.max': 'Instructor name must be 100 characters or less'
+  }),
   type: Joi.string().valid('Gi', 'No-Gi', 'Open Mat').required().messages({
     'any.only': 'Type must be one of: Gi, No-Gi, Open Mat',
     'any.required': 'Type is required'

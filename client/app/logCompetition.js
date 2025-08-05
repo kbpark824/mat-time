@@ -405,6 +405,11 @@ function CompetitionLogScreenContent() {
     <KeyboardAwareScrollView 
       style={styles.container}
       contentContainerStyle={{ paddingBottom: Platform.OS === 'android' ? 80 : 20 }}
+      enableOnAndroid={true}
+      enableAutomaticScroll={true}
+      keyboardOpeningTime={0}
+      extraScrollHeight={20}
+      keyboardShouldPersistTaps="handled"
     >
       <Text style={styles.label}>Date</Text>
       <TouchableOpacity onPress={() => setShowDatePicker(!showDatePicker)}>

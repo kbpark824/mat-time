@@ -14,6 +14,10 @@ const SessionSchema = new mongoose.Schema({
     type: Number, // In hours, e.g., 1.5 for 90 minutes
     required: true,
   },
+  instructor: {
+    type: String,
+    default: '',
+  },
   type: {
     type: String,
     enum: ['Gi', 'No-Gi', 'Open Mat'],
