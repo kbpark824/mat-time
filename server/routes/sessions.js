@@ -155,7 +155,7 @@ router.put('/:id', auth, validateObjectId, asyncHandler(async (req, res) => {
         });
     }
 
-    const { date, duration, type, techniqueNotes, rollingNotes, tags } = req.body;
+    const { date, duration, instructor, type, techniqueNotes, rollingNotes, tags } = req.body;
 
     let session = await Session.findById(req.params.id);
     if (!session) return res.status(404).json({ msg: 'Session not found' });
@@ -169,6 +169,7 @@ router.put('/:id', auth, validateObjectId, asyncHandler(async (req, res) => {
     const updatedSessionData = {
         date,
         duration,
+        instructor,
         type,
         techniqueNotes,
         rollingNotes,
