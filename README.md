@@ -4,8 +4,8 @@
 
 Mat Time is a modern, full-stack mobile application designed specifically for Brazilian Jiu-Jitsu practitioners who want to systematically track their training journey. Built with React Native and Node.js, it combines intuitive session logging with powerful analytics to help you understand and improve your training patterns.
 
-[![Production Ready](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)](https://github.com/yourusername/mat-time)
-[![Security Verified](https://img.shields.io/badge/Security-Enterprise%20Grade-blue)](https://github.com/yourusername/mat-time)
+[![Production Ready](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)](https://github.com/kbpark824/mat-time)
+[![Security Verified](https://img.shields.io/badge/Security-Enterprise%20Grade-blue)](https://github.com/kbpark824/mat-time)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
@@ -54,13 +54,14 @@ Mat Time transforms how jiujitsu practitioners track their progress by providing
 - **Node.js** 18+ and **npm**
 - **MongoDB** instance (local or cloud)
 - **Expo CLI**: `npm install -g @expo/cli`
+- **EAS CLI**: `npm install -g eas-cli` (for production builds)
 - **iOS Simulator** or **Android Emulator** (optional)
 
 ### Installation
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/mat-time.git
+   git clone https://github.com/kbpark824/mat-time.git
    cd mat-time
    ```
 
@@ -115,7 +116,8 @@ Mat Time transforms how jiujitsu practitioners track their progress by providing
 2. **Build the client**
    ```bash
    cd client
-   eas build --platform all  # Requires EAS CLI setup
+   eas build --platform ios --profile production    # iOS production
+   eas build --platform android --profile preview   # Android testing
    ```
 
 ---
@@ -319,10 +321,17 @@ We welcome contributions! Please follow these guidelines:
 
 ### Development Status
 
-**Current Version**: 1.0.0  
+**Current Version**: 1.0.1 (submitted to app stores)  
 **Status**: Production Ready ✅  
 **Security**: Enterprise Grade (11/11 vulnerabilities resolved)  
 **Last Updated**: January 2025
+
+**Recent Updates (v1.0.1)**:
+- Added instructor field to session logging
+- Fixed Android navigation bar covering delete buttons
+- Improved competition/seminar activity card display
+- Enhanced keyboard scrolling on Android
+- Fixed password reset functionality
 
 ---
 
