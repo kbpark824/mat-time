@@ -106,7 +106,7 @@ router.get('/', auth, asyncHandler(async (req, res) => {
       query.tags = { $all: tagIds }; // $all ensures all specified tags are present
   }
 
-  let seminarsQuery = Seminar.find(query, 'date name instructor location notes tags user createdAt updatedAt')
+  let seminarsQuery = Seminar.find(query)
     .populate('tags', 'name')
     .sort({ date: -1 });
 

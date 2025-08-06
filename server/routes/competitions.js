@@ -179,7 +179,7 @@ router.get('/', auth, asyncHandler(async (req, res) => {
       query.tags = { $all: tagIds }; // $all ensures all specified tags are present
   }
 
-  let competitionsQuery = Competition.find(query, 'date name location placement weight medals notes tags user createdAt updatedAt')
+  let competitionsQuery = Competition.find(query)
     .populate('tags', 'name')
     .sort({ date: -1 });
 
