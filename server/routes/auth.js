@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const rateLimit = require('express-rate-limit');
 const Joi = require('joi');
 const User = require('../models/User');
 const Session = require('../models/Session');
@@ -11,6 +12,20 @@ const PasswordResetToken = require('../models/PasswordResetToken');
 const auth = require('../middleware/authMiddleware');
 const asyncHandler = require('../middleware/asyncHandler');
 const emailService = require('../utils/emailService');
+
+// Rate limiter for email operations
+const emailLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 5, // 5 email requests per window
+  message: {
+    success: false,
+    error: 'Too many email requests. Please try again in 10 minutes.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Skip rate limiting for localhost in development
+  skip: (req) => process.env.NODE_ENV !== 'production' && req.ip === '127.0.0.1'
+});
 
 // Helper function to generate both access and refresh tokens
 const generateTokens = async (user, req) => {
@@ -72,9 +87,10 @@ const beltRankSchema = Joi.object({
     'number.max': 'Stripes cannot exceed 4',
     'any.required': 'Stripes count is required'
   }),
-  achievedDate: Joi.date().iso().max('now').required().messages({
+  achievedDate: Joi.date().iso().min('1900-01-01').max('now').required().messages({
     'date.base': 'Achieved date must be a valid date',
     'date.format': 'Achieved date must be in ISO format',
+    'date.min': 'Achieved date cannot be before 1900',
     'date.max': 'Achieved date cannot be in the future',
     'any.required': 'Achieved date is required'
   })
@@ -284,7 +300,7 @@ router.delete('/account', auth, asyncHandler(async (req, res, next) => {
 // @route   POST api/auth/resend-verification
 // @desc    Resend email verification
 // @access  Public
-router.post('/resend-verification', asyncHandler(async (req, res) => {
+router.post('/resend-verification', emailLimiter, asyncHandler(async (req, res) => {
   const { email } = req.body;
 
   if (!email) {
@@ -522,7 +538,7 @@ router.post('/logout', auth, asyncHandler(async (req, res) => {
 // @route   POST api/auth/forgot-password
 // @desc    Send password reset email
 // @access  Public
-router.post('/forgot-password', asyncHandler(async (req, res) => {
+router.post('/forgot-password', emailLimiter, asyncHandler(async (req, res) => {
   const { email } = req.body;
 
   // Validate email

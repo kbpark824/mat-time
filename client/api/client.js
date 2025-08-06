@@ -14,15 +14,14 @@ let isRefreshing = false;
 let failedQueue = [];
 
 const processQueue = (error, token = null) => {
-  failedQueue.forEach(prom => {
+  const queue = failedQueue.splice(0); // Clear the array and get all items
+  queue.forEach(prom => {
     if (error) {
       prom.reject(error);
     } else {
       prom.resolve(token);
     }
   });
-  
-  failedQueue = [];
 };
 
 // Helper function to check if token is expired or expiring soon
@@ -89,7 +88,13 @@ apiClient.interceptors.response.use(
     
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
-        // If we're already refreshing, queue this request
+        // If we're already refreshing, queue this request (with size limit)
+        if (failedQueue.length >= 50) {
+          // Prevent memory exhaustion - reject oldest requests when queue is full
+          const oldestRequest = failedQueue.shift();
+          oldestRequest.reject(new Error('Request queue full - please try again'));
+        }
+        
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         }).then(token => {

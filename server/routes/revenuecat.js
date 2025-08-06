@@ -34,12 +34,19 @@ const verifySignature = (req, res, next) => {
     .digest('hex');
   
   // Use timing-safe comparison to prevent timing attacks
-  const signatureBuffer = Buffer.alloc(32); // Fixed length for SHA256
-  const expectedBuffer = Buffer.alloc(32);
+  // First validate signature length (SHA256 hex = 64 characters)
+  if (signature.length !== 64) {
+    return res.status(401).json({ msg: 'Unauthorized - Invalid signature format' });
+  }
   
   try {
-    Buffer.from(signature, 'hex').copy(signatureBuffer);
-    Buffer.from(expectedSignature, 'hex').copy(expectedBuffer);
+    const signatureBuffer = Buffer.from(signature, 'hex');
+    const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+    
+    // Both buffers should be 32 bytes (SHA256 output length)
+    if (signatureBuffer.length !== expectedBuffer.length || signatureBuffer.length !== 32) {
+      return res.status(401).json({ msg: 'Unauthorized - Invalid signature format' });
+    }
     
     if (!crypto.timingSafeEqual(signatureBuffer, expectedBuffer)) {
       return res.status(401).json({ msg: 'Unauthorized - Invalid signature' });

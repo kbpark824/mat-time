@@ -17,6 +17,7 @@ class EmailService {
     this.senderEmail = process.env.BREVO_SENDER_EMAIL;
     this.senderName = process.env.BREVO_SENDER_NAME;
     this.appDomain = process.env.APP_DOMAIN;
+    this.appScheme = process.env.APP_SCHEME || 'mattime';
     
     // Verify SMTP connection
     this.verifyConnection();
@@ -38,7 +39,7 @@ class EmailService {
 
   // Create verification email HTML template
   createVerificationEmailTemplate(verificationToken, userEmail) {
-    const deepLinkUrl = `mattime://verify-email/${verificationToken}`;
+    const deepLinkUrl = `${this.appScheme}://verify-email/${verificationToken}`;
     const webFallbackUrl = `https://${this.appDomain}/api/auth/verify-email/${verificationToken}`;
     
     return `
@@ -164,7 +165,7 @@ class EmailService {
 
   // Create password reset email HTML template
   createPasswordResetEmailTemplate(resetToken, userEmail) {
-    const deepLinkUrl = `mattime://reset-password/${resetToken}`;
+    const deepLinkUrl = `${this.appScheme}://reset-password/${resetToken}`;
     const webFallbackUrl = `https://${this.appDomain}/reset-password?token=${resetToken}`;
     
     return `

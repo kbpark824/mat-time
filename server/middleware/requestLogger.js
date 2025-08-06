@@ -8,9 +8,12 @@ const requestLogger = (req, res, next) => {
   res.end = function(...args) {
     const responseTime = Date.now() - startTime;
     
-    // Log the request
+    // Log the request with request ID for correlation
+    const requestId = req.requestId || 'unknown';
+    const sanitizedIp = req.ip.length > 7 ? req.ip.substring(0, 7) + '***' : req.ip;
+    
     logger.http(
-      `${req.method} ${req.path} ${res.statusCode} - ${responseTime}ms - IP: ${req.ip}`
+      `[${requestId}] ${req.method} ${req.path} ${res.statusCode} - ${responseTime}ms - IP: ${sanitizedIp}`
     );
     
     originalEnd.apply(this, args);

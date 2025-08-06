@@ -77,11 +77,14 @@ refreshTokenSchema.statics.createToken = async function(userId, deviceInfo = {})
 
 // Static method to cleanup expired tokens for a user
 refreshTokenSchema.statics.cleanupExpiredTokens = async function(userId) {
+  const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+  
   return await this.deleteMany({
     userId,
     $or: [
-      { expiresAt: { $lt: new Date() } },
-      { isRevoked: true }
+      { expiresAt: { $lt: new Date() } }, // Expired tokens
+      { isRevoked: true }, // Revoked tokens
+      { createdAt: { $lt: ninetyDaysAgo } } // Very old tokens (even if still valid)
     ]
   });
 };

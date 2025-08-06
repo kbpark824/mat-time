@@ -83,8 +83,13 @@ router.get('/', auth, asyncHandler(async (req, res) => {
   let query = { user: req.user.id };
 
   if (keyword) {
-    // Sanitize keyword to prevent MongoDB operator injection
-    const sanitizedKeyword = keyword.replace(/[\$\{\}]/g, '').trim();
+    // Comprehensive sanitization to prevent MongoDB operator injection
+    const sanitizedKeyword = keyword
+      .replace(/[\$\{\}\[\]]/g, '') // Remove MongoDB operators
+      .replace(/['"]/g, '') // Remove quotes that could break queries
+      .replace(/[\\]/g, '') // Remove backslashes
+      .trim();
+    
     if (sanitizedKeyword.length > 0) {
       query.$text = { $search: sanitizedKeyword };
     }
@@ -101,8 +106,8 @@ router.get('/', auth, asyncHandler(async (req, res) => {
       query.tags = { $all: tagIds }; // $all ensures all specified tags are present
   }
 
-  let seminarsQuery = Seminar.find(query)
-    .populate('tags')
+  let seminarsQuery = Seminar.find(query, 'date name instructor location notes tags user createdAt updatedAt')
+    .populate('tags', 'name')
     .sort({ date: -1 });
 
   // Apply pagination if provided
@@ -124,12 +129,12 @@ router.get('/:id', auth, validateObjectId, asyncHandler(async (req, res) => {
     const seminar = await Seminar.findById(req.params.id).populate('tags');
     
     if (!seminar) {
-        return res.status(404).json({ msg: 'Seminar not found' });
+        return res.status(404).json({ success: false, error: 'Seminar not found' });
     }
     
     // Verify the seminar belongs to the user
     if (seminar.user.toString() !== req.user.id) {
-        return res.status(401).json({ msg: 'Not authorized' });
+        return res.status(401).json({ success: false, error: 'Not authorized' });
     }
     
     res.json(seminar);
@@ -151,10 +156,10 @@ router.put('/:id', auth, validateObjectId, asyncHandler(async (req, res) => {
     const { date, professorName, type, techniqueNotes, tags } = req.body;
 
     let seminar = await Seminar.findById(req.params.id);
-    if (!seminar) return res.status(404).json({ msg: 'Seminar not found' });
+    if (!seminar) return res.status(404).json({ success: false, error: 'Seminar not found' });
 
     if (seminar.user.toString() !== req.user.id) {
-        return res.status(401).json({ msg: 'Not authorized' });
+        return res.status(401).json({ success: false, error: 'Not authorized' });
     }
 
     const tagIds = await getTagIds(tags, req.user.id);
@@ -181,15 +186,15 @@ router.put('/:id', auth, validateObjectId, asyncHandler(async (req, res) => {
 // @access  Private
 router.delete('/:id', auth, validateObjectId, asyncHandler(async (req, res) => {
     let seminar = await Seminar.findById(req.params.id);
-    if (!seminar) return res.status(404).json({ msg: 'Seminar not found' });
+    if (!seminar) return res.status(404).json({ success: false, error: 'Seminar not found' });
 
     if (seminar.user.toString() !== req.user.id) {
-        return res.status(401).json({ msg: 'Not authorized' });
+        return res.status(401).json({ success: false, error: 'Not authorized' });
     }
 
     await Seminar.findByIdAndDelete(req.params.id);
 
-    res.json({ msg: 'Seminar removed' });
+    res.json({ success: true, message: 'Seminar removed' });
 }));
 
 module.exports = router;

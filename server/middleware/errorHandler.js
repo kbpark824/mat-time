@@ -1,8 +1,13 @@
 const logger = require('../config/logger');
 
 const errorHandler = (err, req, res, next) => {
-  // Log error with winston
-  logger.error(`${err.message} - ${req.method} ${req.path} - IP: ${req.ip}`);
+  // Sanitize sensitive data in logs
+  const sanitizedPath = req.path.replace(/\/[a-f\d]{24}/gi, '/:id'); // Hide ObjectIds
+  const sanitizedIp = req.ip.length > 7 ? req.ip.substring(0, 7) + '***' : req.ip;
+  const requestId = req.requestId || 'unknown';
+  
+  // Log error with winston including request ID for correlation
+  logger.error(`[${requestId}] ${err.message} - ${req.method} ${sanitizedPath} - IP: ${sanitizedIp}`);
   
   if (process.env.NODE_ENV !== 'production') {
     logger.debug(`Stack trace: ${err.stack}`);

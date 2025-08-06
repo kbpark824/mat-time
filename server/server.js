@@ -7,6 +7,7 @@ const path = require('path');
 const connectDB = require('./config/db');
 const logger = require('./config/logger');
 const requestLogger = require('./middleware/requestLogger');
+const requestIdMiddleware = require('./middleware/requestId');
 const constants = require('./config/constants');
 
 // Load environment variables
@@ -68,7 +69,8 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: constants.SECURITY.BODY_SIZE_LIMIT })); // Body parser for JSON with size limit
 app.use(express.urlencoded({ extended: true, parameterLimit: constants.VALIDATION.MAX_URL_PARAMETERS })); // Limit URL parameters to prevent HPP
 
-// Request logging middleware
+// Request ID and logging middleware
+app.use(requestIdMiddleware);
 app.use(requestLogger);
 
 // Rate limiting middleware

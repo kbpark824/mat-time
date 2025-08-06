@@ -11,7 +11,9 @@ const storeTokens = async (accessToken, refreshToken) => {
     // Remove legacy token if it exists
     await SecureStore.deleteItemAsync(LEGACY_KEY);
   } catch (error) {
-    console.log('Error storing tokens', error);
+    if (__DEV__) {
+      console.log('Error storing tokens', error);
+    }
   }
 };
 
@@ -30,7 +32,9 @@ const getTokens = async () => {
     
     return { accessToken, refreshToken };
   } catch (error) {
-    console.log('Error getting tokens', error);
+    if (__DEV__) {
+      console.log('Error getting tokens', error);
+    }
     return { accessToken: null, refreshToken: null };
   }
 };
@@ -41,7 +45,9 @@ const removeTokens = async () => {
     await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
     await SecureStore.deleteItemAsync(LEGACY_KEY); // Remove legacy token too
   } catch (error) {
-    console.log('Error removing tokens', error);
+    if (__DEV__) {
+      console.log('Error removing tokens', error);
+    }
   }
 };
 
@@ -50,7 +56,9 @@ const storeToken = async (authToken) => {
   try {
     await SecureStore.setItemAsync(LEGACY_KEY, authToken);
   } catch (error) {
-    console.log('Error storing the auth token', error);
+    if (__DEV__) {
+      console.log('Error storing the auth token', error);
+    }
   }
 };
 
@@ -58,7 +66,9 @@ const getToken = async () => {
   try {
     return await SecureStore.getItemAsync(LEGACY_KEY);
   } catch (error) {
-    console.log('Error getting the auth token', error);
+    if (__DEV__) {
+      console.log('Error getting the auth token', error);
+    }
   }
 };
 
@@ -66,7 +76,9 @@ const removeToken = async () => {
   try {
     await SecureStore.deleteItemAsync(LEGACY_KEY);
   } catch (error) {
-    console.log('Error removing the auth token', error);
+    if (__DEV__) {
+      console.log('Error removing the auth token', error);
+    }
   }
 };
 

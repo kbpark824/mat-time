@@ -89,8 +89,13 @@ router.get('/', auth, asyncHandler(async (req, res) => {
   let query = { user: req.user.id };
 
   if (keyword) {
-    // Sanitize keyword to prevent MongoDB operator injection
-    const sanitizedKeyword = keyword.replace(/[\$\{\}]/g, '').trim();
+    // Comprehensive sanitization to prevent MongoDB operator injection
+    const sanitizedKeyword = keyword
+      .replace(/[\$\{\}\[\]]/g, '') // Remove MongoDB operators
+      .replace(/['"]/g, '') // Remove quotes that could break queries
+      .replace(/[\\]/g, '') // Remove backslashes
+      .trim();
+    
     if (sanitizedKeyword.length > 0) {
       query.$text = { $search: sanitizedKeyword };
     }
@@ -107,8 +112,8 @@ router.get('/', auth, asyncHandler(async (req, res) => {
       query.tags = { $all: tagIds }; // $all ensures all specified tags are present
   }
 
-  let sessionsQuery = Session.find(query)
-    .populate('tags')
+  let sessionsQuery = Session.find(query, 'date duration instructor type techniqueNotes rollingNotes tags user createdAt updatedAt')
+    .populate('tags', 'name')
     .sort({ date: -1 });
 
   // Apply pagination if provided
@@ -131,12 +136,12 @@ router.get('/:id', auth, validateObjectId, asyncHandler(async (req, res) => {
     const session = await Session.findById(req.params.id).populate('tags');
     
     if (!session) {
-        return res.status(404).json({ msg: 'Session not found' });
+        return res.status(404).json({ success: false, error: 'Session not found' });
     }
     
     // Verify the session belongs to the user
     if (session.user.toString() !== req.user.id) {
-        return res.status(401).json({ msg: 'Not authorized' });
+        return res.status(401).json({ success: false, error: 'Not authorized' });
     }
     
     res.json(session);
@@ -158,10 +163,10 @@ router.put('/:id', auth, validateObjectId, asyncHandler(async (req, res) => {
     const { date, duration, instructor, type, techniqueNotes, rollingNotes, tags } = req.body;
 
     let session = await Session.findById(req.params.id);
-    if (!session) return res.status(404).json({ msg: 'Session not found' });
+    if (!session) return res.status(404).json({ success: false, error: 'Session not found' });
 
     if (session.user.toString() !== req.user.id) {
-        return res.status(401).json({ msg: 'Not authorized' });
+        return res.status(401).json({ success: false, error: 'Not authorized' });
     }
 
     const tagIds = await getTagIds(tags, req.user.id);
@@ -190,10 +195,10 @@ router.put('/:id', auth, validateObjectId, asyncHandler(async (req, res) => {
 // @access  Private
 router.delete('/:id', auth, validateObjectId, asyncHandler(async (req, res) => {
     let session = await Session.findById(req.params.id);
-    if (!session) return res.status(404).json({ msg: 'Session not found' });
+    if (!session) return res.status(404).json({ success: false, error: 'Session not found' });
 
     if (session.user.toString() !== req.user.id) {
-        return res.status(401).json({ msg: 'Not authorized' });
+        return res.status(401).json({ success: false, error: 'Not authorized' });
     }
 
     await Session.findByIdAndDelete(req.params.id);

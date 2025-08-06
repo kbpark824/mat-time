@@ -107,7 +107,9 @@ export const AuthProvider = ({ children }) => {
         await apiClient.post('/auth/logout', { refreshToken });
       }
     } catch (error) {
-      console.log('Error during server logout:', error);
+      if (__DEV__) {
+        console.log('Error during server logout:', error);
+      }
     }
     
     setUser(null);

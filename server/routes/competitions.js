@@ -156,8 +156,13 @@ router.get('/', auth, asyncHandler(async (req, res) => {
   let query = { user: req.user.id };
 
   if (keyword) {
-    // Sanitize keyword to prevent MongoDB operator injection
-    const sanitizedKeyword = keyword.replace(/[\$\{\}]/g, '').trim();
+    // Comprehensive sanitization to prevent MongoDB operator injection
+    const sanitizedKeyword = keyword
+      .replace(/[\$\{\}\[\]]/g, '') // Remove MongoDB operators
+      .replace(/['"]/g, '') // Remove quotes that could break queries
+      .replace(/[\\]/g, '') // Remove backslashes
+      .trim();
+    
     if (sanitizedKeyword.length > 0) {
       query.$text = { $search: sanitizedKeyword };
     }
@@ -174,8 +179,8 @@ router.get('/', auth, asyncHandler(async (req, res) => {
       query.tags = { $all: tagIds }; // $all ensures all specified tags are present
   }
 
-  let competitionsQuery = Competition.find(query)
-    .populate('tags')
+  let competitionsQuery = Competition.find(query, 'date name location placement weight medals notes tags user createdAt updatedAt')
+    .populate('tags', 'name')
     .sort({ date: -1 });
 
   // Apply pagination if provided
@@ -197,12 +202,12 @@ router.get('/:id', auth, validateObjectId, asyncHandler(async (req, res) => {
     const competition = await Competition.findById(req.params.id).populate('tags');
     
     if (!competition) {
-        return res.status(404).json({ msg: 'Competition not found' });
+        return res.status(404).json({ success: false, error: 'Competition not found' });
     }
     
     // Verify the competition belongs to the user
     if (competition.user.toString() !== req.user.id) {
-        return res.status(401).json({ msg: 'Not authorized' });
+        return res.status(401).json({ success: false, error: 'Not authorized' });
     }
     
     res.json(competition);
@@ -239,10 +244,10 @@ router.put('/:id', auth, validateObjectId, asyncHandler(async (req, res) => {
     } = req.body;
 
     let competition = await Competition.findById(req.params.id);
-    if (!competition) return res.status(404).json({ msg: 'Competition not found' });
+    if (!competition) return res.status(404).json({ success: false, error: 'Competition not found' });
 
     if (competition.user.toString() !== req.user.id) {
-        return res.status(401).json({ msg: 'Not authorized' });
+        return res.status(401).json({ success: false, error: 'Not authorized' });
     }
 
     const tagIds = await getTagIds(tags, req.user.id);
@@ -278,15 +283,15 @@ router.put('/:id', auth, validateObjectId, asyncHandler(async (req, res) => {
 // @access  Private
 router.delete('/:id', auth, validateObjectId, asyncHandler(async (req, res) => {
     let competition = await Competition.findById(req.params.id);
-    if (!competition) return res.status(404).json({ msg: 'Competition not found' });
+    if (!competition) return res.status(404).json({ success: false, error: 'Competition not found' });
 
     if (competition.user.toString() !== req.user.id) {
-        return res.status(401).json({ msg: 'Not authorized' });
+        return res.status(401).json({ success: false, error: 'Not authorized' });
     }
 
     await Competition.findByIdAndDelete(req.params.id);
 
-    res.json({ msg: 'Competition removed' });
+    res.json({ success: true, message: 'Competition removed' });
 }));
 
 module.exports = router;

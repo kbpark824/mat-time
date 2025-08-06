@@ -99,7 +99,9 @@ function Layout() {
   // Handle deep links
   useEffect(() => {
     const handleDeepLink = (url) => {
-      console.log('Deep link received:', url);
+      if (__DEV__) {
+        console.log('Deep link received:', url);
+      }
       
       if (url.includes('reset-password/')) {
         const token = url.split('reset-password/')[1];

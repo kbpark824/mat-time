@@ -17,8 +17,13 @@ router.get('/', auth, asyncHandler(async (req, res) => {
 
   // Build search query
   if (keyword) {
-    // Sanitize keyword to prevent MongoDB operator injection
-    const sanitizedKeyword = keyword.replace(/[\$\{\}]/g, '').trim();
+    // Comprehensive sanitization to prevent MongoDB operator injection
+    const sanitizedKeyword = keyword
+      .replace(/[\$\{\}\[\]]/g, '') // Remove MongoDB operators
+      .replace(/['"]/g, '') // Remove quotes that could break queries
+      .replace(/[\\]/g, '') // Remove backslashes
+      .trim();
+    
     if (sanitizedKeyword.length > 0) {
       query.$text = { $search: sanitizedKeyword };
     }
