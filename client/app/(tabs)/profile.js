@@ -91,10 +91,6 @@ export default function ProfileScreen() {
     });
   };
 
-  if (showPaywall) {
-    return <Paywall onPurchaseCompleted={handlePurchaseCompleted} onClose={() => setShowPaywall(false)} />;
-  }
-
   return (
     <ErrorBoundary fallbackMessage="Unable to load profile screen. Please try refreshing.">
       <ScrollView style={styles.container}>
@@ -242,6 +238,19 @@ export default function ProfileScreen() {
             </View>
           </View>
         </View>
+      </Modal>
+
+      {/* Paywall Modal */}
+      <Modal
+        visible={showPaywall}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowPaywall(false)}
+      >
+        <Paywall
+          onPurchaseCompleted={handlePurchaseCompleted}
+          onClose={() => setShowPaywall(false)}
+        />
       </Modal>
       </ScrollView>
     </ErrorBoundary>

@@ -87,9 +87,15 @@ export default function Paywall({ onPurchaseCompleted, onClose }) {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Ionicons name="close" size={24} color={colors.mutedAccent} />
-          </TouchableOpacity>
+          <View style={styles.headerContent}>
+            <View style={styles.headerTitle}>
+              <Ionicons name="star" size={24} color={colors.white} style={{ marginRight: 8 }} />
+              <Text style={styles.headerTitleText}>Upgrade to Pro</Text>
+            </View>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+              <Ionicons name="close" size={24} color={colors.white} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Title Section */}
@@ -97,7 +103,6 @@ export default function Paywall({ onPurchaseCompleted, onClose }) {
           <View style={styles.proIcon}>
             <Ionicons name="star" size={32} color={colors.white} />
           </View>
-          <Text style={styles.title}>Upgrade to Pro</Text>
           <Text style={styles.subtitle}>
             Unlock powerful features to enhance your training journey
           </Text>
@@ -108,7 +113,7 @@ export default function Paywall({ onPurchaseCompleted, onClose }) {
           {proFeatures.map((feature, index) => (
             <View key={index} style={styles.featureItem}>
               <View style={styles.featureIcon}>
-                <Ionicons name={feature.icon} size={20} color={colors.primaryText} />
+                <Ionicons name={feature.icon} size={20} color={colors.white} />
               </View>
               <View style={styles.featureContent}>
                 <Text style={styles.featureTitle}>{feature.title}</Text>
@@ -200,11 +205,24 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingHorizontal: 20,
+    backgroundColor: colors.accent,
     paddingTop: 60,
     paddingBottom: 20,
+    paddingHorizontal: 20,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerTitleText: {
+    color: colors.white,
+    fontSize: 28,
+    fontWeight: 'bold',
   },
   closeButton: {
     padding: 8,
@@ -212,23 +230,17 @@ const styles = StyleSheet.create({
   titleSection: {
     alignItems: 'center',
     paddingHorizontal: 20,
+    paddingTop: 20,
     paddingBottom: 40,
   },
   proIcon: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: colors.primaryText,
+    backgroundColor: colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: colors.primaryText,
-    marginBottom: 12,
-    textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
@@ -250,7 +262,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.lightGray,
+    backgroundColor: colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -339,7 +351,7 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: colors.primaryText,
+    backgroundColor: colors.accent,
   },
   bottomSection: {
     paddingHorizontal: 20,
@@ -350,7 +362,7 @@ const styles = StyleSheet.create({
     borderTopColor: colors.lightGray,
   },
   purchaseButton: {
-    backgroundColor: colors.primaryText,
+    backgroundColor: colors.accent,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
