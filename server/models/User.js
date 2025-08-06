@@ -18,7 +18,6 @@ const UserSchema = new mongoose.Schema({
   },
   revenueCatId: {
     type: String,
-    unique: true,
     sparse: true, // Allows multiple documents to have a null value
   },
   isEmailVerified: {

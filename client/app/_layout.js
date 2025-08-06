@@ -217,6 +217,48 @@ function Layout() {
           ),
         }}
       />
+      <Stack.Screen 
+        name="forgotPassword" 
+        options={{
+          headerShown: true,
+          title: 'Forgot Password',
+          headerStyle: {
+            backgroundColor: colors.accent,
+          },
+          headerTintColor: colors.white,
+          headerTitleAlign: 'left',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+            fontSize: 28,
+          },
+          headerTitle: () => (
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ color: colors.white, fontSize: 28, fontWeight: 'bold' }}>Forgot Password</Text>
+            </View>
+          ),
+        }}
+      />
+      <Stack.Screen 
+        name="resetPassword" 
+        options={{
+          headerShown: true,
+          title: 'Reset Password',
+          headerStyle: {
+            backgroundColor: colors.accent,
+          },
+          headerTintColor: colors.white,
+          headerTitleAlign: 'left',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+            fontSize: 28,
+          },
+          headerTitle: () => (
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ color: colors.white, fontSize: 28, fontWeight: 'bold' }}>Reset Password</Text>
+            </View>
+          ),
+        }}
+      />
       <Stack.Screen
         name="(tabs)"
         options={{ headerShown: false }}
