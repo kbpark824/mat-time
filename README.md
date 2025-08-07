@@ -6,7 +6,7 @@ Mat Time is a modern, full-stack mobile application designed specifically for Br
 
 [![Production Ready](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)](https://github.com/kbpark824/mat-time)
 [![Security Verified](https://img.shields.io/badge/Security-Enterprise%20Grade-blue)](https://github.com/kbpark824/mat-time)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 ---
 
