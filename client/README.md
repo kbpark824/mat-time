@@ -1,6 +1,10 @@
-# Welcome to your Expo app 👋
+# Mat Time Client 👋
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+This is the React Native Expo frontend for Mat Time, a comprehensive jiujitsu training tracker.
+
+## License
+
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](../LICENSE) file for details.
 
 ## Get started
 
