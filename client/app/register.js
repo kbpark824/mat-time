@@ -175,7 +175,7 @@ export default function RegisterScreen() {
                   <Text style={styles.linkText}>Terms of Use</Text>
                 </TouchableOpacity>
                 <Text style={styles.termsText}> and </Text>
-                <TouchableOpacity onPress={() => Linking.openURL('https://www.termsfeed.com/live/ff739534-7f59-4d57-84d3-6acf05dc0024')}>
+                <TouchableOpacity onPress={() => Linking.openURL('https://mat-time.io/privacy-policy')}>
                   <Text style={styles.linkText}>Privacy Policy</Text>
                 </TouchableOpacity>
               </View>
