@@ -24,12 +24,13 @@ const router = express.Router();
 // @desc    Basic health check
 // @access  Public
 router.get('/', (req, res) => {
+  const environment = process.env.NODE_ENV || 'development';
   res.status(200).json({
     success: true,
-    message: 'Server is running',
+    message: `Mat Time API is running in ${environment.toUpperCase()} mode`,
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: environment
   });
 });
 
