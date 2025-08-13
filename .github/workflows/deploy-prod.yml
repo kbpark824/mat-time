@@ -1,0 +1,46 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_deployment:
+        description: 'Type "DEPLOY" to confirm production deployment'
+        required: true
+        type: string
+
+jobs:
+  deploy-prod:
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+      - name: Validate Deployment Confirmation
+        if: ${{ github.event.inputs.confirm_deployment != 'DEPLOY' }}
+        run: |
+          echo "❌ Deployment cancelled: You must type 'DEPLOY' to confirm"
+          exit 1
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: |
+          curl -fsSL https://railway.app/install.sh | sh
+          echo "$HOME/.railway/bin" >> $GITHUB_PATH
+
+      - name: Deploy to Railway Production
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway login --token $RAILWAY_TOKEN
+          railway link ${{ secrets.RAILWAY_PROJECT_ID }}
+          railway service ${{ secrets.RAILWAY_SERVICE_ID_PROD }}
+          railway up --detach
+        working-directory: ./server
+
+      - name: Deployment Status
+        run: |
+          echo "🎉 Successfully deployed to PRODUCTION environment"
+          echo "📝 Commit: ${{ github.sha }}"
+          echo "👤 Deployed by: ${{ github.actor }}"
+          echo "⚠️  Please verify the deployment is working correctly"
