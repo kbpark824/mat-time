@@ -16,9 +16,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Copy server files to root
+        run: |
+          cp -r server/* .
+          ls -la
+
       - name: Deploy to Railway Development
         run: railway up --service=${{ secrets.RAILWAY_SERVICE_ID_DEV }}
-        working-directory: ./server
 
       - name: Deployment Status
         run: |
