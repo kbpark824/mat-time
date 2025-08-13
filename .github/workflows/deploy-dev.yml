@@ -10,7 +10,7 @@ jobs:
     container: ghcr.io/railwayapp/cli:latest
     environment: development
     env:
-      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_DEV }}
     
     steps:
       - name: Checkout code
