@@ -7,25 +7,17 @@ on:
 jobs:
   deploy-dev:
     runs-on: ubuntu-latest
+    container: ghcr.io/railwayapp/cli:latest
     environment: development
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Railway CLI
-        run: |
-          curl -fsSL https://railway.app/install.sh | sh
-          echo "$HOME/.railway/bin" >> $GITHUB_PATH
-
       - name: Deploy to Railway Development
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
-          railway login --token="$RAILWAY_TOKEN"
-          railway link "${{ secrets.RAILWAY_PROJECT_ID }}"
-          railway service "${{ secrets.RAILWAY_SERVICE_ID_DEV }}"
-          railway up --detach
+        run: railway up --service=${{ secrets.RAILWAY_SERVICE_ID_DEV }}
         working-directory: ./server
 
       - name: Deployment Status
