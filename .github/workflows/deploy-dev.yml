@@ -22,9 +22,9 @@ jobs:
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          railway login --token $RAILWAY_TOKEN
-          railway link ${{ secrets.RAILWAY_PROJECT_ID }}
-          railway service ${{ secrets.RAILWAY_SERVICE_ID_DEV }}
+          railway login --token="$RAILWAY_TOKEN"
+          railway link "${{ secrets.RAILWAY_PROJECT_ID }}"
+          railway service "${{ secrets.RAILWAY_SERVICE_ID_DEV }}"
           railway up --detach
         working-directory: ./server
 
